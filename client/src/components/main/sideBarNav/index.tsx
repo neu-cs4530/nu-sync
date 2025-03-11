@@ -65,6 +65,12 @@ const SideBarNav = () => {
         className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
         Games
       </NavLink>
+      <NavLink
+        to='/friends'
+        id='menu_friends'
+        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        Friends
+      </NavLink>
     </div>
   );
 };
