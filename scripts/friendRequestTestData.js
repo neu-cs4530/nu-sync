@@ -2,8 +2,8 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-// Friend Relationship Schema
-const friendshipSchema = new Schema({
+// Friend Request Schema
+const friendRequestSchema = new Schema({
   requester: { type: String, required: true, ref: 'User' },
   recipient: { type: String, required: true, ref: 'User' },
   status: {
@@ -14,38 +14,46 @@ const friendshipSchema = new Schema({
   },
   requestedAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  visibility: {
-    type: String,
-    enum: ['public', 'friends-only', 'private'],
-    default: 'friends-only',
+  privacySettings: {
+    visibility: {
+      type: String,
+      enum: ['public', 'friends-only', 'private'],
+      default: 'friends-only',
+    },
+    shareMusic: { type: Boolean, default: true },
+    notificationsEnabled: { type: Boolean, default: true },
   },
-  shareMusic: { type: Boolean, default: true },
-  notificationsEnabled: { type: Boolean, default: true },
 });
 
 // Create indexes for efficient queries
-friendshipSchema.index({ requester: 1, status: 1 });
-friendshipSchema.index({ recipient: 1, status: 1 });
+friendRequestSchema.index({ requester: 1, status: 1 });
+friendRequestSchema.index({ recipient: 1, status: 1 });
 
-const Friendship = mongoose.model('Friendship', friendshipSchema, 'Friendship');
+const FriendRequest = mongoose.model(
+  'FriendRequest',
+  friendRequestSchema,
+  'FriendRequest',
+);
 
-// Function to generate test friendships using your existing users
-async function createTestFriendships() {
-  // Delete existing friendships (for testing purposes)
-  await Friendship.deleteMany({});
+// Function to generate test friend requests using existing users
+async function createTestFriendRequests() {
+  // Delete existing friend requests (for testing purposes)
+  await FriendRequest.deleteMany({});
 
-  // Sample friendships - 5 accepted, 5 pending, 5 rejected
-  const friendships = [
-    // Accepted friendships
+  // Sample friend requests - 5 accepted, 5 pending, 5 rejected
+  const friendRequests = [
+    // Accepted friend requests
     {
       requester: 'sana',
       recipient: 'ihba001',
       status: 'accepted',
       requestedAt: new Date('2023-01-15'),
       updatedAt: new Date('2023-01-16'),
-      visibility: 'public',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'public',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'sana',
@@ -53,9 +61,11 @@ async function createTestFriendships() {
       status: 'accepted',
       requestedAt: new Date('2023-01-20'),
       updatedAt: new Date('2023-01-21'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'hamkalo',
@@ -63,9 +73,11 @@ async function createTestFriendships() {
       status: 'accepted',
       requestedAt: new Date('2023-01-10'),
       updatedAt: new Date('2023-01-12'),
-      visibility: 'friends-only',
-      shareMusic: false,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: false,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'azad',
@@ -73,9 +85,11 @@ async function createTestFriendships() {
       status: 'accepted',
       requestedAt: new Date('2023-01-05'),
       updatedAt: new Date('2023-01-06'),
-      visibility: 'private',
-      shareMusic: true,
-      notificationsEnabled: false,
+      privacySettings: {
+        visibility: 'private',
+        shareMusic: true,
+        notificationsEnabled: false,
+      },
     },
     {
       requester: 'Joji John',
@@ -83,21 +97,25 @@ async function createTestFriendships() {
       status: 'accepted',
       requestedAt: new Date('2023-01-25'),
       updatedAt: new Date('2023-01-26'),
-      visibility: 'public',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'public',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
 
-    // Pending friendships
+    // Pending friend requests
     {
       requester: 'saltyPeter',
       recipient: 'ihba001',
       status: 'pending',
       requestedAt: new Date('2023-02-01'),
       updatedAt: new Date('2023-02-01'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'monkeyABC',
@@ -105,9 +123,11 @@ async function createTestFriendships() {
       status: 'pending',
       requestedAt: new Date('2023-02-03'),
       updatedAt: new Date('2023-02-03'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'abaya',
@@ -115,9 +135,11 @@ async function createTestFriendships() {
       status: 'pending',
       requestedAt: new Date('2023-02-05'),
       updatedAt: new Date('2023-02-05'),
-      visibility: 'public',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'public',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'Joji John',
@@ -125,9 +147,11 @@ async function createTestFriendships() {
       status: 'pending',
       requestedAt: new Date('2023-02-10'),
       updatedAt: new Date('2023-02-10'),
-      visibility: 'private',
-      shareMusic: false,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'private',
+        shareMusic: false,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'hamkalo',
@@ -135,21 +159,25 @@ async function createTestFriendships() {
       status: 'pending',
       requestedAt: new Date('2023-02-12'),
       updatedAt: new Date('2023-02-12'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
 
-    // Rejected friendships
+    // Rejected friend requests
     {
       requester: 'sana',
       recipient: 'azad',
       status: 'rejected',
       requestedAt: new Date('2023-01-30'),
       updatedAt: new Date('2023-01-31'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: false,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: false,
+      },
     },
     {
       requester: 'monkeyABC',
@@ -157,9 +185,11 @@ async function createTestFriendships() {
       status: 'rejected',
       requestedAt: new Date('2023-02-02'),
       updatedAt: new Date('2023-02-03'),
-      visibility: 'public',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'public',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'abaya',
@@ -167,9 +197,11 @@ async function createTestFriendships() {
       status: 'rejected',
       requestedAt: new Date('2023-02-04'),
       updatedAt: new Date('2023-02-05'),
-      visibility: 'private',
-      shareMusic: false,
-      notificationsEnabled: false,
+      privacySettings: {
+        visibility: 'private',
+        shareMusic: false,
+        notificationsEnabled: false,
+      },
     },
     {
       requester: 'alia',
@@ -177,9 +209,11 @@ async function createTestFriendships() {
       status: 'rejected',
       requestedAt: new Date('2023-02-07'),
       updatedAt: new Date('2023-02-08'),
-      visibility: 'friends-only',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'friends-only',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
     {
       requester: 'abhi3241',
@@ -187,13 +221,15 @@ async function createTestFriendships() {
       status: 'rejected',
       requestedAt: new Date('2023-02-09'),
       updatedAt: new Date('2023-02-10'),
-      visibility: 'public',
-      shareMusic: true,
-      notificationsEnabled: true,
+      privacySettings: {
+        visibility: 'public',
+        shareMusic: true,
+        notificationsEnabled: true,
+      },
     },
   ];
 
-  return await Friendship.insertMany(friendships);
+  return await FriendRequest.insertMany(friendRequests);
 }
 
 // Function to run the seed data creation
@@ -205,21 +241,23 @@ async function seedDatabase() {
     });
     console.log('Connected to database');
 
-    const friendships = await createTestFriendships();
-    console.log(`Created ${friendships.length} test friendships`);
+    const requests = await createTestFriendRequests();
+    console.log(`Created ${requests.length} test friend requests`);
 
-    // Create some additional friendships to demonstrate mutual friends
-    await Friendship.insertMany([
-      // Create some mutual friendships for demonstration
+    // Create some additional friend requests to demonstrate mutual friends
+    await FriendRequest.insertMany([
+      // Create some mutual friend requests for demonstration
       {
         requester: 'sana',
         recipient: 'abhi3241',
         status: 'accepted',
         requestedAt: new Date('2023-03-01'),
         updatedAt: new Date('2023-03-02'),
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
+        privacySettings: {
+          visibility: 'public',
+          shareMusic: true,
+          notificationsEnabled: true,
+        },
       },
       {
         requester: 'abhi3241',
@@ -227,9 +265,11 @@ async function seedDatabase() {
         status: 'accepted',
         requestedAt: new Date('2023-03-03'),
         updatedAt: new Date('2023-03-04'),
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
+        privacySettings: {
+          visibility: 'public',
+          shareMusic: true,
+          notificationsEnabled: true,
+        },
       },
       {
         requester: 'sana',
@@ -237,21 +277,23 @@ async function seedDatabase() {
         status: 'accepted', // Overrides previous rejected request
         requestedAt: new Date('2023-03-05'),
         updatedAt: new Date('2023-03-06'),
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
+        privacySettings: {
+          visibility: 'public',
+          shareMusic: true,
+          notificationsEnabled: true,
+        },
       },
     ]);
 
     // Query for mutual friends example - find mutual friends between sana and abhi3241
-    const sanaFriends = await Friendship.find({
+    const sanaFriends = await FriendRequest.find({
       $or: [
         { requester: 'sana', status: 'accepted' },
         { recipient: 'sana', status: 'accepted' },
       ],
     });
 
-    const abhiFriends = await Friendship.find({
+    const abhiFriends = await FriendRequest.find({
       $or: [
         { requester: 'abhi3241', status: 'accepted' },
         { recipient: 'abhi3241', status: 'accepted' },
@@ -259,16 +301,12 @@ async function seedDatabase() {
     });
 
     // Extract friend usernames for both users
-    const sanaFriendNames = sanaFriends.map((friendship) =>
-      friendship.requester === 'sana'
-        ? friendship.recipient
-        : friendship.requester,
+    const sanaFriendNames = sanaFriends.map((request) =>
+      request.requester === 'sana' ? request.recipient : request.requester,
     );
 
-    const abhiFriendNames = abhiFriends.map((friendship) =>
-      friendship.requester === 'abhi3241'
-        ? friendship.recipient
-        : friendship.requester,
+    const abhiFriendNames = abhiFriends.map((request) =>
+      request.requester === 'abhi3241' ? request.recipient : request.requester,
     );
 
     // Find mutual friends
