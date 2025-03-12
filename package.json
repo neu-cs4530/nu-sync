@@ -6,5 +6,8 @@
     "client",
     "server",
     "shared"
-  ]
+  ],
+  "dependencies": {
+    "fake-stack-overflow": "file:"
+  }
 }
