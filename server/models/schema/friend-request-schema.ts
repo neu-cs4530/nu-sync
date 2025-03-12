@@ -1,32 +1,32 @@
-import { Schema } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 
 /**
- * Mongoose schema for the Friendships collection.
+ * Mongoose schema for the FriendRequest collection.
  *
- * This schema defines the structure for storing friend requests and relationships in the database.
- * Each document includes the following fields:
- * - `requester`: The ObjectId of the user who sent the friend request.
- * - `recipient`: The ObjectId of the user who received the friend request.
- * - `status`: The status of the friend request (e.g., "pending", "accepted", "rejected").
- * - `requestedAt`: The timestamp when the request was sent.
- * - `updatedAt`: The timestamp when the request was last updated.
- * - `privacySettings`: Privacy settings specific to this friendship.
+ * This schema defines the structure for storing friend requests in the database.
+ * Each friend request includes:
+ * - `requester`: The user who sent the request.
+ * - `recipient`: The user who received the request.
+ * - `status`: The status of the request (pending, accepted, rejected).
+ * - `requestedAt`: The date and time when the request was made.
+ * - `updatedAt`: The date and time when the request status was last updated.
+ * - `privacySettings`: Controls various privacy options between the two users.
  */
 const friendRequestSchema: Schema = new Schema(
   {
     requester: {
-      type: Schema.Types.ObjectId,
-      ref: 'User', // References the User collection
+      type: Types.ObjectId,
+      ref: 'User',
       required: true,
     },
     recipient: {
-      type: Schema.Types.ObjectId,
-      ref: 'User', // References the User collection
+      type: Types.ObjectId,
+      ref: 'User',
       required: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'], // Allowed statuses
+      enum: ['pending', 'accepted', 'rejected'],
       default: 'pending',
     },
     requestedAt: {
@@ -40,7 +40,7 @@ const friendRequestSchema: Schema = new Schema(
     privacySettings: {
       visibility: {
         type: String,
-        enum: ['public', 'friends-only', 'private'], // Allowed visibility options
+        enum: ['public', 'friends-only', 'private'],
         default: 'friends-only',
       },
       shareMusic: {
@@ -61,7 +61,7 @@ const friendRequestSchema: Schema = new Schema(
       },
     },
   },
-  { collection: 'Friendships' },
+  { collection: 'FriendRequest', timestamps: true },
 );
 
 export default friendRequestSchema;
