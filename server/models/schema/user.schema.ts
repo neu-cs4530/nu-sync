@@ -15,7 +15,6 @@ import { Schema } from 'mongoose';
  * - `playlists`: Stores user-created playlists.
  * - `currentlyPlaying`: The currently playing track on Spotify.
  * - `playlistHistory`: The history of playlists the user has interacted with.
- * 
  */
 const userSchema: Schema = new Schema(
   {
