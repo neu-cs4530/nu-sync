@@ -108,7 +108,6 @@ export interface UpdateBiographyRequest extends Request {
   };
 }
 
-
 /**
  * Represents the user's privacy settings.
  * - `profileVisibility`: Controls the visibility of the user's profile.

@@ -47,14 +47,6 @@ const friendRequestSchema: Schema = new Schema(
         type: Boolean,
         default: true,
       },
-      allowChat: {
-        type: Boolean,
-        default: true,
-      },
-      allowCodeSharing: {
-        type: Boolean,
-        default: true,
-      },
       notificationsEnabled: {
         type: Boolean,
         default: true,

@@ -6,8 +6,6 @@ import { ObjectId } from 'mongodb';
 export interface PrivacySettings {
   visibility: 'public' | 'friends-only' | 'private';
   shareMusic: boolean;
-  allowChat: boolean;
-  allowCodeSharing: boolean;
   notificationsEnabled: boolean;
 }
 
