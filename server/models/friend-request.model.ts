@@ -1,6 +1,6 @@
 import Mongoose, { Model } from 'mongoose';
-import friendRequestSchema from './schema/friend-request-schema';
 import { DatabaseFriendRequest } from '@fake-stack-overflow/shared/types/friend-request';
+import friendRequestSchema from './schema/friend-request-schema';
 
 /**
  * Mongoose model for the `FriendRequest` collection.
@@ -11,6 +11,7 @@ import { DatabaseFriendRequest } from '@fake-stack-overflow/shared/types/friend-
  */
 const FriendRequestModel: Model<DatabaseFriendRequest> = Mongoose.model<DatabaseFriendRequest>(
   'FriendRequest',
-  friendRequestSchema);
+  friendRequestSchema,
+);
 
 export default FriendRequestModel;

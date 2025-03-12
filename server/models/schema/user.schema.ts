@@ -8,7 +8,8 @@ import { Schema } from 'mongoose';
  * - `username`: The username of the user.
  * - `password`: The encrypted password securing the user's account.
  * - `dateJoined`: The date the user joined the platform.
- * - `biography`: A short description about the user.
+ * - `biography`: A bio of the user.
+ * - `friends`: An array of usernames representing friends of the user.
  * - `spotifyId`: The Spotify user ID for integration with Spotify.
  * - `musicPreferences`: Stores the user's favorite genres, artists, and tracks.
  * - `privacySettings`: Controls the visibility of the user's profile and music history.
@@ -32,6 +33,10 @@ const userSchema: Schema = new Schema(
     biography: {
       type: String,
       default: '',
+    },
+    friends: {
+      type: [String],
+      default: [],
     },
     spotifyId: {
       type: String,

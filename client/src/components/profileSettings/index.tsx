@@ -27,6 +27,9 @@ const ProfileSettings: React.FC = () => {
     handleResetPassword,
     handleUpdateBiography,
     handleDeleteUser,
+
+    mutualFriends,
+    mutualFriendsLoading,
   } = useProfileSettings();
 
   if (loading) {
@@ -97,6 +100,27 @@ const ProfileSettings: React.FC = () => {
               <strong>Date Joined:</strong>{' '}
               {userData.dateJoined ? new Date(userData.dateJoined).toLocaleDateString() : 'N/A'}
             </p>
+
+            {!canEditProfile && (
+              <div className='mutual-friends'>
+                <h4>Mutual Friends</h4>
+                {(() => {
+                  if (mutualFriendsLoading) {
+                    return <p>Loading mutual friends...</p>;
+                  }
+                  if (mutualFriends.length > 0) {
+                    return (
+                      <ul>
+                        {mutualFriends.map(friend => (
+                          <li key={friend}>{friend}</li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return <p>No mutual friends found.</p>;
+                })()}
+              </div>
+            )}
 
             {/* ---- Reset Password Section ---- */}
             {canEditProfile && (
