@@ -6,9 +6,11 @@ import {
   UserByUsernameRequest,
   FakeSOSocket,
   UpdateBiographyRequest,
+  GetMutualFriendsRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
+  getMutualFriends,
   getUserByUsername,
   getUsersList,
   loginUser,
@@ -236,6 +238,34 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Handles retrieving mutual friends between two users.
+   *
+   * @param req - The request containing `currentUser` and `viewedUser` in the body.
+   * @param res - The response, returning a list of mutual friends or an error.
+   */
+  const findMutualFriends = async (req: GetMutualFriendsRequest, res: Response): Promise<void> => {
+    try {
+      if (
+        req.params === undefined ||
+        req.params.currentUser === undefined ||
+        req.params.currentUser === '' ||
+        req.params.viewedUser === undefined ||
+        req.params.viewedUser === ''
+      ) {
+        res.status(400).send('Either currentUser or viewedUser is missing');
+        return;
+      }
+      const { currentUser, viewedUser } = req.params;
+
+      const mutualFriends = await getMutualFriends(currentUser, viewedUser);
+
+      res.status(200).json(mutualFriends);
+    } catch (error) {
+      res.status(500).send(`Error when getting mutual freinds: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -244,6 +274,7 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/getUsers', getUsers);
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
+  router.get('/getMutualFriends/:currentUser/:viewedUser', findMutualFriends);
   return router;
 };
 

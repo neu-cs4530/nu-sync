@@ -28,6 +28,7 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       username: result.username,
       dateJoined: result.dateJoined,
       biography: result.biography,
+      friends: result.friends,
     };
 
     return safeUser;
@@ -53,6 +54,44 @@ export const getUserByUsername = async (username: string): Promise<UserResponse>
     return user;
   } catch (error) {
     return { error: `Error occurred when finding user: ${error}` };
+  }
+};
+/**
+ * Gets all the users who are mutial friends of the current user and the viewed profile user.
+ *
+ * @param currentUsername the user currently signed in and viewing the profile
+ * @param viewedProfileUsername the user whose profile is being viewed
+ * @returns Promise<UsersResponse> a list of friend objects (without the password) who are mutuals or an error message
+ */
+export const getMutualFriends = async (
+  currentUsername: string,
+  viewedProfileUsername: string,
+): Promise<UsersResponse> => {
+  try {
+    const currentUser: UserResponse = await getUserByUsername(currentUsername);
+    const viewedUser: UserResponse = await getUserByUsername(viewedProfileUsername);
+
+    if ('error' in currentUser || 'error' in viewedUser) {
+      throw new Error('One or both users not found');
+    }
+
+    if (currentUser.username === viewedUser.username) {
+      throw new Error('Cannot compare the same user');
+    }
+
+    if (!currentUser.friends || !viewedUser.friends) {
+      return [];
+    }
+
+    const mutualFriends = currentUser.friends.filter(friend => viewedUser.friends.includes(friend));
+
+    const mutualFriendsData = await UserModel.find({ username: { $in: mutualFriends } }).select(
+      '-password',
+    );
+
+    return mutualFriendsData;
+  } catch (error) {
+    return { error: `Error retrieving mutual friends: ${error}` };
   }
 };
 

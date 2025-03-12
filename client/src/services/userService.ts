@@ -123,6 +123,23 @@ const updateBiography = async (
   return res.data;
 };
 
+/**
+ * Fetches mutual friends between the logged-in user and the profile being viewed.
+ *
+ * @param req The request containing the usernames of the logged-in user and the profile being viewed.
+ * @returns {Promise<SafeDatabaseUser[]>} A list of mutual friends or an error
+ */
+const getMutualFriends = async (
+  username: string,
+  viewedUser: string,
+): Promise<SafeDatabaseUser[]> => {
+  const res = await api.get(`${USER_API_URL}/getMutualFriends/${username}/${viewedUser}`);
+  if (res.status !== 200) {
+    throw new Error('Error when fetching mutual friends');
+  }
+  return res.data;
+};
+
 export {
   getUsers,
   getUserByUsername,
@@ -131,4 +148,5 @@ export {
   deleteUser,
   resetPassword,
   updateBiography,
+  getMutualFriends,
 };
