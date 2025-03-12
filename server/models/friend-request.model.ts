@@ -11,6 +11,7 @@ import friendRequestSchema from './schema/friend-request-schema';
  */
 const FriendRequestModel: Model<DatabaseFriendRequest> = Mongoose.model<DatabaseFriendRequest>(
   'FriendRequest',
-  friendRequestSchema);
+  friendRequestSchema,
+);
 
 export default FriendRequestModel;
