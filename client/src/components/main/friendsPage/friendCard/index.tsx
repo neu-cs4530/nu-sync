@@ -11,7 +11,7 @@ interface FriendCardProps {
 /**
  * Component to display a singular friend for a user.
  * @returns A React component rendering:
- * - A friend card (a component to display a singular friend of the current user)
+ * - A friend card (a component to display a singular friend of the current user).
  * - Displays things such as the number of friends, number of mutual friends, etc.
  */
 const FriendCard: React.FC<FriendCardProps> = ({ name, numFollowers, numMutualFriends }) => (

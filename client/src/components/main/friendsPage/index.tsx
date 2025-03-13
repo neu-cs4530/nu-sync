@@ -7,7 +7,9 @@ import './index.css';
  * - A list of friends for the current logged in user.
  */
 const FriendsPage = () => {
-  // list of dummy friends, will be changed later when friends functionality is implemented
+
+  // list of dummy friends
+  // TODO: change when friends functionality is implemented
   const dummyFriends = [
     { name: 'friend1', numFollowers: 124, numMutualFriends: 33 },
     { name: 'friend2', numFollowers: 452, numMutualFriends: 12 },
