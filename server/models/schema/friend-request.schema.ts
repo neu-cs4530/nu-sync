@@ -10,7 +10,6 @@ import { Schema, Types } from 'mongoose';
  * - `status`: The status of the request (pending, accepted, rejected).
  * - `requestedAt`: The date and time when the request was made.
  * - `updatedAt`: The date and time when the request status was last updated.
- * - `privacySettings`: Controls various privacy options between the two users.
  */
 const friendRequestSchema: Schema = new Schema(
   {
@@ -36,21 +35,6 @@ const friendRequestSchema: Schema = new Schema(
     updatedAt: {
       type: Date,
       default: Date.now,
-    },
-    privacySettings: {
-      visibility: {
-        type: String,
-        enum: ['public', 'friends-only', 'private'],
-        default: 'friends-only',
-      },
-      shareMusic: {
-        type: Boolean,
-        default: true,
-      },
-      notificationsEnabled: {
-        type: Boolean,
-        default: true,
-      },
     },
   },
   { collection: 'FriendRequest', timestamps: true },
