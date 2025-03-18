@@ -1,4 +1,17 @@
 import { Schema } from 'mongoose';
+
+// Schema for a poll option
+const pollOptionSchema = new Schema({
+  optionText: { type: String, required: true }, // The text of the poll option
+  votes: { type: [String], default: [] }, // Array of usernames who voted for this option
+});
+
+// Schema for a poll
+const pollSchema = new Schema({
+  question: { type: String, required: true }, // The poll question
+  options: { type: [pollOptionSchema], required: true }, // Array of poll options
+});
+
 /**
  * Mongoose schema for the Question collection.
  *
@@ -14,7 +27,10 @@ import { Schema } from 'mongoose';
  * - `upVotes`: An array of usernames that have upvoted the question.
  * - `downVotes`: An array of usernames that have downvoted the question.
  * - `comments`: Comments that have been added to the question by users.
+ * - `poll`: An optional poll associated with the question.
  */
+
+// Update the question schema to include the poll field
 const questionSchema: Schema = new Schema(
   {
     title: {
@@ -35,6 +51,7 @@ const questionSchema: Schema = new Schema(
     upVotes: [{ type: String }],
     downVotes: [{ type: String }],
     comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+    poll: { type: pollSchema }, // Added the poll field
   },
   { collection: 'Question' },
 );
