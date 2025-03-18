@@ -14,15 +14,6 @@ const friendRequestSchema = new Schema({
   },
   requestedAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  privacySettings: {
-    visibility: {
-      type: String,
-      enum: ['public', 'friends-only', 'private'],
-      default: 'friends-only',
-    },
-    shareMusic: { type: Boolean, default: true },
-    notificationsEnabled: { type: Boolean, default: true },
-  },
 });
 
 // Create indexes for efficient queries
@@ -49,11 +40,6 @@ async function createTestFriendRequests() {
       status: 'accepted',
       requestedAt: new Date('2023-01-15'),
       updatedAt: new Date('2023-01-16'),
-      privacySettings: {
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'sana',
@@ -61,11 +47,6 @@ async function createTestFriendRequests() {
       status: 'accepted',
       requestedAt: new Date('2023-01-20'),
       updatedAt: new Date('2023-01-21'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'hamkalo',
@@ -73,11 +54,6 @@ async function createTestFriendRequests() {
       status: 'accepted',
       requestedAt: new Date('2023-01-10'),
       updatedAt: new Date('2023-01-12'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: false,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'azad',
@@ -85,11 +61,6 @@ async function createTestFriendRequests() {
       status: 'accepted',
       requestedAt: new Date('2023-01-05'),
       updatedAt: new Date('2023-01-06'),
-      privacySettings: {
-        visibility: 'private',
-        shareMusic: true,
-        notificationsEnabled: false,
-      },
     },
     {
       requester: 'Joji John',
@@ -97,11 +68,6 @@ async function createTestFriendRequests() {
       status: 'accepted',
       requestedAt: new Date('2023-01-25'),
       updatedAt: new Date('2023-01-26'),
-      privacySettings: {
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
 
     // Pending friend requests
@@ -111,11 +77,6 @@ async function createTestFriendRequests() {
       status: 'pending',
       requestedAt: new Date('2023-02-01'),
       updatedAt: new Date('2023-02-01'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'monkeyABC',
@@ -123,11 +84,6 @@ async function createTestFriendRequests() {
       status: 'pending',
       requestedAt: new Date('2023-02-03'),
       updatedAt: new Date('2023-02-03'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'abaya',
@@ -135,11 +91,6 @@ async function createTestFriendRequests() {
       status: 'pending',
       requestedAt: new Date('2023-02-05'),
       updatedAt: new Date('2023-02-05'),
-      privacySettings: {
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'Joji John',
@@ -147,11 +98,6 @@ async function createTestFriendRequests() {
       status: 'pending',
       requestedAt: new Date('2023-02-10'),
       updatedAt: new Date('2023-02-10'),
-      privacySettings: {
-        visibility: 'private',
-        shareMusic: false,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'hamkalo',
@@ -159,11 +105,6 @@ async function createTestFriendRequests() {
       status: 'pending',
       requestedAt: new Date('2023-02-12'),
       updatedAt: new Date('2023-02-12'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
 
     // Rejected friend requests
@@ -173,11 +114,6 @@ async function createTestFriendRequests() {
       status: 'rejected',
       requestedAt: new Date('2023-01-30'),
       updatedAt: new Date('2023-01-31'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: false,
-      },
     },
     {
       requester: 'monkeyABC',
@@ -185,11 +121,6 @@ async function createTestFriendRequests() {
       status: 'rejected',
       requestedAt: new Date('2023-02-02'),
       updatedAt: new Date('2023-02-03'),
-      privacySettings: {
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'abaya',
@@ -197,11 +128,6 @@ async function createTestFriendRequests() {
       status: 'rejected',
       requestedAt: new Date('2023-02-04'),
       updatedAt: new Date('2023-02-05'),
-      privacySettings: {
-        visibility: 'private',
-        shareMusic: false,
-        notificationsEnabled: false,
-      },
     },
     {
       requester: 'alia',
@@ -209,11 +135,6 @@ async function createTestFriendRequests() {
       status: 'rejected',
       requestedAt: new Date('2023-02-07'),
       updatedAt: new Date('2023-02-08'),
-      privacySettings: {
-        visibility: 'friends-only',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
     {
       requester: 'abhi3241',
@@ -221,11 +142,6 @@ async function createTestFriendRequests() {
       status: 'rejected',
       requestedAt: new Date('2023-02-09'),
       updatedAt: new Date('2023-02-10'),
-      privacySettings: {
-        visibility: 'public',
-        shareMusic: true,
-        notificationsEnabled: true,
-      },
     },
   ];
 
@@ -253,11 +169,6 @@ async function seedDatabase() {
         status: 'accepted',
         requestedAt: new Date('2023-03-01'),
         updatedAt: new Date('2023-03-02'),
-        privacySettings: {
-          visibility: 'public',
-          shareMusic: true,
-          notificationsEnabled: true,
-        },
       },
       {
         requester: 'abhi3241',
@@ -265,11 +176,6 @@ async function seedDatabase() {
         status: 'accepted',
         requestedAt: new Date('2023-03-03'),
         updatedAt: new Date('2023-03-04'),
-        privacySettings: {
-          visibility: 'public',
-          shareMusic: true,
-          notificationsEnabled: true,
-        },
       },
       {
         requester: 'sana',
@@ -277,11 +183,6 @@ async function seedDatabase() {
         status: 'accepted', // Overrides previous rejected request
         requestedAt: new Date('2023-03-05'),
         updatedAt: new Date('2023-03-06'),
-        privacySettings: {
-          visibility: 'public',
-          shareMusic: true,
-          notificationsEnabled: true,
-        },
       },
     ]);
 
