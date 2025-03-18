@@ -1,8 +1,15 @@
 import express, { Response, Request } from 'express';
 import { ObjectId } from 'mongodb';
 import { FakeSOSocket } from '../types/types';
-import FriendRequestModel from '../models/friend-request.model';
-import UserModel from '../models/users.model';
+import {
+  createFriendRequest,
+  updateFriendRequestStatus,
+  getFriendRequestsByUsername,
+  getPendingFriendRequests,
+  getFriendsByUsername,
+  getMutualFriends,
+  deleteFriendRequest,
+} from '../services/friend.service';
 
 /**
  * This controller handles friend request-related routes.
@@ -51,51 +58,19 @@ const friendRequestController = (socket: FakeSOSocket) => {
     const { requester, recipient } = req.body;
 
     try {
-      // Check if a request already exists between these users
-      const requesterUser = await UserModel.findOne({ username: requester });
-      const recipientUser = await UserModel.findOne({ username: recipient });
+      const result = await createFriendRequest(requester, recipient);
 
-      if (!requesterUser || !recipientUser) {
-        res.status(404).send('One or both users not found');
-        return;
+      if ('error' in result) {
+        throw new Error(result.error);
       }
-
-      const existingRequest = await FriendRequestModel.findOne({
-        $or: [
-          { requester: requesterUser._id, recipient: recipientUser._id },
-          { requester: recipientUser._id, recipient: requesterUser._id },
-        ],
-      });
-
-      if (existingRequest) {
-        res.status(409).send('Friend request already exists');
-        return;
-      }
-
-      // Create new friend request
-      const friendRequest = new FriendRequestModel({
-        requester: requesterUser._id,
-        recipient: recipientUser._id,
-        // Status is 'pending' by default
-        // requestedAt and updatedAt will default to current date
-      });
-
-      await friendRequest.save();
-
-      // Populate the user details for response
-      const populatedRequest = await FriendRequestModel.findById(
-        friendRequest._id,
-      )
-        .populate('requester', 'username')
-        .populate('recipient', 'username');
 
       // Emit socket event for real-time updates
       socket.emit('friendRequestUpdate', {
-        friendRequest: populatedRequest,
+        friendRequest: result,
         type: 'created',
       });
 
-      res.status(201).json(populatedRequest);
+      res.status(201).json(result);
     } catch (err: unknown) {
       res
         .status(500)
@@ -121,30 +96,22 @@ const friendRequestController = (socket: FakeSOSocket) => {
     const { requestId, status } = req.body;
 
     try {
-      // Find and update the request
-      const friendRequest = await FriendRequestModel.findByIdAndUpdate(
+      const result = await updateFriendRequestStatus(
         requestId,
-        {
-          status,
-          updatedAt: new Date(),
-        },
-        { new: true },
-      )
-        .populate('requester', 'username')
-        .populate('recipient', 'username');
+        status as 'pending' | 'accepted' | 'rejected',
+      );
 
-      if (!friendRequest) {
-        res.status(404).send('Friend request not found');
-        return;
+      if ('error' in result) {
+        throw new Error(result.error);
       }
 
       // Emit socket event for real-time updates
       socket.emit('friendRequestUpdate', {
-        friendRequest,
+        friendRequest: result,
         type: 'updated',
       });
 
-      res.status(200).json(friendRequest);
+      res.status(200).json(result);
     } catch (err: unknown) {
       res
         .status(500)
@@ -172,21 +139,11 @@ const friendRequestController = (socket: FakeSOSocket) => {
     }
 
     try {
-      // Find user by username
-      const user = await UserModel.findOne({ username });
+      const requests = await getFriendRequestsByUsername(username);
 
-      if (!user) {
-        res.status(404).send('User not found');
-        return;
+      if ('error' in requests) {
+        throw new Error(requests.error);
       }
-
-      // Get all requests where user is either requester or recipient
-      const requests = await FriendRequestModel.find({
-        $or: [{ requester: user._id }, { recipient: user._id }],
-      })
-        .populate('requester', 'username')
-        .populate('recipient', 'username')
-        .sort({ updatedAt: -1 });
 
       res.status(200).json(requests);
     } catch (err: unknown) {
@@ -214,22 +171,11 @@ const friendRequestController = (socket: FakeSOSocket) => {
     }
 
     try {
-      // Find user by username
-      const user = await UserModel.findOne({ username });
+      const pendingRequests = await getPendingFriendRequests(username);
 
-      if (!user) {
-        res.status(404).send('User not found');
-        return;
+      if ('error' in pendingRequests) {
+        throw new Error(pendingRequests.error);
       }
-
-      // Get pending requests where user is the recipient
-      const pendingRequests = await FriendRequestModel.find({
-        recipient: user._id,
-        status: 'pending',
-      })
-        .populate('requester', 'username')
-        .populate('recipient', 'username')
-        .sort({ requestedAt: -1 });
 
       res.status(200).json(pendingRequests);
     } catch (err: unknown) {
@@ -254,47 +200,11 @@ const friendRequestController = (socket: FakeSOSocket) => {
     }
 
     try {
-      // Find user by username
-      const user = await UserModel.findOne({ username });
+      const friends = await getFriendsByUsername(username);
 
-      if (!user) {
-        res.status(404).send('User not found');
-        return;
+      if ('error' in friends) {
+        throw new Error(friends.error);
       }
-
-      // Find accepted friend requests
-      const acceptedRequests = await FriendRequestModel.find({
-        $or: [
-          { requester: user._id, status: 'accepted' },
-          { recipient: user._id, status: 'accepted' },
-        ],
-      })
-        .populate('requester', 'username')
-        .populate('recipient', 'username');
-
-      // Extract friend details
-      const friends = acceptedRequests.map((request) => {
-        // Determine which user in the request is the friend
-        const isFriendRequester =
-          String(request.recipient._id) === String(user._id);
-
-        // Add type assertion here to tell TypeScript these are populated documents
-        const friendUser = isFriendRequester
-          ? (request.requester as unknown as {
-              _id: ObjectId;
-              username: string;
-            })
-          : (request.recipient as unknown as {
-              _id: ObjectId;
-              username: string;
-            });
-
-        return {
-          _id: friendUser._id,
-          username: friendUser.username,
-          requestId: request._id,
-        };
-      });
 
       res.status(200).json(friends);
     } catch (err: unknown) {
@@ -317,26 +227,19 @@ const friendRequestController = (socket: FakeSOSocket) => {
     }
 
     try {
-      // Get the request before deleting for socket event
-      const friendRequest = await FriendRequestModel.findById(requestId)
-        .populate('requester', 'username')
-        .populate('recipient', 'username');
+      const result = await deleteFriendRequest(requestId);
 
-      if (!friendRequest) {
-        res.status(404).send('Friend request not found');
-        return;
+      if ('error' in result) {
+        throw new Error(result.error);
       }
-
-      // Delete the request
-      await FriendRequestModel.findByIdAndDelete(requestId);
 
       // Emit socket event
       socket.emit('friendRequestUpdate', {
-        friendRequest,
+        friendRequest: result,
         type: 'deleted',
       });
 
-      res.status(200).json(friendRequest);
+      res.status(200).json(result);
     } catch (err) {
       res
         .status(500)
@@ -350,7 +253,7 @@ const friendRequestController = (socket: FakeSOSocket) => {
    * @param res The response object to send the result.
    * @returns {Promise<void>} A promise that resolves when mutual friends are found.
    */
-  const getMutualFriends = async (
+  const getMutualFriendsHandler = async (
     req: Request,
     res: Response,
   ): Promise<void> => {
@@ -362,52 +265,11 @@ const friendRequestController = (socket: FakeSOSocket) => {
     }
 
     try {
-      // Find users by usernames
-      const user1 = await UserModel.findOne({ username: username1 });
-      const user2 = await UserModel.findOne({ username: username2 });
+      const mutualFriends = await getMutualFriends(username1, username2);
 
-      if (!user1 || !user2) {
-        res.status(404).send('One or both users not found');
-        return;
+      if ('error' in mutualFriends) {
+        throw new Error(mutualFriends.error);
       }
-
-      // Get friends for user1
-      const user1friends = await FriendRequestModel.find({
-        $or: [
-          { requester: user1._id, status: 'accepted' },
-          { recipient: user1._id, status: 'accepted' },
-        ],
-      });
-
-      const user1FriendIds = user1friends.map((friend) =>
-        friend.requester.equals(user1._id)
-          ? friend.recipient
-          : friend.requester,
-      );
-
-      // Get friends for user2
-      const user2friends = await FriendRequestModel.find({
-        $or: [
-          { requester: user2._id, status: 'accepted' },
-          { recipient: user2._id, status: 'accepted' },
-        ],
-      });
-
-      const user2FriendIds = user2friends.map((friend) =>
-        friend.requester.equals(user2._id)
-          ? friend.recipient
-          : friend.requester,
-      );
-
-      // Find mutual friends by comparing the two friend lists
-      const mutualFriendIds = user1FriendIds.filter((id1) =>
-        user2FriendIds.some((id2) => id2.equals(id1)),
-      );
-
-      // Get user details for mutual friends
-      const mutualFriends = await UserModel.find({
-        _id: { $in: mutualFriendIds },
-      }).select('-password');
 
       res.status(200).json(mutualFriends);
     } catch (err: unknown) {
@@ -419,7 +281,6 @@ const friendRequestController = (socket: FakeSOSocket) => {
 
   // Setup socket event listeners for friend requests
   socket.on('connection', (conn) => {
-    // Here you can add any friend request specific socket events if needed
     conn.on('joinFriendRequests', (username: string) => {
       // A user can join a "room" with their username to receive their friend request updates
       conn.join(`friend-requests-${username}`);
@@ -436,7 +297,7 @@ const friendRequestController = (socket: FakeSOSocket) => {
   router.get('/requests/:username', getRequestsByUsername);
   router.get('/requests/pending/:username', getPendingRequests);
   router.get('/friends/:username', getFriends);
-  router.get('/mutual/:username1/:username2', getMutualFriends);
+  router.get('/mutual/:username1/:username2', getMutualFriendsHandler);
   router.delete('/request/:requestId', deleteRequest);
 
   return router;
