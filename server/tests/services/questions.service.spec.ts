@@ -6,6 +6,7 @@ import {
   fetchAndIncrementQuestionViewsById,
   saveQuestion,
   addVoteToQuestion,
+  voteOnPoll
 } from '../../services/question.service';
 import { DatabaseQuestion, PopulatedDatabaseQuestion } from '../../types/types';
 import {
@@ -472,5 +473,50 @@ describe('Question model', () => {
 
       expect(result).toEqual({ error: 'Error when adding downvote to question' });
     });
+  });
+
+  describe('voteOnPoll', () => {
+    test('should successfully vote on a poll', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+        save: jest.fn().mockResolvedValue(true), // Mock save method
+      };
+
+      // Mock the Mongoose findById method
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      // Call the function
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      // Debugging: Log the result and mockQuestion
+      console.log('Result:', result);
+      console.log('Mock Question:', JSON.stringify(mockQuestion, null, 2));
+
+      // Verify the result
+      expect(result).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['testUser'] }, // User's vote should be added
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      });
+
+      // Verify that the save method was called
+      expect(mockQuestion.save).toHaveBeenCalled();
+    });
+
+    
   });
 });

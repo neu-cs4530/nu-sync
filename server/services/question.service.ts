@@ -10,6 +10,7 @@ import {
   Question,
   QuestionResponse,
   VoteResponse,
+  Poll,
 } from '../types/types';
 import AnswerModel from '../models/answers.model';
 import QuestionModel from '../models/questions.model';
@@ -258,5 +259,47 @@ export const addVoteToQuestion = async (
           ? 'Error when adding upvote to question'
           : 'Error when adding downvote to question',
     };
+  }
+};
+
+/**
+ * Adds a vote to a poll option.
+ * @param {string} qid - The question ID
+ * @param {number} optionIndex - The index of the poll option
+ * @param {string} username - The username who voted
+ * @returns {Promise<{ error?: string; msg?: string; poll?: Poll }>} - The updated poll or error message
+ */
+export const voteOnPoll = async (
+  qid: string,
+  optionIndex: number,
+  username: string,
+): Promise<{ error?: string; msg?: string; poll?: Poll }> => {
+  try {
+    const question = await QuestionModel.findById(qid);
+
+    if (!question || !question.poll) {
+      return { error: 'Question or poll not found' };
+    }
+
+    const poll = question.poll;
+    const option = poll.options[optionIndex];
+
+    if (!option) {
+      return { error: 'Invalid option index' };
+    }
+
+    // Check if the user has already voted on any option in this poll
+    const hasUserVoted = poll.options.some((opt) => opt.votes.includes(username));
+    if (hasUserVoted) {
+      return { error: 'User has already voted on this poll' };
+    }
+
+    // Add the user's vote to the selected option
+    option.votes.push(username);
+    await question.save();
+
+    return { msg: 'Vote recorded successfully', poll: question.poll };
+  } catch (error) {
+    return { error: 'Error when voting on poll' };
   }
 };
