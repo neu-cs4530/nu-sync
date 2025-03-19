@@ -1,7 +1,7 @@
 import { PopulatedDatabaseAnswer } from './answer';
 import { PopulatedDatabaseChat } from './chat';
 import { DatabaseMessage } from './message';
-import { PopulatedDatabaseQuestion } from './question';
+import { PopulatedDatabaseQuestion, Poll } from './question';
 import { SafeDatabaseUser } from './user';
 import { BaseMove, GameInstance, GameInstanceID, GameMove, GameState } from './game';
 
@@ -94,6 +94,16 @@ export interface GameMovePayload {
 }
 
 /**
+ * Payload for a poll update event.
+ * - `qid`: The unique identifier of the question.
+ * - `poll`: The updated poll object.
+ */
+export interface PollUpdatePayload {
+  qid: string;
+  poll: Poll;
+}
+
+/**
  * Interface representing the events the client can emit to the server.
  * - `makeMove`: Client can emit a move in the game.
  * - `joinGame`: Client can join a game.
@@ -133,4 +143,5 @@ export interface ServerToClientEvents {
   gameUpdate: (game: GameUpdatePayload) => void;
   gameError: (error: GameErrorPayload) => void;
   chatUpdate: (chat: ChatUpdatePayload) => void;
+  pollUpdate: (poll: PollUpdatePayload) => void; // Added the new pollUpdate event
 }

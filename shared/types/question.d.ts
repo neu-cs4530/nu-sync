@@ -157,3 +157,17 @@ export interface VoteRequest extends Request {
     username: string;
   };
 }
+
+/**
+ * Interface for the request body when voting on a poll option.
+ * - `qid`: The unique identifier of the question with the poll (body).
+ * - `optionIndex`: The index of the poll option being voted on (body).
+ * - `username`: The username of the user casting the vote (body).
+ */
+export interface PollVoteRequest extends Request {
+  body: {
+    qid: string; // Question ID
+    optionIndex: number; // Index of the poll option
+    username: string; // Username of the voter
+  };
+}
