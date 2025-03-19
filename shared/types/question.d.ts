@@ -104,6 +104,16 @@ export type QuestionResponse = DatabaseQuestion | { error: string };
 export type VoteInterface = { msg: string; upVotes: string[]; downVotes: string[] };
 
 /**
+ * Represents the response for a poll vote operation.
+ * - `msg`: A success or error message.
+ * - `poll`: The updated poll data.
+ */
+export interface PollVoteResponse {
+  msg: string;
+  poll: Poll;
+}
+
+/**
  * Type representing possible responses for a vote-related operation.
  * - Either an object with the vote success message, updated upVotes,
  *   and updated downVotes, or an error message.
