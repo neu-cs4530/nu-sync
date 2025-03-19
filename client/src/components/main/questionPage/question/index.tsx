@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
+import { voteOnPollOption } from '../../../../services/questionService';
 
 /**
  * Interface representing the props for the Question component.
@@ -45,6 +46,27 @@ const QuestionView = ({ question }: QuestionProps) => {
     navigate(`/question/${questionID}`);
   };
 
+  /**
+   * Function to handle voting on a poll option.
+   * 
+   * @param optionIndex - The index of the poll option to vote on.
+   */
+  const handlePollVote = async (optionIndex: number) => {
+    try {
+      if (!question._id) {
+        throw new Error('Question ID is missing');
+      }
+
+      const res = await voteOnPollOption(question._id, optionIndex, 'username'); // Replace 'username' with the actual username from context
+      if (res.msg) {
+        console.log(res.msg); // "Vote recorded successfully"
+        console.log('Updated poll:', res.poll); // Updated poll data
+      }
+    } catch (error) {
+      console.error('Error voting on poll:', error);
+    }
+  };
+
   return (
     <div
       className='question right_padding'
@@ -72,6 +94,23 @@ const QuestionView = ({ question }: QuestionProps) => {
             </button>
           ))}
         </div>
+        {/* Poll Section */}
+        {question.poll && (
+          <div className='poll'>
+            <h4>{question.poll.question}</h4>
+            {question.poll.options.map((option, index) => (
+              <div key={index} className='poll-option'>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    handlePollVote(index);
+                  }}>
+                  {option.optionText} ({option.votes.length} votes)
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className='lastActivity'>
         <div className='question_author'>{question.askedBy}</div>

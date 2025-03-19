@@ -99,7 +99,7 @@ export interface GameMovePayload {
  * - `poll`: The updated poll object.
  */
 export interface PollUpdatePayload {
-  qid: string;
+  qid: ObjectId;
   poll: Poll;
 }
 
