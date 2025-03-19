@@ -497,10 +497,6 @@ describe('Question model', () => {
       // Call the function
       const result = await voteOnPoll('someQuestionId', 0, 'testUser');
 
-      // Debugging: Log the result and mockQuestion
-      console.log('Result:', result);
-      console.log('Mock Question:', JSON.stringify(mockQuestion, null, 2));
-
       // Verify the result
       expect(result).toEqual({
         msg: 'Vote recorded successfully',
@@ -517,6 +513,69 @@ describe('Question model', () => {
       expect(mockQuestion.save).toHaveBeenCalled();
     });
 
-    
+    test('should return an error if the question is not found', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(null);
+
+      const result = await voteOnPoll('nonExistentId', 0, 'testUser');
+
+      expect(result).toEqual({ error: 'Question or poll not found' });
+    });
+
+    test('should return an error if the question does not have a poll', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: undefined,
+      };
+
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      expect(result).toEqual({ error: 'Question or poll not found' });
+    });
+
+    test('should return an error if the option index is invalid', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      };
+
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      const result = await voteOnPoll('someQuestionId', 2, 'testUser');
+
+      expect(result).toEqual({ error: 'Invalid option index' });
+    });
+
+    test('should return an error if the user has already voted on the poll', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['testUser'] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      };
+
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      expect(result).toEqual({ error: 'User has already voted on this poll' });
+    });
   });
 });
