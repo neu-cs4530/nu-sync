@@ -13,8 +13,6 @@ import {
   Question,
   Tag,
   VoteResponse,
-  Poll,
-  PollVoteRequest
 } from '../../types/types';
 
 const addVoteToQuestionSpy = jest.spyOn(questionUtil, 'addVoteToQuestion');
@@ -874,7 +872,5 @@ describe('Test questionController', () => {
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid request');
     });
-  });
-
-  
+  });  
 });

@@ -281,7 +281,7 @@ export const voteOnPoll = async (
       return { error: 'Question or poll not found' };
     }
 
-    const poll = question.poll;
+    const { poll } = question;
     const option = poll.options[optionIndex];
 
     if (!option) {
@@ -289,8 +289,8 @@ export const voteOnPoll = async (
     }
 
     // Remove the user's vote from any option they have previously voted on
-    poll.options.forEach((opt) => {
-      opt.votes = opt.votes.filter((vote) => vote !== username);
+    poll.options.forEach(opt => {
+      opt.votes = opt.votes.filter(vote => vote !== username);
     });
 
     // Add the user's vote to the selected option
@@ -299,7 +299,6 @@ export const voteOnPoll = async (
 
     return { msg: 'Vote recorded successfully', poll: question.poll };
   } catch (error) {
-    console.error('Error when voting on poll:', error);
     return { error: 'Error when voting on poll' };
   }
 };

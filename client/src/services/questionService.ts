@@ -1,5 +1,10 @@
 import { ObjectId } from 'mongodb';
-import { PopulatedDatabaseQuestion, Question, VoteInterface, PollVoteResponse } from '../types/types';
+import {
+  PopulatedDatabaseQuestion,
+  Question,
+  VoteInterface,
+  PollVoteResponse,
+} from '../types/types';
 import api from './config';
 
 const QUESTION_API_URL = `${process.env.REACT_APP_SERVER_URL}/question`;
@@ -90,7 +95,6 @@ const downvoteQuestion = async (qid: ObjectId, username: string): Promise<VoteIn
 
 /**
  * Function to vote on a poll option.
- * 
  * @param qid - The ID of the question with the poll.
  * @param optionIndex - The index of the poll option to vote on.
  * @param username - The username of the person voting on the poll.
@@ -109,4 +113,11 @@ const voteOnPollOption = async (
   return res.data;
 };
 
-export { getQuestionsByFilter, getQuestionById, addQuestion, upvoteQuestion, downvoteQuestion, voteOnPollOption };
+export {
+  getQuestionsByFilter,
+  getQuestionById,
+  addQuestion,
+  upvoteQuestion,
+  downvoteQuestion,
+  voteOnPollOption
+};
