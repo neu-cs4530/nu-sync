@@ -5,6 +5,7 @@ import {
   DatabaseFriendRequest,
   SafeDatabaseUser,
   DatabaseUser,
+  FriendConnectionResponse,
 } from '../types/types';
 
 /**
@@ -182,9 +183,7 @@ export const getPendingFriendRequests = async (
  */
 export const getFriendsByUsername = async (
   username: string,
-): Promise<
-  { _id: ObjectId; username: string; requestId: ObjectId }[] | { error: string }
-> => {
+): Promise<FriendConnectionResponse> => {
   try {
     // Find user by username
     const user: DatabaseUser | null = await UserModel.findOne({ username });
