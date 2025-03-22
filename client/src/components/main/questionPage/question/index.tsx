@@ -53,19 +53,11 @@ const QuestionView = ({ question }: QuestionProps) => {
    * @param optionIndex - The index of the poll option to vote on.
    */
   const handlePollVote = async (optionIndex: number) => {
-    try {
-      if (!question._id) {
-        throw new Error('Question ID is missing');
-      }
-
-      const res = await voteOnPollOption(question._id, optionIndex, user.username);
-      if (res.msg) {
-        console.log(res.msg); // "Vote recorded successfully"
-        console.log('Updated poll:', res.poll); // Updated poll data
-      }
-    } catch (error) {
-      console.error('Error voting on poll:', error);
+    if (!question._id) {
+      throw new Error('Question ID is missing');
     }
+
+    const res = await voteOnPollOption(question._id, optionIndex, user.username);
   };
 
   return (
