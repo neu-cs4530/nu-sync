@@ -57,7 +57,7 @@ const QuestionView = ({ question }: QuestionProps) => {
       throw new Error('Question ID is missing');
     }
 
-    const res = await voteOnPollOption(question._id, optionIndex, user.username);
+    await voteOnPollOption(question._id, optionIndex, user.username);
   };
 
   return (

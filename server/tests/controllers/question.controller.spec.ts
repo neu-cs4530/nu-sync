@@ -872,5 +872,5 @@ describe('Test questionController', () => {
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid request');
     });
-  });  
+  });
 });
