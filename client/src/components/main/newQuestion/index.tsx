@@ -82,6 +82,7 @@ const NewQuestionPage = () => {
           val={pollQuestion}
           setState={setPollQuestion}
           err={pollErr}
+          mandatory={false}
         />
         {/* Poll Options */}
         <div className='poll-options'>
