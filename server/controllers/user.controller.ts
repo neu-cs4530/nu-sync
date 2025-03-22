@@ -115,7 +115,10 @@ const userController = (socket: FakeSOSocket) => {
    * @param res The response, either returning the user or an error.
    * @returns A promise resolving to void.
    */
-  const getUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
+  const getUser = async (
+    req: UserByUsernameRequest,
+    res: Response,
+  ): Promise<void> => {
     try {
       const { username } = req.params;
 
@@ -156,7 +159,10 @@ const userController = (socket: FakeSOSocket) => {
    * @param res The response, either confirming deletion or returning an error.
    * @returns A promise resolving to void.
    */
-  const deleteUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
+  const deleteUser = async (
+    req: UserByUsernameRequest,
+    res: Response,
+  ): Promise<void> => {
     try {
       const { username } = req.params;
 
@@ -182,14 +188,19 @@ const userController = (socket: FakeSOSocket) => {
    * @param res The response, either confirming the update or returning an error.
    * @returns A promise resolving to void.
    */
-  const resetPassword = async (req: UserRequest, res: Response): Promise<void> => {
+  const resetPassword = async (
+    req: UserRequest,
+    res: Response,
+  ): Promise<void> => {
     try {
       if (!isUserBodyValid(req)) {
         res.status(400).send('Invalid user body');
         return;
       }
 
-      const updatedUser = await updateUser(req.body.username, { password: req.body.password });
+      const updatedUser = await updateUser(req.body.username, {
+        password: req.body.password,
+      });
 
       if ('error' in updatedUser) {
         throw Error(updatedUser.error);
@@ -207,7 +218,10 @@ const userController = (socket: FakeSOSocket) => {
    * @param res The response, either confirming the update or returning an error.
    * @returns A promise resolving to void.
    */
-  const updateBiography = async (req: UpdateBiographyRequest, res: Response): Promise<void> => {
+  const updateBiography = async (
+    req: UpdateBiographyRequest,
+    res: Response,
+  ): Promise<void> => {
     try {
       if (!isUpdateBiographyBodyValid(req)) {
         res.status(400).send('Invalid user body');

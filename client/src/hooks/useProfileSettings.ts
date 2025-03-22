@@ -5,6 +5,7 @@ import {
   deleteUser,
   resetPassword,
   updateBiography,
+  getMutualFriends,
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
@@ -26,6 +27,8 @@ const useProfileSettings = () => {
   const [newBio, setNewBio] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mutualFriends, setMutualFriends] = useState<string[]>([]);
+  const [mutualFriendsLoading, setMutualFriendsLoading] = useState(false);
 
   // For delete-user confirmation modal
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -54,6 +57,31 @@ const useProfileSettings = () => {
 
     fetchUserData();
   }, [username]);
+
+  // Fetch mutual friends only when viewing another user's profile
+  useEffect(() => {
+    if (!username || currentUser.username === username) return;
+
+    const fetchMutualFriends = async () => {
+      try {
+        setMutualFriendsLoading(true);
+        const friendsList: SafeDatabaseUser[] = await getMutualFriends(
+          currentUser.username,
+          username,
+        );
+        if ('error' in friendsList) {
+          setErrorMessage("Couldn't fetch mutual friends.");
+        }
+        setMutualFriends(friendsList.map(friend => friend.username));
+      } catch {
+        setMutualFriends([]);
+      } finally {
+        setMutualFriendsLoading(false);
+      }
+    };
+
+    fetchMutualFriends();
+  }, [username, userData, currentUser.username]);
 
   /**
    * Toggles the visibility of the password fields.
@@ -162,6 +190,8 @@ const useProfileSettings = () => {
     handleResetPassword,
     handleUpdateBiography,
     handleDeleteUser,
+    mutualFriends,
+    mutualFriendsLoading,
   };
 };
 

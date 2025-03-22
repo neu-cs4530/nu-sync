@@ -28,6 +28,7 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       username: result.username,
       dateJoined: result.dateJoined,
       biography: result.biography,
+      friends: result.friends,
     };
 
     return safeUser;
@@ -42,9 +43,13 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
  * @param {string} username - The username of the user to find.
  * @returns {Promise<UserResponse>} - Resolves with the found user object (without the password) or an error message.
  */
-export const getUserByUsername = async (username: string): Promise<UserResponse> => {
+export const getUserByUsername = async (
+  username: string,
+): Promise<UserResponse> => {
   try {
-    const user: SafeDatabaseUser | null = await UserModel.findOne({ username }).select('-password');
+    const user: SafeDatabaseUser | null = await UserModel.findOne({
+      username,
+    }).select('-password');
 
     if (!user) {
       throw Error('User not found');
@@ -64,7 +69,8 @@ export const getUserByUsername = async (username: string): Promise<UserResponse>
  */
 export const getUsersList = async (): Promise<UsersResponse> => {
   try {
-    const users: SafeDatabaseUser[] = await UserModel.find().select('-password');
+    const users: SafeDatabaseUser[] =
+      await UserModel.find().select('-password');
 
     if (!users) {
       throw Error('Users could not be retrieved');
@@ -82,13 +88,16 @@ export const getUsersList = async (): Promise<UsersResponse> => {
  * @param {UserCredentials} loginCredentials - An object containing the username and password.
  * @returns {Promise<UserResponse>} - Resolves with the authenticated user object (without the password) or an error message.
  */
-export const loginUser = async (loginCredentials: UserCredentials): Promise<UserResponse> => {
+export const loginUser = async (
+  loginCredentials: UserCredentials,
+): Promise<UserResponse> => {
   const { username, password } = loginCredentials;
 
   try {
-    const user: SafeDatabaseUser | null = await UserModel.findOne({ username, password }).select(
-      '-password',
-    );
+    const user: SafeDatabaseUser | null = await UserModel.findOne({
+      username,
+      password,
+    }).select('-password');
 
     if (!user) {
       throw Error('Authentication failed');
@@ -106,11 +115,14 @@ export const loginUser = async (loginCredentials: UserCredentials): Promise<User
  * @param {string} username - The username of the user to delete.
  * @returns {Promise<UserResponse>} - Resolves with the deleted user object (without the password) or an error message.
  */
-export const deleteUserByUsername = async (username: string): Promise<UserResponse> => {
+export const deleteUserByUsername = async (
+  username: string,
+): Promise<UserResponse> => {
   try {
-    const deletedUser: SafeDatabaseUser | null = await UserModel.findOneAndDelete({
-      username,
-    }).select('-password');
+    const deletedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndDelete({
+        username,
+      }).select('-password');
 
     if (!deletedUser) {
       throw Error('Error deleting user');
@@ -134,11 +146,12 @@ export const updateUser = async (
   updates: Partial<User>,
 ): Promise<UserResponse> => {
   try {
-    const updatedUser: SafeDatabaseUser | null = await UserModel.findOneAndUpdate(
-      { username },
-      { $set: updates },
-      { new: true },
-    ).select('-password');
+    const updatedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndUpdate(
+        { username },
+        { $set: updates },
+        { new: true },
+      ).select('-password');
 
     if (!updatedUser) {
       throw Error('Error updating user');
