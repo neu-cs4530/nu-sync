@@ -48,7 +48,6 @@ const QuestionView = ({ question }: QuestionProps) => {
 
   /**
    * Function to handle voting on a poll option.
-   * 
    * @param optionIndex - The index of the poll option to vote on.
    */
   const handlePollVote = async (optionIndex: number) => {

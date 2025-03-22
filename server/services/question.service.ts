@@ -288,11 +288,10 @@ export const voteOnPoll = async (
       return { error: 'Invalid option index' };
     }
 
-    // Check if the user has already voted on any option in this poll
-    const hasUserVoted = poll.options.some((opt) => opt.votes.includes(username));
-    if (hasUserVoted) {
-      return { error: 'User has already voted on this poll' };
-    }
+    // Remove the user's vote from any option they have previously voted on
+    poll.options.forEach((opt) => {
+      opt.votes = opt.votes.filter((vote) => vote !== username);
+    });
 
     // Add the user's vote to the selected option
     option.votes.push(username);

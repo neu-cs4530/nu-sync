@@ -556,26 +556,5 @@ describe('Question model', () => {
 
       expect(result).toEqual({ error: 'Invalid option index' });
     });
-
-    test('should return an error if the user has already voted on the poll', async () => {
-      const mockQuestion = {
-        _id: 'someQuestionId',
-        upVotes: [],
-        downVotes: [],
-        poll: {
-          question: 'What is your favorite framework?',
-          options: [
-            { optionText: 'React', votes: ['testUser'] },
-            { optionText: 'Vue', votes: [] },
-          ],
-        },
-      };
-
-      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
-
-      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
-
-      expect(result).toEqual({ error: 'User has already voted on this poll' });
-    });
   });
 });
