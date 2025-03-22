@@ -18,6 +18,7 @@ import userController from './controllers/user.controller';
 import messageController from './controllers/message.controller';
 import chatController from './controllers/chat.controller';
 import gameController from './controllers/game.controller';
+import spotifyController from './controllers/spotify.controller'
 
 dotenv.config();
 
@@ -30,6 +31,13 @@ const server = http.createServer(app);
 const socket: FakeSOSocket = new Server(server, {
   cors: { origin: '*' },
 });
+
+app.use(
+  cors({
+    credentials: true,
+    origin: [CLIENT_URL],
+  }),
+);
 
 function connectDatabase() {
   return mongoose.connect(MONGO_URL).catch(err => console.log('MongoDB connection error: ', err));
@@ -60,12 +68,12 @@ process.on('SIGINT', async () => {
   });
 });
 
-app.use(
-  cors({
-    credentials: true,
-    origin: [CLIENT_URL],
-  }),
-);
+// app.use(
+//   cors({
+//     credentials: true,
+//     origin: [CLIENT_URL],
+//   }),
+// );
 
 app.use(express.json());
 
@@ -82,6 +90,7 @@ app.use('/messaging', messageController(socket));
 app.use('/user', userController(socket));
 app.use('/chat', chatController(socket));
 app.use('/games', gameController(socket));
+app.use('/spotify', spotifyController(socket));
 
 // Export the app instance
 export { app, server, startServer };

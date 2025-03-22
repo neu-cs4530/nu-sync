@@ -4,6 +4,9 @@ import useProfileSettings from '../../hooks/useProfileSettings';
 
 const ProfileSettings: React.FC = () => {
   const {
+    loggedInSpotify,
+    setLoggedInSpotify,
+    handleLoginUserSpotify,
     userData,
     loading,
     editBioMode,
@@ -180,6 +183,8 @@ const ProfileSettings: React.FC = () => {
             </div>
           </div>
         )}
+
+        {loggedInSpotify ? <p>Logged into Spotify</p> : <button onClick={handleLoginUserSpotify}>Log in with Spotify</button>}
       </div>
     </div>
   );

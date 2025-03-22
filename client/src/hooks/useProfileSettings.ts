@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -9,6 +10,7 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
+import { loginSpotify } from '../services/spotifyService'
 
 /**
  * A custom hook to encapsulate all logic/state for the ProfileSettings component.
@@ -35,6 +37,8 @@ const useProfileSettings = () => {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
+
+  const [loggedInSpotify, setLoggedInSpotify] = useState(false)
 
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
@@ -167,7 +171,23 @@ const useProfileSettings = () => {
     });
   };
 
+  // handle logging a user into spotify
+  const handleLoginUserSpotify = async () => {
+    if (loggedInSpotify) return;
+
+    try {
+      // window.location.href = `http://localhost:8000/spotify/auth/spotify`;
+      await loginSpotify()
+
+    } catch (error) {
+      setErrorMessage('Failed to log into Spotify');
+    }
+  }
+
   return {
+    loggedInSpotify,
+    setLoggedInSpotify,
+    handleLoginUserSpotify,
     userData,
     newPassword,
     confirmNewPassword,
