@@ -119,5 +119,5 @@ export {
   addQuestion,
   upvoteQuestion,
   downvoteQuestion,
-  voteOnPollOption
+  voteOnPollOption,
 };

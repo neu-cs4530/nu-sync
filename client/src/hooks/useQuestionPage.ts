@@ -103,7 +103,7 @@ const useQuestionPage = () => {
      */
     const handlePollUpdate = ({ qid, poll }: PollUpdatePayload) => {
       setQlist(prevQlist => prevQlist.map(q => (q._id === qid ? { ...q, poll } : q)));
-    }
+    };
 
     fetchData();
 

@@ -125,9 +125,9 @@ const useNewQuestion = () => {
       comments: [],
       poll: pollQuestion
         ? {
-          question: pollQuestion,
-          options: pollOptions.map(option => ({ optionText: option, votes: [] })),
-        }
+            question: pollQuestion,
+            options: pollOptions.map(option => ({ optionText: option, votes: [] })),
+          }
         : undefined,
     };
 
