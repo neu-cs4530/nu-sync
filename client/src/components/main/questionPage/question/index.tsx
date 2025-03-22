@@ -5,6 +5,7 @@ import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
 import { voteOnPollOption } from '../../../../services/questionService';
+import useUserContext from '../../../../hooks/useUserContext';
 
 /**
  * Interface representing the props for the Question component.
@@ -24,6 +25,7 @@ interface QuestionProps {
  */
 const QuestionView = ({ question }: QuestionProps) => {
   const navigate = useNavigate();
+  const { user } = useUserContext();
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -56,7 +58,7 @@ const QuestionView = ({ question }: QuestionProps) => {
         throw new Error('Question ID is missing');
       }
 
-      const res = await voteOnPollOption(question._id, optionIndex, 'username'); // Replace 'username' with the actual username from context
+      const res = await voteOnPollOption(question._id, optionIndex, user.username);
       if (res.msg) {
         console.log(res.msg); // "Vote recorded successfully"
         console.log('Updated poll:', res.poll); // Updated poll data

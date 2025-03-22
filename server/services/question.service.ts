@@ -299,6 +299,7 @@ export const voteOnPoll = async (
 
     return { msg: 'Vote recorded successfully', poll: question.poll };
   } catch (error) {
+    console.error('Error when voting on poll:', error);
     return { error: 'Error when voting on poll' };
   }
 };

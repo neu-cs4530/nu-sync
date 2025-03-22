@@ -513,6 +513,59 @@ describe('Question model', () => {
       expect(mockQuestion.save).toHaveBeenCalled();
     });
 
+    test('should allow multiple users to vote on different poll options', async () => {
+      // Mock poll data
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      // Mock the Mongoose findById method to return the mock question
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      // Simulate the first user voting on the first option (React)
+      const result1 = await voteOnPoll('someQuestionId', 0, 'user1');
+
+      // Verify the first user's vote
+      expect(result1).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['user1'] }, // user1 voted for React
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      });
+
+      // Simulate the second user voting on the second option (Vue)
+      const result2 = await voteOnPoll('someQuestionId', 1, 'user2');
+
+      // Verify the second user's vote
+      expect(result2).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['user1'] }, // user1's vote remains
+            { optionText: 'Vue', votes: ['user2'] }, // user2 voted for Vue
+          ],
+        },
+      });
+
+      // Verify that the save method was called twice (once for each vote)
+      expect(mockQuestion.save).toHaveBeenCalledTimes(2);
+    });
+
     test('should return an error if the question is not found', async () => {
       jest.spyOn(QuestionModel, 'findById').mockResolvedValue(null);
 
