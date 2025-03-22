@@ -37,7 +37,6 @@ const NewQuestionPage = () => {
 
   /**
    * Function to update a poll option.
-   * 
    * @param index - The index of the poll option to update.
    * @param value - The new value of the poll option.
    */
@@ -74,34 +73,36 @@ const NewQuestionPage = () => {
         err={tagErr}
       />
       {/** Poll section */}
-      <Input
-        title={'Poll Question'}
-        hint={'Add a poll question (optional)'}
-        id={'formPollQuestionInput'}
-        val={pollQuestion}
-        setState={setPollQuestion}
-        err={pollErr}
-      />
-      {/* Poll Options */}
-      {pollOptions.map((option, index) => (
+      <div className='poll-section'>
+        {/* Added a container for the poll section */}
         <Input
-          key={index}
-          title={`Poll Option ${index + 1}`}
-          hint={'Add a poll option'}
-          id={`formPollOptionInput${index}`}
-          val={option}
-          setState={(value) => updatePollOption(index, value)}
-          err={''} // No individual error for poll options (handled by pollErr)
+          title={'Poll Question'}
+          hint={'Add a poll question (optional)'}
+          id={'formPollQuestionInput'}
+          val={pollQuestion}
+          setState={setPollQuestion}
+          err={pollErr}
         />
-      ))}
-      {/* Add Poll Option Button */}
-      <button
-        type='button'
-        className='form_addPollOptionBtn'
-        onClick={addPollOption}>
-        Add Poll Option
-      </button>
-      
+        {/* Poll Options */}
+        <div className='poll-options'>
+          {/* Added a container for poll options */}
+          {pollOptions.map((option, index) => (
+            <Input
+              key={index}
+              title={`Poll Option ${index + 1}`}
+              hint={'Add a poll option'}
+              id={`formPollOptionInput${index}`}
+              val={option}
+              setState={value => updatePollOption(index, value)}
+              err={''} // No individual error for poll options (handled by pollErr)
+            />
+          ))}
+        </div>
+        {/* Add Poll Option Button */}
+        <button className='form_addPollOptionBtn' onClick={addPollOption}>
+          Add Poll Option
+        </button>
+      </div>
       <div className='btn_indicator_container'>
         <button
           className='form_postBtn'
