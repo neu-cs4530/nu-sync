@@ -3,7 +3,13 @@ import { PopulatedDatabaseChat } from './chat';
 import { DatabaseMessage } from './message';
 import { PopulatedDatabaseQuestion, Poll } from './question';
 import { SafeDatabaseUser } from './user';
-import { BaseMove, GameInstance, GameInstanceID, GameMove, GameState } from './game';
+import {
+  BaseMove,
+  GameInstance,
+  GameInstanceID,
+  GameMove,
+  GameState,
+} from './game';
 
 /**
  * Payload for an answer update event.
@@ -94,6 +100,17 @@ export interface GameMovePayload {
 }
 
 /**
+ * Payload for a friend request update event.
+ * - `friendRequest`: The updated friend request object.
+ * - `type`: The type of update (`'created'`, `'updated'`, or `'deleted'`).
+ */
+export interface FriendRequestUpdatePayload {
+  friendRequest: DatabaseFriendRequest;
+  type: 'created' | 'updated' | 'deleted';
+}
+
+
+/**
  * Payload for a poll update event.
  * - `qid`: The unique identifier of the question.
  * - `poll`: The updated poll object.
@@ -110,6 +127,8 @@ export interface PollUpdatePayload {
  * - `leaveGame`: Client can leave a game.
  * - `joinChat`: Client can join a chat.
  * - `leaveChat`: Client can leave a chat.
+ * - `joinFriendRequests`: Client can subscribe to friend request updates.
+ * - `leaveFriendRequests`: Client can unsubscribe from friend request updates.
  */
 export interface ClientToServerEvents {
   makeMove: (move: GameMovePayload) => void;
@@ -117,6 +136,8 @@ export interface ClientToServerEvents {
   leaveGame: (gameID: string) => void;
   joinChat: (chatID: string) => void;
   leaveChat: (chatID: string | undefined) => void;
+  joinFriendRequests: (username: string) => void;
+  leaveFriendRequests: (username: string) => void;
 }
 
 /**
@@ -131,6 +152,7 @@ export interface ClientToServerEvents {
  * - `gameUpdate`: Server sends updated game state.
  * - `gameError`: Server sends error message related to game operation.
  * - `chatUpdate`: Server sends updated chat.
+ * - `friendRequestUpdate`: Server sends updated friend request status.
  */
 export interface ServerToClientEvents {
   questionUpdate: (question: PopulatedDatabaseQuestion) => void;
@@ -143,5 +165,6 @@ export interface ServerToClientEvents {
   gameUpdate: (game: GameUpdatePayload) => void;
   gameError: (error: GameErrorPayload) => void;
   chatUpdate: (chat: ChatUpdatePayload) => void;
-  pollUpdate: (poll: PollUpdatePayload) => void; // Added the new pollUpdate event
+  pollUpdate: (poll: PollUpdatePayload) => void;
+  friendRequestUpdate: (friendRequest: FriendRequestUpdatePayload) => void;
 }
