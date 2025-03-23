@@ -5,6 +5,26 @@ import { DatabaseTag, Tag } from './tag';
 import { Comment, DatabaseComment } from './comment';
 
 /**
+ * Represents a poll option.
+ * - `optionText`: The text of the option.
+ * - `votes`: An array of usernames who voted for this option.
+ */
+export interface PollOption {
+  optionText: string;
+  votes: string[];
+}
+
+/**
+ * Represents a poll.
+ * - `question`: The poll question.
+ * - `options`: An array of poll options.
+ */
+export interface Poll {
+  question: string;
+  options: PollOption[];
+}
+
+/**
  * Type representing the possible ordering options for questions.
  * - `newest`: Sort by the most recently asked questions.
  * - `unanswered`: Sort by questions with no answers.
@@ -25,6 +45,7 @@ export type OrderType = 'newest' | 'unanswered' | 'active' | 'mostViewed';
  * - `upVotes`: An array of usernames who have upvoted the question.
  * - `downVotes`: An array of usernames who have downvoted the question.
  * - `comments`: An array of comments related to the question.
+ * - `poll`: An optional poll associated with the question.
  */
 export interface Question {
   title: string;
@@ -37,6 +58,7 @@ export interface Question {
   upVotes: string[];
   downVotes: string[];
   comments: Comment[];
+  poll?: Poll;
 }
 
 /**
@@ -45,12 +67,14 @@ export interface Question {
  * - `tags`: An array of ObjectIds referencing tags associated with the question.
  * - `answers`: An array of ObjectIds referencing answers associated with the question.
  * - `comments`: An array of ObjectIds referencing comments associated with the question.
+ * - 'poll': An optional poll associated with the question.
  */
 export interface DatabaseQuestion extends Omit<Question, 'tags' | 'answers' | 'comments'> {
   _id: ObjectId;
   tags: ObjectId[];
   answers: ObjectId[];
   comments: ObjectId[];
+  poll?: Poll;
 }
 
 /**
@@ -58,12 +82,14 @@ export interface DatabaseQuestion extends Omit<Question, 'tags' | 'answers' | 'c
  * - `tags`: An array of populated `DatabaseTag` objects.
  * - `answers`: An array of populated `PopulatedDatabaseAnswer` objects.
  * - `comments`: An array of populated `DatabaseComment` objects.
+ * - 'poll': An optional poll associated with the question.
  */
 export interface PopulatedDatabaseQuestion
   extends Omit<DatabaseQuestion, 'tags' | 'answers' | 'comments'> {
   tags: DatabaseTag[];
   answers: PopulatedDatabaseAnswer[];
   comments: DatabaseComment[];
+  poll?: Poll;
 }
 
 /**
@@ -76,6 +102,16 @@ export type QuestionResponse = DatabaseQuestion | { error: string };
  * Type representing an object with the vote success message, updated upVotes,
  */
 export type VoteInterface = { msg: string; upVotes: string[]; downVotes: string[] };
+
+/**
+ * Represents the response for a poll vote operation.
+ * - `msg`: A success or error message.
+ * - `poll`: The updated poll data.
+ */
+export interface PollVoteResponse {
+  msg: string;
+  poll: Poll;
+}
 
 /**
  * Type representing possible responses for a vote-related operation.
@@ -129,5 +165,19 @@ export interface VoteRequest extends Request {
   body: {
     qid: string;
     username: string;
+  };
+}
+
+/**
+ * Interface for the request body when voting on a poll option.
+ * - `qid`: The unique identifier of the question with the poll (body).
+ * - `optionIndex`: The index of the poll option being voted on (body).
+ * - `username`: The username of the user casting the vote (body).
+ */
+export interface PollVoteRequest extends Request {
+  body: {
+    qid: string; // Question ID
+    optionIndex: number; // Index of the poll option
+    username: string; // Username of the voter
   };
 }
