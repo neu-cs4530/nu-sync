@@ -19,8 +19,6 @@ const useProfileSettings = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useUserContext();
-
-  // Local state
   const [userData, setUserData] = useState<SafeDatabaseUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -173,16 +171,21 @@ const useProfileSettings = () => {
 
   // handle logging a user into spotify
   const handleLoginUserSpotify = async () => {
-    if (loggedInSpotify) return;
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      setErrorMessage('Please log in first');
+      return;
+    }
 
+    const user = JSON.parse(storedUser);
     try {
-      // window.location.href = `http://localhost:8000/spotify/auth/spotify`;
-      await loginSpotify()
-
+      // store url to return to after spotify login
+      localStorage.setItem('spotify_return_url', window.location.pathname);
+      window.location.href = `http://localhost:8000/spotify/auth/spotify?username=${user.username}`;
     } catch (error) {
       setErrorMessage('Failed to log into Spotify');
     }
-  }
+  };
 
   return {
     loggedInSpotify,
