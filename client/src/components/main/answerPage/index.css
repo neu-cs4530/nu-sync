@@ -1,7 +1,41 @@
 .answer_question_meta {
-  color: #bbbbbb;
+  color: #718096;
+  /* Changed from #bbbbbb to a more readable blue-gray */
+  font-size: 0.875rem;
+  /* Added for better hierarchy */
+  transition: color 0.15s ease;
+  /* Smooth color transition */
 }
 
 .ansButton {
   margin: 2% 0 2% 2%;
+  /* Original spacing preserved */
+  background-color: #4299e1;
+  /* Modern blue matching your theme */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  /* Matching your button radius */
+  padding: 0.625rem 1.25rem;
+  /* Comfortable click area */
+  font-weight: 500;
+  /* Medium weight for better readability */
+  box-shadow: 0 1px 3px rgba(66, 153, 225, 0.3);
+  /* Subtle glow */
+  transition: all 0.15s ease;
+  /* Smooth hover effects */
+}
+
+.ansButton:hover {
+  background-color: #3182ce;
+  /* Slightly darker on hover */
+  transform: translateY(-1px);
+  /* Subtle lift effect */
+  box-shadow: 0 2px 5px rgba(66, 153, 225, 0.4);
+  /* Enhanced glow */
+}
+
+.ansButton:active {
+  transform: translateY(0);
+  /* Reset when clicked */
 }
