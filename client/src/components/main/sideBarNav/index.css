@@ -2,9 +2,14 @@
   display: flex;
   flex-direction: column;
   width: 15%;
-  border-right: dashed;
+  border-right: 1px solid #e2e8f0;
+  /* Changed from dashed to subtle solid */
   padding: 4% 0 4% 0;
   align-items: center;
+  background: #ffffff;
+  /* Added clean white background */
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
+  /* Subtle depth */
 }
 
 .menu_button:first-child {
@@ -15,14 +20,28 @@
   height: 40px;
   width: 80%;
   margin-top: 20px;
-  border-radius: 5px;
+  border-radius: 6px;
+  /* Slightly more rounded */
   text-align: center;
   line-height: 40px;
-  color: cornflowerblue;
+  color: #4a5568;
+  /* More sophisticated blue-gray */
+  background: transparent;
+  transition: background-color 0.15s ease;
+  /* Smooth color transition */
+}
+
+.menu_button:hover {
+  background-color: #f8fafc;
+  /* Very light hover state */
 }
 
 .menu_selected {
-  background: #cccccc;
+  background: #4299e1;
+  /* Brighter, more modern blue */
+  color: white;
+  box-shadow: 0 1px 3px rgba(66, 153, 225, 0.3);
+  /* Subtle glow */
 }
 
 .additional-options {
@@ -30,6 +49,8 @@
   flex-direction: column;
   padding: 4% 0 4% 0;
   align-items: center;
+  border-top: 1px solid #edf2f7;
+  /* Light divider */
 }
 
 .message-options {
@@ -37,7 +58,25 @@
 }
 
 .message-option-selected {
-  background: #3090e2;
+  background: #4299e1;
+  /* Matching modern blue */
   color: white;
   width: 110%;
+  box-shadow: 0 1px 3px rgba(66, 153, 225, 0.3);
+  /* Consistent glow */
+}
+
+.main {
+  display: flex;
+  height: calc(100vh - 70px);
+  background-color: white;
+  border: 1px solid #e2e8f0;
+}
+
+.right_main {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem;
+  background-color: white;
+  border: 1px solid #e2e8f0;
 }
