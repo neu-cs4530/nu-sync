@@ -25,16 +25,35 @@
 }
 
 .bluebtn {
+  /* Base Styles */
   background: #3090e2;
   color: #ffffff;
-  border: #000000 1px solid;
-  font-size: 20px;
-  padding: 10px 10px 10px 10px;
+  border: none;
+  /* Remove border for cleaner look */
+  font-size: 1rem;
+  /* Use rem for better responsiveness */
+  font-weight: 500;
+  /* Medium weight for modern typography */
+  padding: 12px 24px;
+  /* Better padding proportions */
+  border-radius: 8px;
+  /* Subtle rounded corners */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 144, 226, 0.2);
+  /* Soft shadow */
   margin-right: 5%;
+  position: relative;
+  overflow: hidden;
 }
 
 .bluebtn:hover {
   background: #0056b3;
+  /* Darker gradient on hover */
+  transform: translateY(-2px);
+  /* Subtle lift effect */
+  box-shadow: 0 6px 12px rgba(50, 144, 226, 0.3);
+  /* Enhanced shadow on hover */
 }
 
 .btn_indicator_container {
