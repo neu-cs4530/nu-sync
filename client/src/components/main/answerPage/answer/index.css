@@ -1,18 +1,45 @@
-/* All the CSS related to answers Page*/
 .answer {
   display: flex;
   flex-direction: row;
-  border-bottom: #000000 1px dashed;
+  border-bottom: 1px solid #e2e8f0;
+  /* Changed from dashed black to subtle solid gray */
+  padding-bottom: 1.5rem;
+  /* Added space below each answer */
+  margin-bottom: 1.5rem;
+  /* Space between answers */
 }
 
 .answerText {
   width: 75%;
+  color: #2d3748;
+  /* Dark text for better readability */
+  line-height: 1.6;
+  /* Better text spacing */
+  padding-right: 1rem;
+  /* Prevents text from touching author section */
 }
 
 .answerAuthor {
   margin-left: 5%;
+  /* Original spacing preserved */
+  width: 20%;
+  /* Constrained width for better alignment */
+  font-size: 0.875rem;
+  /* Slightly smaller for metadata */
 }
 
 .answer_author {
-  color: green;
+  color: #38a169;
+  /* Modern green instead of basic green */
+  font-weight: 500;
+  /* Medium weight for author name */
+  margin-bottom: 0.25rem;
+  /* Space between author and meta */
+}
+
+.answer_question_meta {
+  color: #718096;
+  /* Light gray for metadata */
+  font-style: normal;
+  /* Clean non-italic style */
 }
