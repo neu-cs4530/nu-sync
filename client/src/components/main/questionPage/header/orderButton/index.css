@@ -1,8 +1,26 @@
 .btn {
-  background: #ffffff;
-  border: #000000 1px solid;
+  padding: 6px 12px; /* Standard button size */
+  border: 1px solid #6c757d; /* Neutral gray border */
+  border-radius: 4px;
+  background-color: #f8f9fa; /* Light gray background */
+  color: #495057; /* Dark gray text */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 8px;
 }
 
 .btn:hover {
-  background-color: #007bff;
+  background-color: #e9ecef; /* Slightly darker gray on hover */
+  border-color: #adb5bd;
+  color: #212529; /* Darker text on hover */
+}
+
+.btn:active {
+  background-color: #dee2e6; /* Active state */
+  transform: translateY(1px); /* Slight press effect */
+}
+
+.btn:last-child {
+  margin-right: 0;
 }
