@@ -1,9 +1,7 @@
 import express, { Request, Response, Router } from 'express';
 import querystring from 'querystring';
 import axios from 'axios';
-import {
-  FakeSOSocket,
-} from '../types/types';
+import { FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 
 const spotifyController = (socket: FakeSOSocket) => {
@@ -43,7 +41,6 @@ const spotifyController = (socket: FakeSOSocket) => {
    * @returns A promise resolving to void.
    */
   const callbackFunc = async (req: Request, res: Response): Promise<void> => {
-
     const code = req.query.code || null;
     const state = req.query.state || null;
     const username = req.query.state?.toString().split(':')[1] || '';
@@ -85,7 +82,7 @@ const spotifyController = (socket: FakeSOSocket) => {
         });
 
         // update user in database with spotify token info
-        const updatedUser = await UserModel.findOneAndUpdate(
+        await UserModel.findOneAndUpdate(
           { username },
           {
             $set: {
@@ -110,47 +107,60 @@ const spotifyController = (socket: FakeSOSocket) => {
           ).toString('base64')}`,
         );
       } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.redirect('http://localhost:3000/home?error=profile_error');
+        if (error instanceof Error) {
+          res.status(500).send(`Error when fetching spotify user profile: ${error.message}`);
+        } else {
+          res.status(500).send(`Error when fetching spotify user profile`);
+        }
       }
     } catch (error) {
-      console.error('Error during token exchange:', error);
-      res.redirect('http://localhost:3000/home?error=invalid_token');
+      if (error instanceof Error) {
+        res.status(500).send(`Invalid spotify access token: ${error.message}`);
+      } else {
+        res.status(500).send(`Invalid spotify access token`);
+      }
     }
   };
 
-    /**
-       * Handles disconnect request of the spotify account
-       * @param req The request containing 
-       * @param res The response, returning.
-       * @returns A promise resolving to void.
-       */
-    const disconnectSpotify = async (req: Request, res: Response): Promise<void> => {
-        const username = req.body.username;
+  /**
+   * Handles disconnect request of the spotify account
+   * @param req The request containing
+   * @param res The response, returning.
+   * @returns A promise resolving to void.
+   */
+  const disconnectSpotify = async (req: Request, res: Response): Promise<void> => {
+    const { username } = req.body;
 
-        try {
-            await UserModel.findOneAndUpdate(
-                { username },
-                {
-                    $set: {
-                        spotifyId: "",
-                        spotifyAccessToken: "",
-                        spotifyRefreshToken: ""
-                    }
-                },
-                { new: true }
-            );
-        }
-        catch (error) {
-            res.status(500).json({ message: "Unable to update user data in backendwhile disconnecting from Spotify" });
-        }
-        
-        res.clearCookie("spotifyAccessToken");
-        res.clearCookie("spotifyRefreshToken");
-        res.clearCookie("spotifyId");
+    try {
+      await UserModel.findOneAndUpdate(
+        { username },
+        {
+          $set: {
+            spotifyId: '',
+            spotifyAccessToken: '',
+            spotifyRefreshToken: '',
+          },
+        },
+        { new: true },
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({
+          message: `Unable to update user data in backend while disconnecting from Spotify: ${error.message}`,
+        });
+      } else {
+        res.status(500).json({
+          message: `Unable to update user data in backend while disconnecting from Spotify`,
+        });
+      }
+    }
 
-        res.status(200).json({ message: "Spotify disconnected successfully" });
-    };
+    res.clearCookie('spotifyAccessToken');
+    res.clearCookie('spotifyRefreshToken');
+    res.clearCookie('spotifyId');
+
+    res.status(200).json({ message: 'Spotify disconnected successfully' });
+  };
 
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
