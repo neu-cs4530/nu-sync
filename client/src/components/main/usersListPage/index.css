@@ -1,7 +1,41 @@
-.users_list:last-child {
-  border-bottom: #000000 1px dashed;
-}
-
 .user-card-container {
   flex: 2;
+  /* Maintains original flex behavior */
+  width: 100%;
+  /* Ensures full width */
+}
+
+.users_list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #e2e8f0;
+  /* Added top border */
+}
+
+.users_list>div {
+  border-bottom: 1px solid #e2e8f0;
+  /* Changed from dashed to solid */
+  padding: 1.5rem 0;
+  /* Added vertical spacing */
+  transition: background-color 0.15s ease;
+  /* Smooth hover effect */
+}
+
+.users_list>div:hover {
+  background-color: #f8fafc;
+  /* Subtle hover state */
+}
+
+/* Remove border from last child */
+.users_list>div:last-child {
+  border-bottom: none;
+}
+
+/* Style for "No Users Found" message */
+.bold_title {
+  font-weight: 600;
+  color: #2d3748;
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 1.1rem;
 }

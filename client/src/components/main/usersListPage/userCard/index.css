@@ -1,23 +1,51 @@
 .user {
   display: flex;
   flex-direction: row;
-  border-top: #000000 1px dashed;
+  border-top: 1px solid #e2e8f0;
+  /* Changed from dashed to solid */
+  padding: 1.25rem 0;
+  /* Added vertical padding */
+  transition: background-color 0.15s ease;
+  /* Smooth hover effect */
+  align-items: center;
+  /* Better vertical alignment */
+}
+
+.user:hover {
+  background-color: #f8fafc;
+  /* Subtle hover state */
 }
 
 .userStats {
-  color: #bbbbbb;
+  color: #718096;
+  /* Updated from #bbbbbb to modern gray */
   text-align: right;
   width: 30%;
+  font-size: 0.875rem;
+  /* Smaller for metadata */
 }
 
 .user_mid {
   margin-left: 2rem;
-  margin-top: auto;
-  margin-bottom: auto;
+  /* Original spacing preserved */
   width: 60%;
 }
 
 .userUsername {
-  color: cornflowerblue;
+  color: #4299e1;
+  /* Updated from cornflowerblue to match theme */
   cursor: pointer;
+  font-weight: 500;
+  /* Medium weight for better readability */
+  font-size: 1.1rem;
+  /* Slightly larger for emphasis */
+  transition: color 0.15s ease;
+  /* Smooth color transition */
+}
+
+.userUsername:hover {
+  color: #3182ce;
+  /* Slightly darker on hover */
+  text-decoration: underline;
+  /* Visual feedback */
 }
