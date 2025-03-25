@@ -1,105 +1,78 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import useUserContext from './useUserContext';
-import UserModel from '../../../server/models/users.model';
+import useLoginContext from './useLoginContext';
 import axios from 'axios';
 
 const useSpotifyAuth = () => {
     const { user } = useUserContext();
-    const navigate = useNavigate();
+    const { setUser } = useLoginContext();
     const location = useLocation();
     const [isSpotifyConnected, setIsSpotifyConnected] = useState(false);
     const [spotifyUserId, setSpotifyUserId] = useState<string | null>(null);
 
-    // check connection state when user changes
-    useEffect(() => {
-        const checkSpotifyConnection = () => {
-            if (user?.spotifyId) {
-                setIsSpotifyConnected(true);
-                setSpotifyUserId(user.spotifyId);
-                return;
-            }
+    const syncSpotifyData = async () => {
 
-            const accessToken = localStorage.getItem('spotify_access_token');
-            const userId = localStorage.getItem('spotify_user_id');
-            if (accessToken && userId) {
+        // check if user exists
+        if (!user?.username) {
+            return;
+        }
+
+        try {
+            const updatedUserResponse = await axios.get(`http://localhost:8000/user/getUser/${user.username}`);
+            const updatedUser = updatedUserResponse.data;
+
+            // update user context
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            if (updatedUser.spotifyId && updatedUser.spotifyAccessToken) {
                 setIsSpotifyConnected(true);
-                setSpotifyUserId(userId);
-                return;
+                setSpotifyUserId(updatedUser.spotifyId);
+                localStorage.setItem('spotify_user_id', updatedUser.spotifyId);
+                localStorage.setItem('spotify_access_token', updatedUser.spotifyAccessToken);
+                localStorage.setItem('spotify_refresh_token', updatedUser.spotifyRefreshToken);
+            } else {
+                setIsSpotifyConnected(false);
+                setSpotifyUserId(null);
+                localStorage.removeItem('spotify_user_id');
+                localStorage.removeItem('spotify_access_token');
+                localStorage.removeItem('spotify_refresh_token');
             }
+        } catch (error) {
+            console.error('Error getting user spotify data from backend:', error);
+        }
+    };
+
+    // we use location in the useEffect so that everytime the URL changes when redirected from spotify, user information is synced
+    useEffect(() => {
+        syncSpotifyData();
+    }, [location, user?.username]);
+
+    const disconnect = async () => {
+        try {
+            await axios.patch('http://localhost:8000/spotify/disconnect', {
+                username: user.username
+            });
+
+            const updatedUser = {
+                ...user,
+                spotifyId: "",
+                spotifyAccessToken: "",
+                spotifyRefreshToken: ""
+            };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
 
             setIsSpotifyConnected(false);
             setSpotifyUserId(null);
-        };
+            localStorage.removeItem('spotify_user_id');
+            localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_refresh_token');
 
-        checkSpotifyConnection();
-    }, [user]);
-
-    useEffect(() => {
-        const handleSpotifyCallback = async () => {
-            const params = new URLSearchParams(location.search);
-            const spotifyData = params.get('spotify_data');
-            
-            if (!spotifyData) {
-                return;
-            }
-
-            try {
-                const data = JSON.parse(Buffer.from(spotifyData, 'base64').toString());
-                const {
-                    access_token,
-                    refresh_token,
-                    spotify_user_id,
-                    spotify_connected
-                } = data;
-
-                if (access_token && refresh_token && spotify_connected === 'true') {
-                    console.log("Storing Spotify tokens and connection state...");
-
-                    localStorage.setItem('spotify_access_token', access_token);
-                    localStorage.setItem('spotify_refresh_token', refresh_token);
-                    
-                    if (spotify_user_id) {
-                        localStorage.setItem('spotify_user_id', spotify_user_id);
-                        setSpotifyUserId(spotify_user_id);
-                    }
-
-                    setIsSpotifyConnected(true);
-                    const cleanUrl = location.pathname;
-                    window.history.replaceState({}, '', cleanUrl);
-                    return;
-                }
-            } catch (error) {
-                console.error('Error processing Spotify data:', error);
-                navigate('/');
-            }
-        };
-
-        handleSpotifyCallback();
-    }, [location, navigate]);
-
-    const disconnect = async () => {
-        localStorage.removeItem('spotify_access_token');
-        localStorage.removeItem('spotify_refresh_token');
-        localStorage.removeItem('spotify_user_id');
-        setIsSpotifyConnected(false);
-        setSpotifyUserId(null);
-
-
-        if (user?.username) {
-
-            try {
-                await axios.patch('http://localhost:8000/spotify/disconnect', {
-                    username: user.username
-                });
-
-            }
-            catch (error) {
-                console.error('Error disconnecting from Spotify:', error);
-            }
-            
+        } catch (error) {
+            console.error("Error disconnecting from Spotify:", error);
         }
-        
     };
 
     return {
@@ -109,4 +82,4 @@ const useSpotifyAuth = () => {
     };
 };
 
-export default useSpotifyAuth; 
+export default useSpotifyAuth;

@@ -60,7 +60,6 @@ const ProtectedRoute = ({
  */
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
   const [user, setUser] = useState<SafeDatabaseUser | null>(() => {
-
     // gets user data from local storage
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;

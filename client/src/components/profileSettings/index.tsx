@@ -2,11 +2,8 @@ import React, { useEffect } from 'react';
 import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
 import useSpotifyAuth from '../../hooks/useSpotifyAuth';
-import { MongoLoggableComponent } from 'mongodb';
 
 const ProfileSettings: React.FC = () => {
-
-  
   const {
     handleLoginUserSpotify,
     userData,
@@ -36,9 +33,7 @@ const ProfileSettings: React.FC = () => {
 
   const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
 
-  useEffect(() => {
-
-  }, [isSpotifyConnected, spotifyUserId])
+  useEffect(() => {}, [isSpotifyConnected, spotifyUserId]);
 
   if (loading) {
     return (
@@ -70,22 +65,18 @@ const ProfileSettings: React.FC = () => {
                 <div>
                   <p className='success-message'>Connected to Spotify!</p>
                   {spotifyUserId && <p>Spotify User ID: {spotifyUserId}</p>}
-                  <button 
+                  <button
                     className='delete-button'
                     onClick={() => {
                       disconnect();
-                    }}
-                  >
+                    }}>
                     Disconnect Spotify
                   </button>
                 </div>
               ) : (
                 <div>
                   <p>Not connected to Spotify</p>
-                  <button 
-                    className='login-button'
-                    onClick={handleLoginUserSpotify}
-                  >
+                  <button className='login-button' onClick={handleLoginUserSpotify}>
                     Connect Spotify
                   </button>
                 </div>

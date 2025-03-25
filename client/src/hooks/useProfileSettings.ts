@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -10,7 +9,6 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
-import { loginSpotify } from '../services/spotifyService'
 
 /**
  * A custom hook to encapsulate all logic/state for the ProfileSettings component.
@@ -36,7 +34,7 @@ const useProfileSettings = () => {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const [loggedInSpotify, setLoggedInSpotify] = useState(false)
+  const [loggedInSpotify, setLoggedInSpotify] = useState(false);
 
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
