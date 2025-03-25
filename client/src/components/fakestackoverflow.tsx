@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
 import { FakeSOSocket, SafeDatabaseUser } from '../types/types';
@@ -28,11 +28,30 @@ const ProtectedRoute = ({
   socket: FakeSOSocket | null;
   children: JSX.Element;
 }) => {
-  if (!user || !socket) {
+  const location = useLocation();
+  const storedUser = localStorage.getItem('user');
+  const isSpotifyCallback = location.search.includes('spotify_data');
+
+  // If no user data at all, redirect to login
+  if (!user && !storedUser) {
     return <Navigate to='/' />;
   }
 
-  return <UserContext.Provider value={{ user, socket }}>{children}</UserContext.Provider>;
+  // For Spotify callback, redirect to user profile
+  if (isSpotifyCallback) {
+    const currentUser = user || (storedUser ? JSON.parse(storedUser) : null);
+    if (currentUser) {
+      return <Navigate to={`/user/${currentUser.username}`} replace />;
+    }
+  }
+
+  // Normal case - require both user and socket
+  if (user && socket) {
+    return <UserContext.Provider value={{ user, socket }}>{children}</UserContext.Provider>;
+  }
+
+  // Default case - redirect to login
+  return <Navigate to='/' />;
 };
 
 /**
@@ -40,7 +59,20 @@ const ProtectedRoute = ({
  * It manages the state for search terms and the main title.
  */
 const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
-  const [user, setUser] = useState<SafeDatabaseUser | null>(null);
+  const [user, setUser] = useState<SafeDatabaseUser | null>(() => {
+    // gets user data from local storage
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  // update user data if needed
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
 
   return (
     <LoginContext.Provider value={{ setUser }}>

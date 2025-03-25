@@ -24,7 +24,7 @@ const useAuth = (authType: 'login' | 'signup') => {
   const [password, setPassword] = useState<string>('');
   const [passwordConfirmation, setPasswordConfirmation] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [err, setErr] = useState<string>('');
+  const [err, setErr] = useState<string | null>(null);
   const { setUser } = useLoginContext();
   const navigate = useNavigate();
 
@@ -100,6 +100,7 @@ const useAuth = (authType: 'login' | 'signup') => {
         throw new Error('Invalid auth type');
       }
 
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       navigate('/home');
     } catch (error) {

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
+import useSpotifyAuth from '../../hooks/useSpotifyAuth';
 
 const ProfileSettings: React.FC = () => {
   const {
+    handleLoginUserSpotify,
     userData,
     loading,
     editBioMode,
@@ -17,20 +19,21 @@ const ProfileSettings: React.FC = () => {
     canEditProfile,
     showPassword,
     togglePasswordVisibility,
-
     setEditBioMode,
     setNewBio,
     setNewPassword,
     setConfirmNewPassword,
     setShowConfirmation,
-
     handleResetPassword,
     handleUpdateBiography,
     handleDeleteUser,
-
     mutualFriends,
     mutualFriendsLoading,
   } = useProfileSettings();
+
+  const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
+
+  useEffect(() => {}, [isSpotifyConnected, spotifyUserId]);
 
   if (loading) {
     return (
@@ -54,6 +57,31 @@ const ProfileSettings: React.FC = () => {
             <p>
               <strong>Username:</strong> {userData.username}
             </p>
+
+            {/* Spotify Connection Status */}
+            <div className='spotify-section'>
+              <h3>Spotify Connection</h3>
+              {isSpotifyConnected ? (
+                <div>
+                  <p className='success-message'>Connected to Spotify!</p>
+                  {spotifyUserId && <p>Spotify User ID: {spotifyUserId}</p>}
+                  <button
+                    className='delete-button'
+                    onClick={() => {
+                      disconnect();
+                    }}>
+                    Disconnect Spotify
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <p>Not connected to Spotify</p>
+                  <button className='login-button' onClick={handleLoginUserSpotify}>
+                    Connect Spotify
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* ---- Biography Section ---- */}
             {!editBioMode && (

@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@cypress/instrument-cra": "^1.4.0",
+    "@fake-stack-overflow/server": "^1.0.0",
     "@fake-stack-overflow/shared": "^1.0.0",
     "axios": "^1.7.9",
     "mongodb": "6.12.0",
