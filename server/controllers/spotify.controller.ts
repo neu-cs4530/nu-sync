@@ -4,18 +4,27 @@ import axios from 'axios';
 import { FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 
+// ensures correct response format from spotify
+interface SpotifyTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}
+
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
 
-  const client_id: string = process.env.SPOTIFY_CLIENT_ID || '';
-  const client_secret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
-  const redirect_uri = process.env.REDIRECT_URI;
+  const clientId: string = process.env.SPOTIFY_CLIENT_ID || '';
+  const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
+  const redirectUri = process.env.REDIRECT_URI;
 
   /**
-   * Handles the initial authorization request of the spotify account.
-   * @param req The request containing
-   * @param res The response, returning.
-   * @returns A promise resolving to void.
+   * Initiates the Spotify OAuth flow by redirecting the user to Spotify's authorization page, where user will be prompted to log in
+   *
+   * @param req The HTTP request object containing the username in query parameters
+   * @param res The HTTP response object for redirecting to Spotify's auth page
+   *
+   * @returns A Promise that resolves to void.
    */
   const initiateLogin = async (req: Request, res: Response): Promise<void> => {
     const { username } = req.query;
@@ -23,28 +32,34 @@ const spotifyController = (socket: FakeSOSocket) => {
     const scope =
       'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 
-    const redirectURI = `https://accounts.spotify.com/authorize?${querystring.stringify({
+    const spotifyAuthParams = {
       response_type: 'code',
-      client_id,
+      client_id: clientId,
       scope,
-      redirect_uri,
+      redirect_uri: redirectUri,
       state,
-    })}`;
+    };
 
-    res.redirect(redirectURI);
+    // redirects user to spotify login page
+    const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
+    res.redirect(redirectUrl);
   };
 
   /**
-   * Handles the callback request of the spotify account.
-   * @param req The request containing
-   * @param res The response, returning.
-   * @returns A promise resolving to void.
+   * Handles callback from Spotify after user authorization
+   * Exchanges the authorization code for access tokens and fetches user's Spotify profile
+   *
+   * @param req The HTTP request object containing the authorization code and state from Spotify
+   * @param res The HTTP response object for redirecting back to the application
+   *
+   * @returns A Promise that resolves to void.
    */
   const callbackFunc = async (req: Request, res: Response): Promise<void> => {
     const code = req.query.code || null;
     const state = req.query.state || null;
     const username = req.query.state?.toString().split(':')[1] || '';
 
+    // verifies the state is correct
     if (state === null) {
       res.redirect(
         `http://localhost:3000/home#${querystring.stringify({
@@ -54,56 +69,61 @@ const spotifyController = (socket: FakeSOSocket) => {
       return;
     }
 
+    // requests access token from spotify
     try {
-      // request access token
-      const tokenResponse = await axios.post(
+      const tokenParams = {
+        code: code?.toString() || '',
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      };
+
+      const tokenResponse = await axios.post<SpotifyTokenResponse>(
         'https://accounts.spotify.com/api/token',
-        querystring.stringify({
-          code: code?.toString() || '',
-          redirect_uri,
-          grant_type: 'authorization_code',
-        }),
+        querystring.stringify(tokenParams),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`,
+            'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
           },
         },
       );
 
-      const { access_token, refresh_token, expires_in } = tokenResponse.data;
+      const accessToken = tokenResponse.data.access_token;
+      const refreshToken = tokenResponse.data.refresh_token;
+      const expiresIn = tokenResponse.data.expires_in;
 
-      // try to get user profile
+      // exchanges access token for user profile
       try {
         const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
           headers: {
-            Authorization: `Bearer ${access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
-        // update user in database with spotify token info
+        // updates user in database with spotify info
         await UserModel.findOneAndUpdate(
           { username },
           {
             $set: {
               spotifyId: profileResponse.data.id,
-              spotifyAccessToken: access_token,
-              spotifyRefreshToken: refresh_token,
+              spotifyAccessToken: accessToken,
+              spotifyRefreshToken: refreshToken,
             },
           },
           { new: true },
         );
 
-        // redirect to profile page
+        const spotifyData = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_in: expiresIn,
+          spotify_connected: 'true',
+          spotify_user_id: profileResponse.data.id,
+        };
+
         res.redirect(
           `http://localhost:3000/user/${username}?spotify_data=${Buffer.from(
-            JSON.stringify({
-              access_token,
-              refresh_token,
-              expires_in,
-              spotify_connected: 'true',
-              spotify_user_id: profileResponse.data.id,
-            }),
+            JSON.stringify(spotifyData),
           ).toString('base64')}`,
         );
       } catch (error) {
@@ -123,10 +143,12 @@ const spotifyController = (socket: FakeSOSocket) => {
   };
 
   /**
-   * Handles disconnect request of the spotify account
-   * @param req The request containing
-   * @param res The response, returning.
-   * @returns A promise resolving to void.
+   * Disconnects current user's Spotify account by removing their stored information in the database and frontend
+   *
+   * @param req The HTTP request object containing the username in the request body
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * @returns A Promise that resolves to void.
    */
   const disconnectSpotify = async (req: Request, res: Response): Promise<void> => {
     const { username } = req.body;
