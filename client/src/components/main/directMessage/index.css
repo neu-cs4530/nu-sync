@@ -113,3 +113,19 @@
   font-weight: bold;
   margin-top: 15px;
 }
+
+
+.message-wrapper.highlight {
+  background-color: yellow;
+  animation: fadeOutHighlight 1.5s ease-out forwards;
+}
+
+@keyframes fadeOutHighlight {
+  0% {
+    background-color: yellow;
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
