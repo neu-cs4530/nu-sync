@@ -1,5 +1,4 @@
 import React from 'react';
-import { ObjectId } from 'mongodb';
 import { DatabaseFriendRequest } from '../../../types/types';
 // import './index.css';
 

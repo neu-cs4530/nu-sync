@@ -65,7 +65,6 @@ const UserCardView = (props: UserProps) => {
             }
           }
         } catch (error) {
-          console.error('Error checking friendship status:', error);
           setStatusMessage('Error checking friendship status');
         }
       };
@@ -83,7 +82,6 @@ const UserCardView = (props: UserProps) => {
       setFriendshipStatus('sent');
       setStatusMessage('Friend request sent');
     } catch (error) {
-      console.error('Error sending friend request:', error);
       setStatusMessage('Failed to send request');
     }
   };
@@ -102,7 +100,6 @@ const UserCardView = (props: UserProps) => {
       setFriendshipStatus('friends');
       setStatusMessage('Friend request accepted');
     } catch (error) {
-      console.error('Error accepting request:', error);
       setStatusMessage('Failed to accept request');
     }
   };

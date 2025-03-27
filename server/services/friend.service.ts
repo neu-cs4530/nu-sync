@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import FriendRequestModel from '../models/friend-request.model';
 import UserModel from '../models/users.model';
 import {
