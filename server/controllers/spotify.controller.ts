@@ -62,7 +62,7 @@ const spotifyController = (socket: FakeSOSocket) => {
     // verifies the state is correct
     if (state === null) {
       res.redirect(
-        `http://localhost:3000/home#${querystring.stringify({
+        `${redirectUri}/home#${querystring.stringify({
           error: 'state_mismatch',
         })}`,
       );
@@ -122,7 +122,7 @@ const spotifyController = (socket: FakeSOSocket) => {
         };
 
         res.redirect(
-          `http://localhost:3000/user/${username}?spotify_data=${Buffer.from(
+          `${redirectUri}/user/${username}?spotify_data=${Buffer.from(
             JSON.stringify(spotifyData),
           ).toString('base64')}`,
         );
