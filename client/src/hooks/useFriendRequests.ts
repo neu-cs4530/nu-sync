@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import useUserContext from './useUserContext';
 import {
   DatabaseFriendRequest,
@@ -24,6 +24,83 @@ const useFriendRequests = () => {
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Memoized handler for friend request updates from socket
+   * @param payload The update payload from the socket
+   */
+  const handleFriendRequestUpdate = useCallback(
+    (payload: FriendRequestUpdatePayload) => {
+      const { friendRequest, type } = payload;
+
+      switch (type) {
+        case 'created':
+          // Add to all requests list
+          setAllRequests((prev) => [friendRequest, ...prev]);
+
+          // Add to pending if user is recipient and status is pending
+          if (
+            friendRequest.status === 'pending' &&
+            friendRequest.recipient.username === user.username
+          ) {
+            setPendingRequests((prev) => [friendRequest, ...prev]);
+          }
+          break;
+
+        case 'updated':
+          // Update in all requests list
+          setAllRequests((prev) =>
+            prev.map((req) =>
+              req._id === friendRequest._id ? friendRequest : req,
+            ),
+          );
+
+          // Update in pending list (add/update if pending, remove if not)
+          if (
+            friendRequest.status === 'pending' &&
+            friendRequest.recipient.username === user.username
+          ) {
+            setPendingRequests((prev) => {
+              // Check if it exists in pending list
+              const existsInPending = prev.some(
+                (req) => req._id === friendRequest._id,
+              );
+
+              if (existsInPending) {
+                // Update existing request
+                return prev.map((req) =>
+                  req._id === friendRequest._id ? friendRequest : req,
+                );
+              }
+              // Add to pending list
+              return [...prev, friendRequest];
+            });
+          } else {
+            // Remove from pending list
+            setPendingRequests((prev) =>
+              prev.filter((req) => req._id !== friendRequest._id),
+            );
+          }
+          break;
+
+        case 'deleted':
+          // Remove from both lists
+          setAllRequests((prev) =>
+            prev.filter((req) => req._id !== friendRequest._id),
+          );
+          setPendingRequests((prev) =>
+            prev.filter((req) => req._id !== friendRequest._id),
+          );
+          break;
+
+        default:
+          // Handle unknown update types
+          // eslint-disable-next-line no-console
+          console.log(`Unknown friend request update type: ${type}`);
+      }
+    },
+    [user.username]
+  );
 
   useEffect(() => {
     /**
@@ -57,81 +134,6 @@ const useFriendRequests = () => {
       }
     };
 
-    /**
-     * Function to handle friend request updates from socket
-     * @param payload The update payload from the socket
-     */
-    const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
-      const { friendRequest, type } = payload;
-
-      switch (type) {
-        case 'created':
-          // Add to all requests list
-          setAllRequests((prev) => [friendRequest, ...prev]);
-
-          // Add to pending if user is recipient and status is pending
-          if (
-            friendRequest.status === 'pending' &&
-            friendRequest.recipient.username === user.username
-          ) {
-            setPendingRequests((prev) => [friendRequest, ...prev]);
-          }
-          break;
-
-        case 'updated':
-          // Update in all requests list
-          setAllRequests((prev) =>
-            prev.map((req) =>
-              req._id === friendRequest._id ? friendRequest : req,
-            ),
-          );
-
-          // Update in pending list (add/update if pending, remove if not)
-          if (
-            friendRequest.status === 'pending' &&
-            friendRequest.recipient.username === user.username
-          ) {
-            // Check if it exists in pending list
-            const existsInPending = pendingRequests.some(
-              (req) => req._id === friendRequest._id,
-            );
-
-            if (existsInPending) {
-              // Update existing request
-              setPendingRequests((prev) =>
-                prev.map((req) =>
-                  req._id === friendRequest._id ? friendRequest : req,
-                ),
-              );
-            } else {
-              // Add to pending list
-              setPendingRequests((prev) => [...prev, friendRequest]);
-            }
-          } else {
-            // Remove from pending list
-            setPendingRequests((prev) =>
-              prev.filter((req) => req._id !== friendRequest._id),
-            );
-          }
-          break;
-
-        case 'deleted':
-          // Remove from both lists
-          setAllRequests((prev) =>
-            prev.filter((req) => req._id !== friendRequest._id),
-          );
-          setPendingRequests((prev) =>
-            prev.filter((req) => req._id !== friendRequest._id),
-          );
-          break;
-
-        default:
-          // Handle unknown update types
-          // eslint-disable-next-line no-console
-          console.log(`Unknown friend request update type: ${type}`);
-      }
-    };
-
     // Fetch data when component mounts
     fetchRequests();
 
@@ -142,7 +144,7 @@ const useFriendRequests = () => {
     return () => {
       socket.off('friendRequestUpdate', handleFriendRequestUpdate);
     };
-  }, [socket, user.username]);
+  }, [socket, user.username, handleFriendRequestUpdate]);
 
   /**
    * Accept a friend request
