@@ -36,16 +36,16 @@ const useFriendRequests = () => {
 
         // Fetch all requests for the current user
         if (user.username) {
-          console.log('Fetching requests for user:', user.username);
+          // console.log('Fetching requests for user:', user.username);
 
           const requests = await getFriendRequests(user.username);
-          console.log('Requests fetched:', requests);
+          // console.log('Requests fetched:', requests);
 
           setAllRequests(requests);
 
           // Fetch pending requests for the current user
           const pending = await getPendingRequests(user.username);
-          console.log('Pending requests:', pending);
+          // console.log('Pending requests:', pending);
           setPendingRequests(pending);
         }
       } catch (err) {
