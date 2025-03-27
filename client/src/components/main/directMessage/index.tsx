@@ -80,7 +80,6 @@ const DirectMessage = () => {
                   <SearchResultCard
                     key={String(result._id)}
                     result={result}
-                    searchTerm={searchTerm}
                     handleClick={() => handleSearchResultClick(result)}
                   />
                 ))}
