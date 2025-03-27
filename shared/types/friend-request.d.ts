@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
  * - `_id`: The unique MongoDB identifier for the user.
  * - `username`: The user's display name in the system.
  */
-export interface User {
+export interface FriendUser {
   _id: ObjectId;
   username: string;
 }
@@ -23,8 +23,8 @@ export interface User {
  */
 export interface DatabaseFriendRequest {
   _id: ObjectId;
-  requester: User;
-  recipient: User;
+  requester: FriendUser;
+  recipient: FriendUser;
   status: 'pending' | 'accepted' | 'rejected';
   requestedAt: Date;
   updatedAt: Date;
