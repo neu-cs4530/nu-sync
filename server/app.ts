@@ -18,6 +18,7 @@ import userController from './controllers/user.controller';
 import messageController from './controllers/message.controller';
 import chatController from './controllers/chat.controller';
 import gameController from './controllers/game.controller';
+import friendRequestController from './controllers/friend.controller';
 
 dotenv.config();
 
@@ -32,7 +33,9 @@ const socket: FakeSOSocket = new Server(server, {
 });
 
 function connectDatabase() {
-  return mongoose.connect(MONGO_URL).catch(err => console.log('MongoDB connection error: ', err));
+  return mongoose
+    .connect(MONGO_URL)
+    .catch((err) => console.log('MongoDB connection error: ', err));
 }
 
 function startServer() {
@@ -42,7 +45,7 @@ function startServer() {
   });
 }
 
-socket.on('connection', socket => {
+socket.on('connection', (socket) => {
   console.log('A user connected ->', socket.id);
 
   socket.on('disconnect', () => {
@@ -82,6 +85,7 @@ app.use('/messaging', messageController(socket));
 app.use('/user', userController(socket));
 app.use('/chat', chatController(socket));
 app.use('/games', gameController(socket));
+app.use('/friend', friendRequestController(socket));
 
 // Export the app instance
 export { app, server, startServer };

@@ -1,26 +1,33 @@
 import { ObjectId } from 'mongodb';
 
 /**
- * Represents a friend request document.
- * - `requester`: The user who sent the request.
- * - `recipient`: The user who received the request.
- * - `status`: The status of the friend request.
- * - `requestedAt`: The timestamp of the friend request.
- * - `updatedAt`: The timestamp of the last update to the request.
+ * Represents a user entity with basic identification information.
+ * - `_id`: The unique MongoDB identifier for the user.
+ * - `username`: The user's display name in the system.
  */
-export interface FriendRequest {
-  requester: ObjectId;
-  recipient: ObjectId;
-  status: 'pending' | 'accepted' | 'rejected';
-  requestedAt: Date;
-  updatedAt: Date;
+export interface User {
+  _id: ObjectId;
+  username: string;
 }
 
 /**
- * Represents a friend request document as stored in the database.
+ * Represents a friend request entity in the database.
+ * @interface DatabaseFriendRequest
+ *
+ * @property {ObjectId} _id - The unique MongoDB identifier for the friend request.
+ * @property {User} requester - The user who initiated the friend request.
+ * @property {User} recipient - The user who received the friend request.
+ * @property {'pending' | 'accepted' | 'rejected'} status - The current status of the friend request.
+ * @property {Date} requestedAt - The timestamp when the friend request was created.
+ * @property {Date} updatedAt - The timestamp when the friend request was last updated.
  */
-export interface DatabaseFriendRequest extends FriendRequest {
+export interface DatabaseFriendRequest {
   _id: ObjectId;
+  requester: User;
+  recipient: User;
+  status: 'pending' | 'accepted' | 'rejected';
+  requestedAt: Date;
+  updatedAt: Date;
 }
 
 /**

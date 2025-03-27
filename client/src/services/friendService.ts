@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import {
   DatabaseFriendRequest,
   FriendConnection,
@@ -56,7 +55,6 @@ const getFriends = async (username: string): Promise<FriendConnection[]> => {
  *
  * @param requester - The username of the user sending the request
  * @param recipient - The username of the user receiving the request
- *
  * @throws Error if there is an issue sending the friend request
  */
 const sendFriendRequest = async (

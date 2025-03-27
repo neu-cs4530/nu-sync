@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './index.css';
 import { SafeDatabaseUser } from '../../../../types/types';
+import SendFriendRequest from '../../friendRequestPage/sendFriendRequest';
 
 /**
  * Interface representing the props for the User component.
@@ -22,15 +23,41 @@ interface UserProps {
  */
 const UserCardView = (props: UserProps) => {
   const { user, handleUserCardViewClickHandler } = props;
+  const [showFriendRequest, setShowFriendRequest] = useState(false);
 
   return (
-    <div className='user right_padding' onClick={() => handleUserCardViewClickHandler(user)}>
-      <div className='user_mid'>
-        <div className='userUsername'>{user.username}</div>
+    <div className="user-card-container">
+      <div
+        className="user right_padding"
+        onClick={() => handleUserCardViewClickHandler(user)}
+      >
+        <div className="user_mid">
+          <div className="userUsername">{user.username}</div>
+        </div>
+        <div className="userStats">
+          <div>joined {new Date(user.dateJoined).toUTCString()}</div>
+        </div>
       </div>
-      <div className='userStats'>
-        <div>joined {new Date(user.dateJoined).toUTCString()}</div>
-      </div>
+
+      <button
+        className="friend-request-button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowFriendRequest(true);
+        }}
+      >
+        Add Friend
+      </button>
+
+      {showFriendRequest && (
+        <div className="friend-request-popup">
+          <SendFriendRequest
+            targetUsername={user.username}
+            compact={true}
+            onRequestSent={() => setShowFriendRequest(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
