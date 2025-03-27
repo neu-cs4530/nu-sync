@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './index.css';
 import { SafeDatabaseUser } from '../../../../types/types';
 import {
@@ -26,6 +27,7 @@ interface UserProps {
 const UserCardView = (props: UserProps) => {
   const { user, handleUserCardViewClickHandler } = props;
   const { user: currentUser } = useUserContext();
+  const navigate = useNavigate();
   const [friendshipStatus, setFriendshipStatus] = useState<
     'none' | 'sent' | 'received' | 'friends'
   >('none');
@@ -105,6 +107,12 @@ const UserCardView = (props: UserProps) => {
     }
   };
 
+  // Handle sending a private message
+  const handleSendMessage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/messaging/direct-message');
+  };
+
   // Don't show action buttons for yourself
   const isCurrentUser = currentUser.username === user.username;
 
@@ -141,14 +149,8 @@ const UserCardView = (props: UserProps) => {
 
       case 'friends':
         return (
-          <button
-            className="view-profile-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleUserCardViewClickHandler(user);
-            }}
-          >
-            View Profile
+          <button className="send-message-button" onClick={handleSendMessage}>
+            Send Message
           </button>
         );
 
