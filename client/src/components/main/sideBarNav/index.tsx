@@ -19,57 +19,86 @@ const SideBarNav = () => {
     location.pathname === path ? 'message-option-selected ' : '';
 
   return (
-    <div id='sideBarNav' className='sideBarNav'>
+    <div id="sideBarNav" className="sideBarNav">
       <NavLink
-        to='/home'
-        id='menu_questions'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        to="/home"
+        id="menu_questions"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
         Questions
       </NavLink>
       <NavLink
-        to='/tags'
-        id='menu_tag'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        to="/tags"
+        id="menu_tag"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
         Tags
       </NavLink>
       <NavLink
-        to='/messaging'
-        id='menu_messaging'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}
-        onClick={toggleOptions}>
+        to="/messaging"
+        id="menu_messaging"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+        onClick={toggleOptions}
+      >
         Messaging
       </NavLink>
       {showOptions && (
-        <div className='additional-options'>
+        <div className="additional-options">
           <NavLink
-            to='/messaging'
-            className={`menu_button message-options ${isActiveOption('/messaging')}`}>
+            to="/messaging"
+            className={`menu_button message-options ${isActiveOption('/messaging')}`}
+          >
             Global Messages
           </NavLink>
           <NavLink
-            to='/messaging/direct-message'
-            className={`menu_button message-options ${isActiveOption('/messaging/direct-message')}`}>
+            to="/messaging/direct-message"
+            className={`menu_button message-options ${isActiveOption('/messaging/direct-message')}`}
+          >
             Direct Messages
           </NavLink>
         </div>
       )}
       <NavLink
-        to='/users'
-        id='menu_users'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        to="/users"
+        id="menu_users"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
         Users
       </NavLink>
       <NavLink
-        to='/games'
-        id='menu_games'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        to="/games"
+        id="menu_games"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
         Games
       </NavLink>
       <NavLink
-        to='/friends'
-        id='menu_friends'
-        className={({ isActive }) => `menu_button ${isActive ? 'menu_selected' : ''}`}>
+        to="/friends"
+        id="menu_friends"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
         Friends
+      </NavLink>
+      <NavLink
+        to="/requests"
+        id="menu_requests"
+        className={({ isActive }) =>
+          `menu_button ${isActive ? 'menu_selected' : ''}`
+        }
+      >
+        Requests
       </NavLink>
     </div>
   );

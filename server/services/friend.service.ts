@@ -1,10 +1,10 @@
-import { ObjectId } from 'mongodb';
 import FriendRequestModel from '../models/friend-request.model';
 import UserModel from '../models/users.model';
 import {
   DatabaseFriendRequest,
   SafeDatabaseUser,
   DatabaseUser,
+  FriendConnectionResponse,
 } from '../types/types';
 
 /**
@@ -131,9 +131,15 @@ export const getFriendRequestsByUsername = async (
     const requests: DatabaseFriendRequest[] = await FriendRequestModel.find({
       $or: [{ requester: user._id }, { recipient: user._id }],
     })
-      .populate('requester', 'username')
-      .populate('recipient', 'username')
-      .sort({ updatedAt: -1 }); // Descending sort so we see most recent first
+      .populate({
+        path: 'requester',
+        select: 'username',
+      })
+      .populate({
+        path: 'recipient',
+        select: 'username',
+      })
+      .sort({ updatedAt: -1 });
 
     return requests;
   } catch (error) {
@@ -182,9 +188,7 @@ export const getPendingFriendRequests = async (
  */
 export const getFriendsByUsername = async (
   username: string,
-): Promise<
-  { _id: ObjectId; username: string; requestId: ObjectId }[] | { error: string }
-> => {
+): Promise<FriendConnectionResponse> => {
   try {
     // Find user by username
     const user: DatabaseUser | null = await UserModel.findOne({ username });
@@ -210,10 +214,9 @@ export const getFriendsByUsername = async (
       const isFriendRequester =
         String(request.recipient._id) === String(user._id);
 
-      // Add type assertion here to tell TypeScript these are populated documents
       const friendUser = isFriendRequester
-        ? (request.requester as unknown as { _id: ObjectId; username: string })
-        : (request.recipient as unknown as { _id: ObjectId; username: string });
+        ? request.requester
+        : request.recipient;
 
       return {
         _id: friendUser._id,
@@ -289,10 +292,12 @@ export const getMutualFriends = async (
           { recipient: user1._id, status: 'accepted' },
         ],
       },
-    );
+    ).populate('requester recipient', 'username');
 
     const user1FriendIds = user1friends.map((friend) =>
-      friend.requester.equals(user1._id) ? friend.recipient : friend.requester,
+      friend.requester._id.equals(user1._id)
+        ? friend.recipient._id
+        : friend.requester._id,
     );
 
     // Get friends for user2
@@ -303,10 +308,12 @@ export const getMutualFriends = async (
           { recipient: user2._id, status: 'accepted' },
         ],
       },
-    );
+    ).populate('requester recipient', 'username');
 
     const user2FriendIds = user2friends.map((friend) =>
-      friend.requester.equals(user2._id) ? friend.recipient : friend.requester,
+      friend.requester._id.equals(user2._id)
+        ? friend.recipient._id
+        : friend.requester._id,
     );
 
     // Find mutual friends by comparing the two friend lists
