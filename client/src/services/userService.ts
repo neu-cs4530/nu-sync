@@ -4,6 +4,12 @@ import api from './config';
 
 const USER_API_URL = `${process.env.REACT_APP_SERVER_URL}/user`;
 
+interface SpotifyTokens {
+  username: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 /**
  * Function to get users
  *
@@ -140,6 +146,23 @@ const getMutualFriends = async (
   return res.data;
 };
 
+/**
+ * Updates the Spotify tokens for a user in the database.
+ * @param data Object containing username and Spotify tokens
+ * @returns The updated user object
+ */
+const updateSpotifyTokens = async (data: SpotifyTokens): Promise<SafeDatabaseUser> => {
+  try {
+    const res = await api.post(`${USER_API_URL}/spotify/tokens`, data);
+    return res.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(`Error updating Spotify tokens: ${error.response.data}`);
+    }
+    throw new Error('Error updating Spotify tokens');
+  }
+};
+
 export {
   getUsers,
   getUserByUsername,
@@ -149,4 +172,5 @@ export {
   resetPassword,
   updateBiography,
   getMutualFriends,
+  updateSpotifyTokens,
 };

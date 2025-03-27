@@ -3,6 +3,7 @@ import './index.css';
 import QuestionHeader from './header';
 import QuestionView from './question';
 import useQuestionPage from '../../../hooks/useQuestionPage';
+import useSpotifyAuth from '../../../hooks/useSpotifyAuth';
 
 /**
  * QuestionPage component renders a page displaying a list of questions
@@ -11,6 +12,9 @@ import useQuestionPage from '../../../hooks/useQuestionPage';
  */
 const QuestionPage = () => {
   const { titleText, qlist, setQuestionOrder } = useQuestionPage();
+
+  // handles spotify auth
+  useSpotifyAuth();
 
   return (
     <>

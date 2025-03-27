@@ -11,6 +11,8 @@ import { Schema } from 'mongoose';
  * - `biography`: A bio of the user.
  * - `friends`: An array of usernames representing friends of the user.
  * - `spotifyId`: The Spotify user ID for integration with Spotify.
+ * - `spotifyAccessToken`: The Spotify access token for integration with Spotify.
+ * - `spotifyRefreshToken`: The Spotify refresh token for integration with Spotify.
  * - `musicPreferences`: Stores the user's favorite genres, artists, and tracks.
  * - `privacySettings`: Controls the visibility of the user's profile and music history.
  * - `playlists`: Stores user-created playlists.
@@ -40,8 +42,16 @@ const userSchema: Schema = new Schema(
     },
     spotifyId: {
       type: String,
-      unique: true,
+      // unique: true,
       sparse: true, // Allows for null values without violating uniqueness
+    },
+    spotifyAccessToken: {
+      type: String,
+      default: null,
+    },
+    spotifyRefreshToken: {
+      type: String,
+      default: null,
     },
     musicPreferences: {
       type: [String],

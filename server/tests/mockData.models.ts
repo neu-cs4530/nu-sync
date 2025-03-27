@@ -138,6 +138,13 @@ export const POPULATED_QUESTIONS: PopulatedDatabaseQuestion[] = [
     upVotes: [],
     downVotes: [],
     comments: [],
+    poll: {
+      question: 'What is your favorite framework?',
+      options: [
+        { optionText: 'React', votes: [] },
+        { optionText: 'Vue', votes: [] },
+      ],
+    },
   },
   {
     _id: new ObjectId('65e9b5a995b6c7045a30d823'),
