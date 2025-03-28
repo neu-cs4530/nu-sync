@@ -40,6 +40,8 @@ export interface User extends UserCredentials {
   dateJoined: Date;
   biography?: string;
   spotifyId?: string;
+  spotifyAccessToken?: string;
+  spotifyRefreshToken?: string;
   musicPreferences?: string[];
   privacySettings?: PrivacySettings;
   playlists?: Playlist[];

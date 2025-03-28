@@ -4,6 +4,8 @@ import axios from 'axios';
 import useUserContext from './useUserContext';
 import useLoginContext from './useLoginContext';
 
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
+
 const useSpotifyAuth = () => {
   const { user } = useUserContext();
   const { setUser } = useLoginContext();
@@ -20,9 +22,7 @@ const useSpotifyAuth = () => {
       }
 
       try {
-        const updatedUserResponse = await axios.get(
-          `http://localhost:8000/user/getUser/${user.username}`,
-        );
+        const updatedUserResponse = await axios.get(`${SERVER_URL}/user/getUser/${user.username}`);
         const updatedUser = updatedUserResponse.data;
 
         // update user context
@@ -52,7 +52,7 @@ const useSpotifyAuth = () => {
 
   const disconnect = async () => {
     try {
-      await axios.patch('http://localhost:8000/spotify/disconnect', {
+      await axios.patch(`${SERVER_URL}/spotify/disconnect`, {
         username: user.username,
       });
 
