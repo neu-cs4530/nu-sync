@@ -72,6 +72,22 @@ const useDirectMessage = () => {
     setShowCreatePanel(false);
   };
 
+  const handleSendSpotifyPlaylist = async () => {
+    if (selectedChat?._id) {
+      const message: Omit<Message, 'type'> = {
+        msg: 'Playlist shared',
+        msgFrom: user.username,
+        msgDateTime: new Date(),
+      };
+
+      const chat = await sendMessage(message, selectedChat._id);
+      setSelectedChat(chat);
+      setError(null);
+    } else {
+      setError('No chat selected');
+    }
+  }
+
   useEffect(() => {
     const fetchChats = async () => {
       const userChats = await getChatsByUser(user.username);
@@ -131,6 +147,7 @@ const useDirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    handleSendSpotifyPlaylist,
     error,
   };
 };

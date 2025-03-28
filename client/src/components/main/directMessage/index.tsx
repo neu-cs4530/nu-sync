@@ -4,6 +4,7 @@ import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
+import useSpotifyAuth from '../../../hooks/useSpotifyAuth';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -22,8 +23,11 @@ const DirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    handleSendSpotifyPlaylist,
     error,
   } = useDirectMessage();
+
+  // const handleSendSpotifyPlaylist = useSpotifyAuth()
 
   return (
     <>
@@ -69,6 +73,9 @@ const DirectMessage = () => {
                 />
                 <button className='custom-button' onClick={handleSendMessage}>
                   Send
+                </button>
+                <button className='custom-button' onClick={handleSendSpotifyPlaylist}>
+                  Share Spotify Playlist
                 </button>
               </div>
             </>
