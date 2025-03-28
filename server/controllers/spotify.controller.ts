@@ -14,10 +14,10 @@ interface SpotifyTokenResponse {
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
 
-  const clientId: string = process.env.SPOTIFY_CLIENT_ID || 'error';
-  const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
-  const redirectUri = process.env.REDIRECT_URI;
-  const clientUrl = process.env.CLIENT_URI || '';
+  const clientId: string = process.env.SPOTIFY_CLIENT_ID || 'MISSING_SPOTIFY_CLIENT_ID';
+  const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || 'MISSING_SPOTIFY_CLIENT_SECRET';
+  const redirectUri = process.env.REDIRECT_URI || 'MISSING_REDIRECT_URI';
+  const clientUrl = process.env.CLIENT_URI || 'MISSING_REDIRECT_URI';
 
   /**
    * Initiates the Spotify OAuth flow by redirecting the user to Spotify's authorization page, where user will be prompted to log in
@@ -29,6 +29,7 @@ const spotifyController = (socket: FakeSOSocket) => {
    */
   const initiateLogin = async (req: Request, res: Response): Promise<void> => {
     const { username } = req.query;
+    console.log('REDIRECT_URI being used:', redirectUri);
     const state = `TEST:${username}`;
     const scope =
       'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';

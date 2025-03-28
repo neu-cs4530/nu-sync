@@ -4,7 +4,7 @@ import axios from 'axios';
 import useUserContext from './useUserContext';
 import useLoginContext from './useLoginContext';
 
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'errrrr';
 
 const useSpotifyAuth = () => {
   const { user } = useUserContext();
