@@ -22,8 +22,8 @@ const useSpotifyAuth = () => {
       }
 
       try {
-        console.log(process.env.REDIRECT_URI);
-        console.log(SERVER_URL);
+        // console.log(process.env.REDIRECT_URI);
+        // console.log(SERVER_URL);
           const updatedUserResponse = await axios.get(`${SERVER_URL}/user/getUser/${user.username}`);
         const updatedUser = updatedUserResponse.data;
 

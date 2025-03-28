@@ -16,8 +16,8 @@ const spotifyController = (socket: FakeSOSocket) => {
 
   const clientId: string = process.env.SPOTIFY_CLIENT_ID || 'error';
   const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
-  console.log(process.env.REDIRECT_URI);
-  console.log('Running server with REDIRECT_URI:', process.env.REDIRECT_URI);
+  // console.log(process.env.REDIRECT_URI);
+  // console.log('Running server with REDIRECT_URI:', process.env.REDIRECT_URI);
   const redirectUri = process.env.REDIRECT_URI;
   const clientUrl = process.env.CLIENT_URL || '';
 
@@ -97,14 +97,14 @@ const spotifyController = (socket: FakeSOSocket) => {
 
       // exchanges access token for user profile
       try {
-        console.log("HERE");
+        // console.log("HERE");
         const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
 
-        console.log("HERE2");
+        // console.log("HERE2");
 
         // updates user in database with spotify info
         await UserModel.findOneAndUpdate(
@@ -119,7 +119,7 @@ const spotifyController = (socket: FakeSOSocket) => {
           { new: true },
         );
 
-          console.log("HERE3");
+          // console.log("HERE3");
 
         const spotifyData = {
           access_token: accessToken,
@@ -129,7 +129,7 @@ const spotifyController = (socket: FakeSOSocket) => {
           spotify_user_id: profileResponse.data.id,
         };
 
-          console.log("CLIENT URL",clientUrl)
+          // console.log("CLIENT URL",clientUrl)
 
         res.redirect(
             `${clientUrl}/user/${username}?spotify_data=${Buffer.from(
