@@ -1,5 +1,6 @@
-const SPOTIFY_API_URL = `${process.env.REACT_APP_SERVER_URL}/spotify` ;
 import api from './config';
+
+const SPOTIFY_API_URL = `${process.env.REACT_APP_SERVER_URL}/spotify`;
 
 /**
  * Function to login with spotify
@@ -19,20 +20,12 @@ const loginSpotify = async () => {
  */
 export const getSpotifyPlaylists = async (username: string) => {
 
-  console.log('getSpotifyPlaylists', SPOTIFY_API_URL);
+  const accessToken = localStorage.getItem('spotify_access_token');
+  const res = await api.post(`${SPOTIFY_API_URL}/getPlaylists`, {
+    access_token: accessToken,
+  });
 
-  try {
-    const accessToken = localStorage.getItem('spotify_access_token');
-    const res = await api.post(`${SPOTIFY_API_URL}/getPlaylists`, {
-      access_token: accessToken,
-    });
-
-    return res.data;
-
-  } catch (error) {
-    console.error('Error fetching Spotify playlists:', error);
-    throw error;
-  }
+  return res.data;
 };
 
 export default loginSpotify;

@@ -4,7 +4,6 @@ import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import UsersListPage from '../usersListPage';
 import MessageCard from '../messageCard';
-import useSpotifyAuth from '../../../hooks/useSpotifyAuth';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -89,10 +88,10 @@ const DirectMessage = () => {
                   <>
                   <div className='playlist-dropdown'>
                     <select onChange={e => {
-                        const playlist = playlists.find(p => p.id === e.target.value);
-                        setSelectedPlaylist(playlist);  // get the entire playlist object and send back to frontend
+                        const playlist = playlists?.find(p => p.id === e.target.value);
+                        setSelectedPlaylist(playlist || null); 
                     }}>
-                      {playlists.map(playlist => (
+                      {playlists?.map(playlist => (
                         <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
                       ))}
                     </select> 

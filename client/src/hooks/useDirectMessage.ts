@@ -10,6 +10,35 @@ import useUserContext from './useUserContext';
 import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
 import { getSpotifyPlaylists } from '../services/spotifyService';
 
+// type for spotify playlist
+interface SpotifyPlaylist {
+  collaborative: boolean;
+  description: string;
+  external_urls: {
+    spotify: string;
+  };
+  href: string;
+  id: string;
+  images: { url: string }[]; // Simplified - you can make it richer if you want
+  name: string;
+  owner: {
+    display_name: string;
+    external_urls: { spotify: string };
+    href: string;
+    id: string;
+    type: string;
+    uri: string;
+  };
+  public: boolean;
+  snapshot_id: string;
+  tracks: {
+    href: string;
+    total: number;
+  };
+  type: string;
+  uri: string;
+}
+
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
  * It includes a selected user, messages, and a new message state.
@@ -23,9 +52,9 @@ const useDirectMessage = () => {
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -82,7 +111,7 @@ const useDirectMessage = () => {
       setPlaylists(allPlaylists || []);
       setShowPlaylistDropdown(true);
     }
-    catch (error) {
+    catch (e) {
       setError('Error fetching Spotify playlists');
     }
   }
@@ -98,7 +127,6 @@ const useDirectMessage = () => {
 
       const allPlaylists = await getSpotifyPlaylists(user.username);
       setPlaylists(allPlaylists);
-      console.log(playlists);
 
       const message: Omit<Message, 'type'> = {
         msg: `Check out this playlist: ${selectedPlaylist.name}\n${selectedPlaylist.external_urls.spotify}`,
