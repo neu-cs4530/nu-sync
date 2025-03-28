@@ -22,7 +22,7 @@ const useSpotifyAuth = () => {
       }
 
       try {
-        const updatedUserResponse = await axios.get(`${SERVER_URL}/user/getUser/${user.username}`);
+          const updatedUserResponse = await axios.get(`http://localhost:8000/user/getUser/${user.username}`);
         const updatedUser = updatedUserResponse.data;
 
         // update user context
