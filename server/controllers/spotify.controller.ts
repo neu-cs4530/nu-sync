@@ -31,6 +31,7 @@ const spotifyController = (socket: FakeSOSocket) => {
    */
   const initiateLogin = async (req: Request, res: Response): Promise<void> => {
     const { username } = req.query;
+    console.log('REDIRECT_URI being used:', redirectUri);
     const state = `TEST:${username}`;
     const scope =
       'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
