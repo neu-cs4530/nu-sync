@@ -10,6 +10,8 @@ import {
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
 
+const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
+
 /**
  * A custom hook to encapsulate all logic/state for the ProfileSettings component.
  */
@@ -179,7 +181,7 @@ const useProfileSettings = () => {
     try {
       // store url to return to after spotify login
       localStorage.setItem('spotify_return_url', window.location.pathname);
-      window.location.href = `http://localhost:8000/spotify/auth/spotify?username=${user.username}`;
+      window.location.href = `${SERVER_URL}/spotify/auth/spotify?username=${user.username}`;
     } catch (error) {
       setErrorMessage('Failed to log into Spotify');
     }
