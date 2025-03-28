@@ -8,6 +8,26 @@
   transition: background-color 0.3s;
 }
 
+.playlist-dropdown {
+  margin-top: 10px;
+}
+
+.playlist-dropdown select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background-color: #121212;
+  color: #1db954;
+  width: 250px;
+  font-size: 14px;
+}
+
+.playlist-dropdown select:focus {
+  outline: none;
+  border-color: #1db954;
+  box-shadow: 0 0 5px #1db954;
+}
+
 .custom-button:hover {
   background-color: #0056b3;
 }

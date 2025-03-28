@@ -261,10 +261,41 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Fetches a user's Spotify playlists
+   *
+   * @param req The HTTP request object containing the username in the request body
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * **/
+  const getSpotifyPlaylists = async (req: Request, res: Response) => {
+
+    try {
+        const { access_token } = req.body;
+
+        console.log('access_token', access_token);
+
+        const playlistResponse = await axios.get(`https://api.spotify.com/v1/me/playlists`, {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        });
+
+        console.log('playlistResponse', playlistResponse.data.items);
+        res.status(200).json(playlistResponse.data.items);
+    } catch (error) {
+        console.error('Error fetching Spotify playlists controller:', error);
+        res.status(500).json({ error: 'Error fetching Spotify playlists controller' });
+    }
+    
+  };
+  
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
   router.post('/auth/refresh', refreshSpotifyToken);
+  router.post('/getPlaylists', getSpotifyPlaylists);
   return router;
 };
 

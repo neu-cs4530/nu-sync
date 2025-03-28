@@ -8,6 +8,7 @@ import {
 } from '../types/types';
 import useUserContext from './useUserContext';
 import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
+import { getSpotifyPlaylists } from '../services/spotifyService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -22,6 +23,9 @@ const useDirectMessage = () => {
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -72,10 +76,32 @@ const useDirectMessage = () => {
     setShowCreatePanel(false);
   };
 
+  const fetchSpotifyPlaylists = async () => {
+    try {
+      const allPlaylists = await getSpotifyPlaylists(user.username);
+      setPlaylists(allPlaylists || []);
+      setShowPlaylistDropdown(true);
+    }
+    catch (error) {
+      setError('Error fetching Spotify playlists');
+    }
+  }
+
   const handleSendSpotifyPlaylist = async () => {
+
+    if (!selectedPlaylist || !selectedChat?._id) {
+      setError('Please select a playlist');
+      return;
+    }
+
     if (selectedChat?._id) {
+
+      const allPlaylists = await getSpotifyPlaylists(user.username);
+      setPlaylists(allPlaylists);
+      console.log(playlists);
+
       const message: Omit<Message, 'type'> = {
-        msg: 'Playlist shared',
+        msg: `Check out this playlist: ${selectedPlaylist.name}\n${selectedPlaylist.external_urls.spotify}`,
         msgFrom: user.username,
         msgDateTime: new Date(),
       };
@@ -83,6 +109,8 @@ const useDirectMessage = () => {
       const chat = await sendMessage(message, selectedChat._id);
       setSelectedChat(chat);
       setError(null);
+      setSelectedPlaylist(null);
+      setShowPlaylistDropdown(false);
     } else {
       setError('No chat selected');
     }
@@ -147,6 +175,11 @@ const useDirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    fetchSpotifyPlaylists,
+    showPlaylistDropdown,
+    playlists,
+    selectedPlaylist,
+    setSelectedPlaylist,
     handleSendSpotifyPlaylist,
     error,
   };
