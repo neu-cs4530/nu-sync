@@ -1,7 +1,7 @@
 import express, { Request, Response, Router } from 'express';
 import querystring from 'querystring';
 import axios from 'axios';
-import { FakeSOSocket } from '../types/types';
+import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 
 // ensures correct response format from spotify
@@ -17,6 +17,7 @@ const spotifyController = (socket: FakeSOSocket) => {
   const clientId: string = process.env.SPOTIFY_CLIENT_ID || '';
   const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
   const redirectUri = process.env.REDIRECT_URI;
+  const clientUrl = process.env.CLIENT_URI || '';
 
   /**
    * Initiates the Spotify OAuth flow by redirecting the user to Spotify's authorization page, where user will be prompted to log in
@@ -62,7 +63,7 @@ const spotifyController = (socket: FakeSOSocket) => {
     // verifies the state is correct
     if (state === null) {
       res.redirect(
-        `${redirectUri}/home#${querystring.stringify({
+        `${clientUrl}/home#${querystring.stringify({
           error: 'state_mismatch',
         })}`,
       );
@@ -122,7 +123,7 @@ const spotifyController = (socket: FakeSOSocket) => {
         };
 
         res.redirect(
-          `${redirectUri}/user/${username}?spotify_data=${Buffer.from(
+          `${clientUrl}/user/${username}?spotify_data=${Buffer.from(
             JSON.stringify(spotifyData),
           ).toString('base64')}`,
         );
@@ -184,9 +185,85 @@ const spotifyController = (socket: FakeSOSocket) => {
     res.status(200).json({ message: 'Spotify disconnected successfully' });
   };
 
+  /**
+   * Refreshes a user's Spotify access token using their stored refresh token
+   */
+  const refreshSpotifyToken = async (req: Request, res: Response) => {
+    try {
+      const { username } = req.body;
+      if (!username) {
+        return res.status(400).json({ error: 'Username is required' });
+      }
+
+      // 1. Fetch the user from DB
+      const userDoc = await UserModel.findOne({ username });
+      if (!userDoc) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      const user = userDoc as unknown as DatabaseUser;
+
+      // 2. Check if the user has a stored refresh token
+      const refreshToken = user.spotifyRefreshToken;
+      if (!refreshToken) {
+        return res.status(400).json({ error: 'No Spotify refresh token stored for this user' });
+      }
+
+      // 3. Request a new access token from Spotify
+      const tokenParams = {
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      };
+
+      const spotifyResponse = await axios.post(
+        'https://accounts.spotify.com/api/token',
+        querystring.stringify(tokenParams),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+          },
+        },
+      );
+
+      // 4. Update tokens if new ones were returned
+      const newAccessToken = spotifyResponse.data.access_token;
+      const newRefreshToken = spotifyResponse.data.refresh_token;
+      // Spotify may not always return a new refresh token
+
+      // 5. Update the database
+      const updateFields: { spotifyAccessToken: string; spotifyRefreshToken?: string } = {
+        spotifyAccessToken: newAccessToken,
+      };
+      if (newRefreshToken) {
+        updateFields.spotifyRefreshToken = newRefreshToken;
+      }
+
+      await UserModel.findOneAndUpdate(
+        { username },
+        {
+          $set: updateFields,
+        },
+        { new: true },
+      );
+
+      // 6. Return the updated tokens (or handle as needed)
+      return res.json({
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken || refreshToken,
+        message: 'Spotify access token refreshed successfully',
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        return res.status(500).json({ error: error.message });
+      }
+      return res.status(500).json({ error: 'Unknown error refreshing Spotify token' });
+    }
+  };
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
+  router.post('/auth/refresh', refreshSpotifyToken);
   return router;
 };
 
