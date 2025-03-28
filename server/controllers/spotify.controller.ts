@@ -14,7 +14,7 @@ interface SpotifyTokenResponse {
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
 
-  const clientId: string = process.env.SPOTIFY_CLIENT_ID || '';
+  const clientId: string = process.env.SPOTIFY_CLIENT_ID || 'error';
   const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
   const redirectUri = process.env.REDIRECT_URI;
   const clientUrl = process.env.CLIENT_URI || '';
