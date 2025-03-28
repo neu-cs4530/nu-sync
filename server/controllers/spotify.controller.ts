@@ -16,6 +16,8 @@ const spotifyController = (socket: FakeSOSocket) => {
 
   const clientId: string = process.env.SPOTIFY_CLIENT_ID || 'error';
   const clientSecret: string = process.env.SPOTIFY_CLIENT_SECRET || '';
+  console.log(process.env.REDIRECT_URI);
+  console.log('Running server with REDIRECT_URI:', process.env.REDIRECT_URI);
   const redirectUri = process.env.REDIRECT_URI;
   const clientUrl = process.env.CLIENT_URL || '';
 
