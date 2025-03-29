@@ -8,7 +8,13 @@ import {
   SafeDatabaseUser,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage, searchMessages } from '../services/chatService';
+import {
+  createChat,
+  getChatById,
+  getChatsByUser,
+  sendMessage,
+  searchMessages,
+} from '../services/chatService';
 import { getSpotifyPlaylists } from '../services/spotifyService';
 
 // type for spotify playlist
@@ -49,15 +55,18 @@ const useDirectMessage = () => {
   const { user, socket } = useUserContext();
   const [showCreatePanel, setShowCreatePanel] = useState<boolean>(false);
   const [chatToCreate, setChatToCreate] = useState<string>('');
-  const [selectedChat, setSelectedChat] = useState<PopulatedDatabaseChat | null>(null);
+  const [selectedChat, setSelectedChat] =
+    useState<PopulatedDatabaseChat | null>(null);
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] =
+    useState<SpotifyPlaylist | null>(null);
 
-  const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] =
+    useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([]);
   const [searchError, setSearchError] = useState('');
@@ -118,11 +127,23 @@ const useDirectMessage = () => {
       const allPlaylists = await getSpotifyPlaylists(user.username);
       setPlaylists(allPlaylists || []);
       setShowPlaylistDropdown(true);
-    }
-    catch (e) {
+    } catch (e) {
       setError('Error fetching Spotify playlists');
     }
-  }
+  };
+
+  const handleDirectChatWithFriend = async (username: string) => {
+    try {
+      const chat = await createChat([user.username, username]);
+
+      setSelectedChat(chat);
+      handleJoinChat(chat._id);
+
+      setShowCreatePanel(false);
+    } catch (err) {
+      setError(`Failed to create chat: ${(err as Error).message}`);
+    }
+  };
 
   const handleSendSpotifyPlaylist = async () => {
     if (!selectedPlaylist || !selectedChat?._id) {
@@ -131,7 +152,6 @@ const useDirectMessage = () => {
     }
 
     if (selectedChat?._id) {
-
       const allPlaylists = await getSpotifyPlaylists(user.username);
       setPlaylists(allPlaylists);
 
@@ -149,8 +169,8 @@ const useDirectMessage = () => {
     } else {
       setError('No chat selected');
     }
-  }
-  
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
@@ -195,7 +215,7 @@ const useDirectMessage = () => {
       switch (type) {
         case 'created': {
           if (chat.participants.includes(user.username)) {
-            setChats(prevChats => [chat, ...prevChats]);
+            setChats((prevChats) => [chat, ...prevChats]);
           }
           return;
         }
@@ -205,9 +225,9 @@ const useDirectMessage = () => {
         }
         case 'newParticipant': {
           if (chat.participants.includes(user.username)) {
-            setChats(prevChats => {
-              if (prevChats.some(c => chat._id === c._id)) {
-                return prevChats.map(c => (c._id === chat._id ? chat : c));
+            setChats((prevChats) => {
+              if (prevChats.some((c) => chat._id === c._id)) {
+                return prevChats.map((c) => (c._id === chat._id ? chat : c));
               }
               return [chat, ...prevChats];
             });
@@ -257,6 +277,7 @@ const useDirectMessage = () => {
     handleSearchResultClick,
     highlightedMessageId,
     messageRefs,
+    handleDirectChatWithFriend,
   };
 };
 
