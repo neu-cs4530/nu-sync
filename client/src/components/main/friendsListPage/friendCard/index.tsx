@@ -43,13 +43,6 @@ const FriendCard = ({ friend, handleFriendSelect }: FriendCardProps) => {
 
       <div className="friend-actions">
         <button
-          className="view-profile-button small-button"
-          onClick={handleViewProfile}
-        >
-          Profile
-        </button>
-
-        <button
           className="send-message-button small-button"
           onClick={handleSendMessage}
         >
