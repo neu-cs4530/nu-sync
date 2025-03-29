@@ -1,4 +1,6 @@
 import './index.css';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { SafeDatabaseUser } from '@fake-stack-overflow/shared';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
@@ -11,6 +13,7 @@ import SearchResultCard from './searchResultCard';
  * It includes a list of users and a chat window to send and receive messages.
  */
 const DirectMessage = () => {
+  const location = useLocation();
   const {
     selectedChat,
     chats,
@@ -20,7 +23,6 @@ const DirectMessage = () => {
     setShowCreatePanel,
     handleSendMessage,
     handleChatSelect,
-    handleUserSelect,
     handleSendSpotifyPlaylist,
     handleDirectChatWithFriend,
     showPlaylistDropdown,
@@ -41,6 +43,16 @@ const DirectMessage = () => {
 
   // const handleSendSpotifyPlaylist = useSpotifyAuth()
 
+  useEffect(() => {
+    const userToChat = localStorage.getItem('openChatWith');
+    if (userToChat) {
+      // Create chat with this user
+      handleDirectChatWithFriend(userToChat);
+      // Remove from localStorage to prevent infinite loops
+      localStorage.removeItem('openChatWith');
+    }
+  }, [handleDirectChatWithFriend]);
+
   return (
     <>
       <div className="create-panel">
@@ -60,7 +72,7 @@ const DirectMessage = () => {
       </div>
 
       <div className="direct-message-container">
-        <div className="chats-list">
+        <div className="chgiats-list">
           <form onSubmit={handleSearch} className="search-bar">
             <input
               type="text"

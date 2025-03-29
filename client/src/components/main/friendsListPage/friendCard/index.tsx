@@ -29,9 +29,8 @@ const FriendCard = ({ friend, handleFriendSelect }: FriendCardProps) => {
     if (handleFriendSelect) {
       handleFriendSelect(friend.username);
     } else {
-      navigate('/direct-message', {
-        state: { selectedUsername: friend.username },
-      });
+      navigate('/messaging/direct-message');
+      localStorage.setItem('openChatWith', friend.username);
     }
   };
 
