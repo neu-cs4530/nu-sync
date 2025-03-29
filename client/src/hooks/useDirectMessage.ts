@@ -8,13 +8,37 @@ import {
   SafeDatabaseUser,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import {
-  createChat,
-  getChatById,
-  getChatsByUser,
-  sendMessage,
-  searchMessages,
-} from '../services/chatService';
+import { createChat, getChatById, getChatsByUser, sendMessage, searchMessages } from '../services/chatService';
+import { getSpotifyPlaylists } from '../services/spotifyService';
+
+// type for spotify playlist
+interface SpotifyPlaylist {
+  collaborative: boolean;
+  description: string;
+  external_urls: {
+    spotify: string;
+  };
+  href: string;
+  id: string;
+  images: { url: string }[]; // Simplified - you can make it richer if you want
+  name: string;
+  owner: {
+    display_name: string;
+    external_urls: { spotify: string };
+    href: string;
+    id: string;
+    type: string;
+    uri: string;
+  };
+  public: boolean;
+  snapshot_id: string;
+  tracks: {
+    href: string;
+    total: number;
+  };
+  type: string;
+  uri: string;
+}
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
@@ -29,6 +53,9 @@ const useDirectMessage = () => {
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
 
   const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,6 +113,44 @@ const useDirectMessage = () => {
     setShowCreatePanel(false);
   };
 
+  const fetchSpotifyPlaylists = async () => {
+    try {
+      const allPlaylists = await getSpotifyPlaylists(user.username);
+      setPlaylists(allPlaylists || []);
+      setShowPlaylistDropdown(true);
+    }
+    catch (e) {
+      setError('Error fetching Spotify playlists');
+    }
+  }
+
+  const handleSendSpotifyPlaylist = async () => {
+    if (!selectedPlaylist || !selectedChat?._id) {
+      setError('Please select a playlist');
+      return;
+    }
+
+    if (selectedChat?._id) {
+
+      const allPlaylists = await getSpotifyPlaylists(user.username);
+      setPlaylists(allPlaylists);
+
+      const message: Omit<Message, 'type'> = {
+        msg: `Check out this playlist: ${selectedPlaylist.name}\n${selectedPlaylist.external_urls.spotify}`,
+        msgFrom: user.username,
+        msgDateTime: new Date(),
+      };
+
+      const chat = await sendMessage(message, selectedChat._id);
+      setSelectedChat(chat);
+      setError(null);
+      setSelectedPlaylist(null);
+      setShowPlaylistDropdown(false);
+    } else {
+      setError('No chat selected');
+    }
+  }
+  
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
@@ -177,6 +242,12 @@ const useDirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    fetchSpotifyPlaylists,
+    showPlaylistDropdown,
+    playlists,
+    selectedPlaylist,
+    setSelectedPlaylist,
+    handleSendSpotifyPlaylist,
     error,
     searchTerm,
     setSearchTerm,
