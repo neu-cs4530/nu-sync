@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FriendRequestCard from './friendRequestCard';
 import useFriendRequests from '../../../hooks/useFriendRequests';
+import useUserContext from '../../../hooks/useUserContext';
 // import './index.css';
 
 const FriendRequestPage = () => {
@@ -16,17 +17,20 @@ const FriendRequestPage = () => {
     removeRequest,
   } = useFriendRequests();
 
+  // Get the current user's username
+  const { user: currentUser } = useUserContext();
+
   // Filter for incoming and outgoing requests
   const incomingRequests = allRequests.filter(
     (req) =>
       req.status === 'pending' &&
-      req.recipient.username !== req.requester.username,
+      req.recipient.username === currentUser.username,
   );
 
   const outgoingRequests = allRequests.filter(
     (req) =>
       req.status === 'pending' &&
-      req.requester.username === req.recipient.username,
+      req.requester.username === currentUser.username,
   );
 
   if (loading) {
