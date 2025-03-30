@@ -47,11 +47,11 @@ const spotifyController = (socket: FakeSOSocket) => {
         const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
         res.redirect(redirectUrl);
       } catch (error) {
-        const axiosError = error as AxiosError;
-        console.error('Spotify API error:', axiosError.response?.status, axiosError.response?.data);
-        res.status(axiosError.response?.status || 500).json({
-          error: axiosError.response?.data || 'Unknown Spotify error',
-        });
+        // const axiosError = error as AxiosError;
+        // console.error('Spotify API error:', axiosError.response?.status, axiosError.response?.data);
+        // res.status(axiosError.response?.status || 500).json({
+        //   error: axiosError.response?.data || 'Unknown Spotify error',
+        // });
       }
       
       };
@@ -139,12 +139,12 @@ const spotifyController = (socket: FakeSOSocket) => {
           ).toString('base64')}`,
         );
       } catch (error) {
-        const axiosError = error as AxiosError;
-        console.error(
-          'Error when fetching Spotify profile:',
-          axiosError.response?.status,
-          axiosError.response?.data,
-        );
+        // const axiosError = error as AxiosError;
+        // console.error(
+        //   'Error when fetching Spotify profile:',
+        //   axiosError.response?.status,
+        //   axiosError.response?.data,
+        // );
         if (error instanceof Error) {
           res.status(500).send(`Error when fetching spotify user profile: ${error.message}`);
         } else {
@@ -152,12 +152,12 @@ const spotifyController = (socket: FakeSOSocket) => {
         }
       }
     } catch (error) {
-      const axiosError = error as AxiosError;
-      console.error(
-        'Error when fetching access token:',
-        axiosError.response?.status,
-        axiosError.response?.data,
-      );
+      // const axiosError = error as AxiosError;
+    //   console.error(
+    //     'Error when fetching access token:',
+    //     axiosError.response?.status,
+    //     axiosError.response?.data,
+    //   );
       if (error instanceof Error) {
         res.status(500).send(`Invalid spotify access token: ${error.message}`);
       } else {
