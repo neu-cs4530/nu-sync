@@ -1,6 +1,5 @@
 import './index.css';
-import { useEffect, useState } from 'react';
-import useUserContext from '../../../hooks/useUserContext';
+import { useEffect } from 'react';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
@@ -12,8 +11,6 @@ import SearchResultCard from './searchResultCard';
  * It includes a list of users and a chat window to send and receive messages.
  */
 const DirectMessage = () => {
-  const { user } = useUserContext();
-
   const {
     selectedChat,
     chats,
@@ -24,8 +21,6 @@ const DirectMessage = () => {
     handleSendMessage,
     handleChatSelect,
     handleDirectChatWithFriend,
-    handleUserSelect,
-    handleCreateChat,
     handleSendSpotifyPlaylist,
     showPlaylistDropdown,
     playlists,
@@ -154,7 +149,10 @@ const DirectMessage = () => {
                 </button>
 
                 {/* Spotify Playlist Dropdown */}
-                <button className='custom-button' onClick={fetchSpotifyPlaylists}>
+                <button
+                  className="custom-button"
+                  onClick={fetchSpotifyPlaylists}
+                >
                   Share Spotify Playlist
                 </button>
 
