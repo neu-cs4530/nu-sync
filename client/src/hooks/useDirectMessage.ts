@@ -62,8 +62,7 @@ const useDirectMessage = () => {
   const [error, setError] = useState<string | null>(null);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
-  const [selectedPlaylist, setSelectedPlaylist] =
-    useState<SpotifyPlaylist | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
 
   const [highlightedMessageId, setHighlightedMessageId] =
     useState<ObjectId | null>(null);
@@ -129,7 +128,6 @@ const useDirectMessage = () => {
 
   const handleDirectChatWithFriend = async (username: string) => {
     try {
-      // Get the latest chats from server first
       const latestChats = await getChatsByUser(user.username);
 
       // Check if a chat already exists

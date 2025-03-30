@@ -23,8 +23,10 @@ const DirectMessage = () => {
     setShowCreatePanel,
     handleSendMessage,
     handleChatSelect,
-    handleSendSpotifyPlaylist,
     handleDirectChatWithFriend,
+    handleUserSelect,
+    handleCreateChat,
+    handleSendSpotifyPlaylist,
     showPlaylistDropdown,
     playlists,
     selectedPlaylist,
@@ -49,8 +51,6 @@ const DirectMessage = () => {
       // Remove from localStorage immediately
       localStorage.removeItem('openChatWith');
 
-      // Just create the chat directly - don't try to check for existing
-      // Since handleDirectChatWithFriend will handle that check internally
       handleDirectChatWithFriend(userToChat);
     }
   }, [handleDirectChatWithFriend]);
@@ -154,10 +154,7 @@ const DirectMessage = () => {
                 </button>
 
                 {/* Spotify Playlist Dropdown */}
-                <button
-                  className="custom-button"
-                  onClick={fetchSpotifyPlaylists}
-                >
+                <button className='custom-button' onClick={fetchSpotifyPlaylists}>
                   Share Spotify Playlist
                 </button>
 
