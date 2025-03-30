@@ -345,9 +345,14 @@ const spotifyController = (socket: FakeSOSocket) => {
           return res.status(200).json(retryResponse.data.items);
           }
           if (axiosError.response?.status === 429) {
-            // const retryAfter = axiosError.response.headers['retry-after'];
-            // console.warn(`Rate limited by Spotify. Retry after ${retryAfter} seconds.`);
-            return res.status(429).json({ error: 'Rate limited by Spotify. Try again later.' });
+            const retryAfter = axiosError.response.headers['retry-after'];
+            console.warn(`Rate limited by Spotify. Retry after ${retryAfter} seconds.`);
+
+            return res.status(429).json({
+              error: 'Rate limited by Spotify. Try again later.',
+              retry_after: retryAfter,
+              raw_spotify_error: axiosError.response.data,
+            });
           }
         throw error;
       }
