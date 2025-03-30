@@ -1,13 +1,20 @@
 import { ObjectId } from 'mongodb';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ChatUpdatePayload,
   Message,
+  MessageSearchResult,
   PopulatedDatabaseChat,
   SafeDatabaseUser,
 } from '../types/types';
 import useUserContext from './useUserContext';
-import { createChat, getChatById, getChatsByUser, sendMessage } from '../services/chatService';
+import {
+  createChat,
+  getChatById,
+  getChatsByUser,
+  sendMessage,
+  searchMessages,
+} from '../services/chatService';
 import { getSpotifyPlaylists } from '../services/spotifyService';
 
 // type for spotify playlist
@@ -55,6 +62,13 @@ const useDirectMessage = () => {
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
+
+  const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([]);
+  const [searchError, setSearchError] = useState('');
+
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
@@ -144,6 +158,38 @@ const useDirectMessage = () => {
     }
   }
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+
+    try {
+      const results = await searchMessages(user.username, searchTerm.trim());
+      setSearchResults(results);
+      setSearchError('');
+    } catch (err) {
+      setSearchError((err as Error).message);
+      setSearchResults([]);
+    }
+  };
+
+  const handleSearchResultClick = async (result: MessageSearchResult) => {
+    await handleChatSelect(result.chatId);
+    setSearchTerm('');
+    setSearchResults([]);
+    setHighlightedMessageId(result._id);
+
+    setTimeout(() => {
+      const target = messageRefs.current[String(result._id)];
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
+    setTimeout(() => {
+      setHighlightedMessageId(null);
+    }, 1500);
+  };
+
   useEffect(() => {
     const fetchChats = async () => {
       const userChats = await getChatsByUser(user.username);
@@ -210,6 +256,14 @@ const useDirectMessage = () => {
     setSelectedPlaylist,
     handleSendSpotifyPlaylist,
     error,
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    searchError,
+    handleSearch,
+    handleSearchResultClick,
+    highlightedMessageId,
+    messageRefs,
   };
 };
 

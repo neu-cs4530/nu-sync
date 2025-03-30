@@ -8,6 +8,7 @@
     "shared"
   ],
   "dependencies": {
+    "escape-string-regexp": "^5.0.0",
     "fake-stack-overflow": "file:"
   }
 }

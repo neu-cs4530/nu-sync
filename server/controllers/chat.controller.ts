@@ -5,6 +5,7 @@ import {
   getChat,
   addParticipantToChat,
   getChatsByParticipants,
+  searchMessagesInUserChats,
 } from '../services/chat.service';
 import { populateDocument } from '../utils/database.util';
 import {
@@ -15,6 +16,7 @@ import {
   ChatIdRequest,
   GetChatByParticipantsRequest,
   PopulatedDatabaseChat,
+  SearchMessagesRequest,
 } from '../types/types';
 import { saveMessage } from '../services/message.service';
 
@@ -57,6 +59,50 @@ const chatController = (socket: FakeSOSocket) => {
     const { chatId } = req.params;
     const { username: userId } = req.body;
     return !!chatId && !!userId;
+  };
+
+  /**
+   * Validates the search request body to ensure it contains valid `username` and `keyword`.
+   * @param req The incoming search request.
+   * @returns `true` if the request is valid; otherwise, `false`.
+   */
+  const isSearchMessagesRequestValid = (req: SearchMessagesRequest): boolean => {
+    const { username, keyword } = req.body;
+    return (
+      typeof username === 'string' &&
+      username.trim().length > 0 &&
+      typeof keyword === 'string' &&
+      keyword.trim().length > 0 &&
+      keyword.length <= 50
+    );
+  };
+
+  /**
+   * Controller handler to search messages for a user by keyword.
+   * Validates input and invokes the chat search service.
+   *
+   * @param req The incoming search request.
+   * @param res The response object to send results.
+   */
+  const searchMessagesRoute = async (req: SearchMessagesRequest, res: Response): Promise<void> => {
+    if (!req.body || !isSearchMessagesRequestValid(req)) {
+      res.status(400).send('Invalid search request. Missing or invalid fields.');
+      return;
+    }
+
+    const { username, keyword } = req.body;
+
+    try {
+      const result = await searchMessagesInUserChats(username, keyword);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      res.status(200).json(result);
+    } catch (err: unknown) {
+      res.status(500).send(`Error searching messages: ${(err as Error).message}`);
+    }
   };
 
   /**
@@ -255,6 +301,7 @@ const chatController = (socket: FakeSOSocket) => {
   });
 
   // Register the routes
+  router.post('/searchMessages', searchMessagesRoute);
   router.post('/createChat', createChatRoute);
   router.post('/:chatId/addMessage', addMessageToChatRoute);
   router.get('/:chatId', getChatRoute);
