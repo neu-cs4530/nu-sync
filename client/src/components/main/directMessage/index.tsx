@@ -119,7 +119,9 @@ const DirectMessage = () => {
                   Send
                 </button>
 
-                <SpotifySharingComponent {...spotifySharing} />
+                <div className='spotify-panel-wrapper'>
+                  <SpotifySharingComponent {...spotifySharing} />
+                </div>
               </div>
             </>
           ) : (

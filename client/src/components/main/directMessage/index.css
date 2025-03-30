@@ -125,3 +125,13 @@
     background-color: transparent;
   }
 }
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.spotify-panel-wrapper {
+  margin-top: 8px;
+}

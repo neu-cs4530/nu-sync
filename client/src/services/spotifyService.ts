@@ -18,11 +18,11 @@ const loginSpotify = async () => {
  * @param username - The username of the user to get the playlists for
  * @throws Error if there is an issue fetching the playlists
  */
-export const getSpotifyPlaylists = async () => {
-
+export const getSpotifyPlaylists = async (username: string) => {
   const accessToken = localStorage.getItem('spotify_access_token');
   const res = await api.post(`${SPOTIFY_API_URL}/getPlaylists`, {
     access_token: accessToken,
+    username,
   });
 
   return res.data;

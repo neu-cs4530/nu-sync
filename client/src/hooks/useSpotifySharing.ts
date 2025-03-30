@@ -10,15 +10,10 @@ import { Message } from '../types/types';
 import useUserContext from './useUserContext';
 import { sendMessage } from '../services/chatService';
 
-// Define types for Spotify data structures
-// type for spotify playlist
-
 export interface SpotifyPlaylist {
   collaborative: boolean;
   description: string;
-  external_urls: {
-    spotify: string;
-  };
+  external_urls: { spotify: string };
   href: string;
   id: string;
   images: { url: string }[];
@@ -33,23 +28,17 @@ export interface SpotifyPlaylist {
   };
   public: boolean;
   snapshot_id: string;
-  tracks: {
-    href: string;
-    total: number;
-  };
+  tracks: { href: string; total: number };
   type: string;
   uri: string;
 }
+
 export interface SpotifyTrack {
   name: string;
   url: string;
   artists: string[];
 }
 
-/**
- * useSpotifySharing handles the logic for sharing Spotify content in chat.
- * It centralizes functionality for sending playlists, songs, and the current track.
- */
 const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
   const { user } = useUserContext();
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
@@ -58,13 +47,12 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  /**
-   * On mount, check if the user is currently playing a track on Spotify.
-   */
   useEffect(() => {
     const checkSpotifyConnection = async () => {
       try {
-        const { isConnected: connected, currentlyPlaying } = await checkSpotifyStatus(user.username);
+        const { isConnected: connected, currentlyPlaying } = await checkSpotifyStatus(
+          user.username,
+        );
         setIsConnected(connected);
         setCurrentlyPlayingAvailable(currentlyPlaying);
       } catch {
@@ -74,25 +62,17 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     };
 
     checkSpotifyConnection();
-  }, []);
+  }, [user.username]);
 
-
-  /**
-   * Fetches the user's Spotify playlists.
-   */
   const fetchPlaylists = async () => {
     try {
-      const data = await getSpotifyPlaylists();
+      const data = await getSpotifyPlaylists(user.username);
       setPlaylists(data.items || data);
     } catch {
       setError('Failed to fetch playlists.');
     }
   };
 
-  /**
-   * Fetches the tracks from a selected playlist.
-   * @param playlistId The Spotify playlist ID
-   */
   const fetchTracks = async (playlistId: string) => {
     try {
       const tracks = await getPlaylistTracks(playlistId);
@@ -102,10 +82,6 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     }
   };
 
-  /**
-   * Sends a Spotify playlist as a message in the current chat.
-   * @param playlist The playlist object
-   */
   const sendPlaylist = async (playlist: SpotifyPlaylist) => {
     if (!selectedChatId) return;
     const message: Omit<Message, 'type'> = {
@@ -116,10 +92,6 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     await sendMessage(message, selectedChatId);
   };
 
-  /**
-   * Sends a specific Spotify song as a message in the current chat.
-   * @param song The track object
-   */
   const sendSong = async (song: SpotifyTrack) => {
     if (!selectedChatId) return;
     const message: Omit<Message, 'type'> = {
@@ -130,9 +102,6 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     await sendMessage(message, selectedChatId);
   };
 
-  /**
-   * Sends the currently playing Spotify track as a message in the current chat.
-   */
   const sendCurrentTrack = async () => {
     if (!selectedChatId) return;
     try {

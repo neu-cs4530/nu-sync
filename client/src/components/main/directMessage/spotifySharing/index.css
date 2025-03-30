@@ -1,59 +1,86 @@
 .spotify-container {
-  background-color: #f9f9f9;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  position: relative;
+  width: 100%;
 }
 
-.spotify-header {
-  font-size: 18px;
+.spotify-toggle-button {
+  background-color: #111;
   color: #1db954;
+  border: 1px solid #1db954;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.spotify-panel {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  background-color: #1c1c1c;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.spotify-panel.slide-in {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.spotify-panel.slide-out {
+  transform: translateY(-10px);
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.spotify-action-row {
+  display: flex;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
-.spotify-section {
-  margin-bottom: 16px;
+.spotify-action-button {
+  background-color: #111;
+  color: #1db954;
+  border: 1px solid #1db954;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.spotify-action-button.half-width {
+  flex: 1;
 }
 
 .spotify-button {
-  display: block;
   background-color: #1db954;
   color: white;
   border: none;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 6px;
-  cursor: pointer;
+  border-radius: 8px;
+  padding: 10px 14px;
   width: 100%;
-  text-align: left;
-  transition: background-color 0.2s ease;
+  margin-bottom: 8px;
+  cursor: pointer;
 }
 
-.spotify-button:hover {
-  background-color: #1aa34a;
-}
-
-.spotify-tracks {
-  margin-top: 8px;
-  padding-left: 10px;
+.playlist-dropdown select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
 
 .spotify-track-button {
-  display: block;
-  background-color: #efefef;
-  color: #333;
-  border: 1px solid #ccc;
+  background: #2a2a2a;
+  color: #fff;
+  border: none;
   padding: 8px;
-  border-radius: 4px;
-  margin-top: 4px;
+  margin-bottom: 6px;
   width: 100%;
   text-align: left;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-}
-
-.spotify-track-button:hover {
-  background-color: #e0e0e0;
 }

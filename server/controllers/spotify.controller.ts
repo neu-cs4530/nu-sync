@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from 'express';
 import querystring from 'querystring';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 
@@ -39,12 +39,23 @@ const spotifyController = (socket: FakeSOSocket) => {
       scope,
       redirect_uri: redirectUri,
       state,
+      show_dialog: true,
     };
 
-    // redirects user to spotify login page
-    const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
-    res.redirect(redirectUrl);
-  };
+      try {
+        // redirects user to spotify login page
+        const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
+        res.redirect(redirectUrl);
+      } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error('Spotify API error:', axiosError.response?.status, axiosError.response?.data);
+        res.status(axiosError.response?.status || 500).json({
+          error: axiosError.response?.data || 'Unknown Spotify error',
+        });
+      }
+      
+      };
+      
 
   /**
    * Handles callback from Spotify after user authorization
@@ -60,7 +71,6 @@ const spotifyController = (socket: FakeSOSocket) => {
     const state = req.query.state || null;
     const username = req.query.state?.toString().split(':')[1] || '';
 
-    // verifies the state is correct
     if (state === null) {
       res.redirect(
         `${clientUrl}/home#${querystring.stringify({
@@ -70,7 +80,6 @@ const spotifyController = (socket: FakeSOSocket) => {
       return;
     }
 
-    // requests access token from spotify
     try {
       const tokenParams = {
         code: code?.toString() || '',
@@ -93,7 +102,6 @@ const spotifyController = (socket: FakeSOSocket) => {
       const refreshToken = tokenResponse.data.refresh_token;
       const expiresIn = tokenResponse.data.expires_in;
 
-      // exchanges access token for user profile
       try {
         const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
           headers: {
@@ -101,8 +109,7 @@ const spotifyController = (socket: FakeSOSocket) => {
           },
         });
 
-        // updates user in database with spotify info
-        await UserModel.findOneAndUpdate(
+        const updatedUser = await UserModel.findOneAndUpdate(
           { username },
           {
             $set: {
@@ -113,6 +120,10 @@ const spotifyController = (socket: FakeSOSocket) => {
           },
           { new: true },
         );
+        if (!updatedUser) {
+          res.status(404).send(`User "${username}" not found in database.`);
+          return;
+        }
 
         const spotifyData = {
           access_token: accessToken,
@@ -128,6 +139,12 @@ const spotifyController = (socket: FakeSOSocket) => {
           ).toString('base64')}`,
         );
       } catch (error) {
+        const axiosError = error as AxiosError;
+        console.error(
+          'Error when fetching Spotify profile:',
+          axiosError.response?.status,
+          axiosError.response?.data,
+        );
         if (error instanceof Error) {
           res.status(500).send(`Error when fetching spotify user profile: ${error.message}`);
         } else {
@@ -135,6 +152,12 @@ const spotifyController = (socket: FakeSOSocket) => {
         }
       }
     } catch (error) {
+      const axiosError = error as AxiosError;
+      console.error(
+        'Error when fetching access token:',
+        axiosError.response?.status,
+        axiosError.response?.data,
+      );
       if (error instanceof Error) {
         res.status(500).send(`Invalid spotify access token: ${error.message}`);
       } else {
@@ -142,6 +165,7 @@ const spotifyController = (socket: FakeSOSocket) => {
       }
     }
   };
+
 
   /**
    * Disconnects current user's Spotify account by removing their stored information in the database and frontend
@@ -268,18 +292,68 @@ const spotifyController = (socket: FakeSOSocket) => {
    *
    * * */
   const getSpotifyPlaylists = async (req: Request, res: Response) => {
+      const { username } = req.body;
+      // console.log('Received playlist request for username:', username);
+
     try {
-      const { access_token: accessToken } = req.body;
+        const userDoc = await UserModel.findOne({ username });
+        // console.log('Fetched userDoc:', userDoc);
+      if (!userDoc) {
+        return res.status(404).json({ error: 'User not found' });
+      }
 
-      const playlistResponse = await axios.get(`https://api.spotify.com/v1/me/playlists`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+        const accessToken = userDoc.spotifyAccessToken;
+        // console.log('Using accessToken:', accessToken);
 
-      res.status(200).json(playlistResponse.data.items);
-    } catch (error) {
-      res.status(500).json({ error: 'Error fetching Spotify playlists controller' });
+      try {
+        const playlistResponse = await axios.get(`https://api.spotify.com/v1/me/playlists`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        return res.status(200).json(playlistResponse.data.items);
+      } catch (error) {
+        const axiosError = error as AxiosError;
+
+        if (axiosError.response?.status === 401) {
+          // Token expired - refresh it
+          const refreshRes = await axios.post(
+            'https://accounts.spotify.com/api/token',
+            querystring.stringify({
+              grant_type: 'refresh_token',
+              refresh_token: userDoc.spotifyRefreshToken,
+            }),
+            {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+              },
+            },
+          );
+
+          const newAccessToken = refreshRes.data.access_token;
+          await UserModel.updateOne({ username }, { $set: { spotifyAccessToken: newAccessToken } });
+
+          // Retry original request
+          const retryResponse = await axios.get(`https://api.spotify.com/v1/me/playlists`, {
+            headers: {
+              Authorization: `Bearer ${newAccessToken}`,
+            },
+          });
+
+          return res.status(200).json(retryResponse.data.items);
+          }
+          if (axiosError.response?.status === 429) {
+            // const retryAfter = axiosError.response.headers['retry-after'];
+            // console.warn(`Rate limited by Spotify. Retry after ${retryAfter} seconds.`);
+            return res.status(429).json({ error: 'Rate limited by Spotify. Try again later.' });
+          }
+        throw error;
+      }
+    } catch (err) {
+        // console.error('Error in getSpotifyPlaylists:', err);
+      return res.status(500).json({ error: 'Error fetching Spotify playlists' });
     }
   };
 
