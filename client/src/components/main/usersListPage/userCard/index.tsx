@@ -107,6 +107,7 @@ const UserCardView = (props: UserProps) => {
   // Handle sending a private message
   const handleSendMessage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    localStorage.setItem('openChatWith', user.username);
     navigate('/messaging/direct-message');
   };
 

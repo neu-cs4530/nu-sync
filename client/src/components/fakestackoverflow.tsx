@@ -17,7 +17,7 @@ import UsersListPage from './main/usersListPage';
 import ProfileSettings from './profileSettings';
 import AllGamesPage from './main/games/allGamesPage';
 import GamePage from './main/games/gamePage';
-import FriendsPage from './main/friendsPage';
+import FriendsListPage from './main/friendsListPage';
 import FriendRequestPage from './main/friendRequestPage/friendRequestPage';
 
 const ProtectedRoute = ({
@@ -35,7 +35,7 @@ const ProtectedRoute = ({
 
   // If no user data at all, redirect to login
   if (!user && !storedUser) {
-    return <Navigate to='/' />;
+    return <Navigate to="/" />;
   }
 
   // For Spotify callback, redirect to user profile
@@ -48,11 +48,15 @@ const ProtectedRoute = ({
 
   // Normal case - require both user and socket
   if (user && socket) {
-    return <UserContext.Provider value={{ user, socket }}>{children}</UserContext.Provider>;
+    return (
+      <UserContext.Provider value={{ user, socket }}>
+        {children}
+      </UserContext.Provider>
+    );
   }
 
   // Default case - redirect to login
-  return <Navigate to='/' />;
+  return <Navigate to="/" />;
 };
 
 /**
@@ -104,7 +108,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
             <Route path="/user/:username" element={<ProfileSettings />} />
             <Route path="/games" element={<AllGamesPage />} />
             <Route path="/games/:gameID" element={<GamePage />} />
-            <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/friends" element={<FriendsListPage />} />
             <Route path="/requests" element={<FriendRequestPage />} />
           </Route>
         }
