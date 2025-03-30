@@ -1,7 +1,6 @@
 import './index.css';
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { SafeDatabaseUser } from '@fake-stack-overflow/shared';
+import { useEffect, useState } from 'react';
+import useUserContext from '../../../hooks/useUserContext';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
@@ -13,7 +12,8 @@ import SearchResultCard from './searchResultCard';
  * It includes a list of users and a chat window to send and receive messages.
  */
 const DirectMessage = () => {
-  const location = useLocation();
+  const { user } = useUserContext();
+
   const {
     selectedChat,
     chats,
@@ -46,10 +46,12 @@ const DirectMessage = () => {
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
     if (userToChat) {
-      // Create chat with this user
-      handleDirectChatWithFriend(userToChat);
-      // Remove from localStorage to prevent infinite loops
+      // Remove from localStorage immediately
       localStorage.removeItem('openChatWith');
+
+      // Just create the chat directly - don't try to check for existing
+      // Since handleDirectChatWithFriend will handle that check internally
+      handleDirectChatWithFriend(userToChat);
     }
   }, [handleDirectChatWithFriend]);
 

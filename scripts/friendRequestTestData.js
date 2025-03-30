@@ -52,9 +52,24 @@ async function createTestFriendRequests() {
       `Deleted ${deleteResult.deletedCount} existing friend requests`,
     );
 
-    // Prepare friend requests with ObjectIds
-    const friendRequests = [
-      // ACCEPTED FRIEND REQUESTS (10)
+    // Track relationships to avoid duplicates
+    const relationships = new Set();
+
+    // Helper function to add relationship to tracking set
+    const addRelationship = (user1, user2) => {
+      const pair = [user1.toString(), user2.toString()].sort().join('-');
+      relationships.add(pair);
+      return pair;
+    };
+
+    // Helper function to check if relationship already exists
+    const hasRelationship = (user1, user2) => {
+      const pair = [user1.toString(), user2.toString()].sort().join('-');
+      return relationships.has(pair);
+    };
+
+    // ACCEPTED FRIEND REQUESTS (10)
+    const acceptedRequests = [
       {
         requester: userMap['sana'],
         recipient: userMap['ihba001'],
@@ -70,209 +85,216 @@ async function createTestFriendRequests() {
         updatedAt: new Date('2023-01-21'),
       },
       {
-        requester: userMap['hamkalo'] || userMap['sana'],
-        recipient: userMap['alia'] || userMap['ihba001'],
+        requester: userMap['hamkalo'],
+        recipient: userMap['alia'],
         status: 'accepted',
         requestedAt: new Date('2023-01-10'),
         updatedAt: new Date('2023-01-12'),
       },
       {
-        requester: userMap['azad'] || userMap['sana'],
-        recipient: userMap['abhi3241'] || userMap['ihba001'],
+        requester: userMap['azad'],
+        recipient: userMap['abhi3241'],
         status: 'accepted',
         requestedAt: new Date('2023-01-05'),
         updatedAt: new Date('2023-01-06'),
       },
       {
-        requester: userMap['abhi3241'] || userMap['sana'],
-        recipient: userMap['azad'] || userMap['ihba001'],
-        status: 'accepted',
-        requestedAt: new Date('2023-03-03'),
-        updatedAt: new Date('2023-03-04'),
-      },
-      {
         requester: userMap['sana'],
-        recipient: userMap['azad'] || userMap['ihba001'],
+        recipient: userMap['azad'],
         status: 'accepted',
         requestedAt: new Date('2023-03-05'),
         updatedAt: new Date('2023-03-06'),
       },
       {
-        requester: userMap['sana'],
-        recipient: userMap['abhi3241'] || userMap['ihba001'],
-        status: 'accepted',
-        requestedAt: new Date('2023-03-01'),
-        updatedAt: new Date('2023-03-02'),
-      },
-      {
         requester: userMap['ihba001'],
-        recipient: userMap['abhi3241'] || userMap['azad'],
+        recipient: userMap['azad'],
         status: 'accepted',
         requestedAt: new Date('2023-04-10'),
         updatedAt: new Date('2023-04-12'),
       },
       {
         requester: userMap['ihba001'],
-        recipient: userMap['saltyPeter'] || userMap['azad'],
+        recipient: userMap['alia'],
         status: 'accepted',
         requestedAt: new Date('2023-04-15'),
         updatedAt: new Date('2023-04-17'),
       },
       {
-        requester: userMap['saltyPeter'] || userMap['azad'],
-        recipient: userMap['abhi3241'] || userMap['monkeyABC'],
+        requester: userMap['saltyPeter'],
+        recipient: userMap['monkeyABC'],
         status: 'accepted',
         requestedAt: new Date('2023-04-20'),
         updatedAt: new Date('2023-04-21'),
       },
-
-      // PENDING FRIEND REQUESTS (15)
       {
-        requester: userMap['saltyPeter'] || userMap['sana'],
-        recipient: userMap['ihba001'],
-        status: 'pending',
-        requestedAt: new Date('2023-02-01'),
-        updatedAt: new Date('2023-02-01'),
+        requester: userMap['hamkalo'],
+        recipient: userMap['monkeyABC'],
+        status: 'accepted',
+        requestedAt: new Date('2023-05-25'),
+        updatedAt: new Date('2023-05-26'),
       },
       {
-        requester: userMap['monkeyABC'] || userMap['abhi3241'],
+        requester: userMap['abaya'],
+        recipient: userMap['mackson3332'],
+        status: 'accepted',
+        requestedAt: new Date('2023-06-01'),
+        updatedAt: new Date('2023-06-02'),
+      },
+    ];
+
+    // Add all accepted relationships to the tracking set
+    acceptedRequests.forEach((req) => {
+      if (req.requester && req.recipient) {
+        addRelationship(req.requester, req.recipient);
+      }
+    });
+
+    // PENDING FRIEND REQUESTS (15)
+    // Define a larger pool of potential pending requests
+    const potentialPendingRequests = [
+      // Users sending requests to sana
+      {
+        requester: userMap['monkeyABC'],
         recipient: userMap['sana'],
         status: 'pending',
         requestedAt: new Date('2023-02-03'),
         updatedAt: new Date('2023-02-03'),
       },
       {
-        requester: userMap['abaya'] || userMap['azad'],
-        recipient: userMap['alia'] || userMap['ihba001'],
-        status: 'pending',
-        requestedAt: new Date('2023-02-05'),
-        updatedAt: new Date('2023-02-05'),
-      },
-      {
-        requester: userMap['abhi3241'] || userMap['monkeyABC'],
-        recipient: userMap['saltyPeter'] || userMap['sana'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-01'),
-        updatedAt: new Date('2023-05-01'),
-      },
-      {
-        requester: userMap['azad'] || userMap['abhi3241'],
-        recipient: userMap['sana'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-03'),
-        updatedAt: new Date('2023-05-03'),
-      },
-      {
-        requester: userMap['alia'] || userMap['azad'],
-        recipient: userMap['sana'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-05'),
-        updatedAt: new Date('2023-05-05'),
-      },
-      {
-        requester: userMap['hamkalo'] || userMap['azad'],
-        recipient: userMap['sana'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-07'),
-        updatedAt: new Date('2023-05-07'),
-      },
-      {
-        requester: userMap['Joji John'] || userMap['monkeyABC'],
+        requester: userMap['Joji John'],
         recipient: userMap['sana'],
         status: 'pending',
         requestedAt: new Date('2023-05-09'),
         updatedAt: new Date('2023-05-09'),
       },
       {
-        requester: userMap['mackson3332'] || userMap['abhi3241'],
+        requester: userMap['mackson3332'],
         recipient: userMap['sana'],
         status: 'pending',
         requestedAt: new Date('2023-05-11'),
         updatedAt: new Date('2023-05-11'),
       },
       {
-        requester: userMap['monkeyABC'] || userMap['azad'],
+        requester: userMap['abaya'],
+        recipient: userMap['sana'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-15'),
+        updatedAt: new Date('2023-05-15'),
+      },
+      // Users sending requests to ihba001
+      {
+        requester: userMap['monkeyABC'],
         recipient: userMap['ihba001'],
         status: 'pending',
         requestedAt: new Date('2023-05-13'),
         updatedAt: new Date('2023-05-13'),
       },
       {
-        requester: userMap['abhi3241'] || userMap['azad'],
-        recipient: userMap['ihba001'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-15'),
-        updatedAt: new Date('2023-05-15'),
-      },
-      {
-        requester: userMap['azad'] || userMap['monkeyABC'],
-        recipient: userMap['ihba001'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-17'),
-        updatedAt: new Date('2023-05-17'),
-      },
-      {
-        requester: userMap['alia'] || userMap['abhi3241'],
-        recipient: userMap['ihba001'],
-        status: 'pending',
-        requestedAt: new Date('2023-05-19'),
-        updatedAt: new Date('2023-05-19'),
-      },
-      {
-        requester: userMap['hamkalo'] || userMap['azad'],
+        requester: userMap['hamkalo'],
         recipient: userMap['ihba001'],
         status: 'pending',
         requestedAt: new Date('2023-05-21'),
         updatedAt: new Date('2023-05-21'),
       },
       {
-        requester: userMap['Joji John'] || userMap['monkeyABC'],
+        requester: userMap['Joji John'],
         recipient: userMap['ihba001'],
         status: 'pending',
         requestedAt: new Date('2023-05-23'),
         updatedAt: new Date('2023-05-23'),
       },
-
-      // REJECTED FRIEND REQUESTS (5)
       {
-        requester: userMap['sana'],
-        recipient: userMap['monkeyABC'] || userMap['abhi3241'],
-        status: 'rejected',
-        requestedAt: new Date('2023-01-30'),
-        updatedAt: new Date('2023-01-31'),
+        requester: userMap['mackson3332'],
+        recipient: userMap['ihba001'],
+        status: 'pending',
+        requestedAt: new Date('2023-06-05'),
+        updatedAt: new Date('2023-06-05'),
       },
+      // Various other pending requests
       {
-        requester: userMap['monkeyABC'] || userMap['azad'],
-        recipient: userMap['saltyPeter'] || userMap['ihba001'],
-        status: 'rejected',
-        requestedAt: new Date('2023-02-02'),
-        updatedAt: new Date('2023-02-03'),
-      },
-      {
-        requester: userMap['abaya'] || userMap['azad'],
-        recipient: userMap['mackson3332'] || userMap['ihba001'],
-        status: 'rejected',
-        requestedAt: new Date('2023-02-04'),
+        requester: userMap['abaya'],
+        recipient: userMap['saltyPeter'],
+        status: 'pending',
+        requestedAt: new Date('2023-02-05'),
         updatedAt: new Date('2023-02-05'),
       },
       {
-        requester: userMap['alia'] || userMap['azad'],
-        recipient: userMap['ihba001'],
-        status: 'rejected',
-        requestedAt: new Date('2023-02-07'),
-        updatedAt: new Date('2023-02-08'),
+        requester: userMap['abhi3241'],
+        recipient: userMap['monkeyABC'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-01'),
+        updatedAt: new Date('2023-05-01'),
       },
       {
-        requester: userMap['abhi3241'] || userMap['sana'],
-        recipient: userMap['hamkalo'] || userMap['azad'],
-        status: 'rejected',
-        requestedAt: new Date('2023-02-09'),
-        updatedAt: new Date('2023-02-10'),
+        requester: userMap['abhi3241'],
+        recipient: userMap['hamkalo'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-03'),
+        updatedAt: new Date('2023-05-03'),
+      },
+      {
+        requester: userMap['alia'],
+        recipient: userMap['mackson3332'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-05'),
+        updatedAt: new Date('2023-05-05'),
+      },
+      {
+        requester: userMap['azad'],
+        recipient: userMap['Joji John'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-07'),
+        updatedAt: new Date('2023-05-07'),
+      },
+      {
+        requester: userMap['saltyPeter'],
+        recipient: userMap['abaya'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-17'),
+        updatedAt: new Date('2023-05-17'),
+      },
+      {
+        requester: userMap['alia'],
+        recipient: userMap['abaya'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-19'),
+        updatedAt: new Date('2023-05-19'),
+      },
+      {
+        requester: userMap['Joji John'],
+        recipient: userMap['mackson3332'],
+        status: 'pending',
+        requestedAt: new Date('2023-05-25'),
+        updatedAt: new Date('2023-05-25'),
+      },
+      {
+        requester: userMap['monkeyABC'],
+        recipient: userMap['abhi3241'],
+        status: 'pending',
+        requestedAt: new Date('2023-06-01'),
+        updatedAt: new Date('2023-06-01'),
       },
     ];
 
-    // Filter out any request with undefined users
-    const validRequests = friendRequests.filter(
+    // Filter out pending requests where an accepted relationship already exists
+    const pendingRequests = potentialPendingRequests
+      .filter((req) => {
+        if (
+          !req.requester ||
+          !req.recipient ||
+          req.requester.equals(req.recipient)
+        ) {
+          return false;
+        }
+        return !hasRelationship(req.requester, req.recipient);
+      })
+      .slice(0, 15); // Take the first 15 valid ones
+
+    // Combine the accepted and pending requests
+    const allRequests = [...acceptedRequests, ...pendingRequests];
+
+    // Filter out any request with undefined users or self-requests
+    const validRequests = allRequests.filter(
       (req) =>
         req.requester && req.recipient && !req.requester.equals(req.recipient),
     );
@@ -287,9 +309,6 @@ async function createTestFriendRequests() {
     );
     console.log(
       `- ${validRequests.filter((r) => r.status === 'pending').length} pending requests`,
-    );
-    console.log(
-      `- ${validRequests.filter((r) => r.status === 'rejected').length} rejected requests`,
     );
 
     return true;

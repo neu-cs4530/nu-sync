@@ -111,11 +111,6 @@ const useDirectMessage = () => {
   };
 
   const handleCreateChat = async () => {
-    if (!chatToCreate) {
-      setError('Please select a user to chat with');
-      return;
-    }
-
     const chat = await createChat([user.username, chatToCreate]);
     setSelectedChat(chat);
     handleJoinChat(chat._id);
@@ -134,10 +129,27 @@ const useDirectMessage = () => {
 
   const handleDirectChatWithFriend = async (username: string) => {
     try {
-      const chat = await createChat([user.username, username]);
+      // Get the latest chats from server first
+      const latestChats = await getChatsByUser(user.username);
 
-      setSelectedChat(chat);
-      handleJoinChat(chat._id);
+      // Check if a chat already exists
+      const existingChat = latestChats.find(
+        (chat) =>
+          chat.participants.length === 2 &&
+          chat.participants.includes(user.username) &&
+          chat.participants.includes(username),
+      );
+
+      if (existingChat) {
+        // If chat exists, just select it
+        setSelectedChat(existingChat);
+        handleJoinChat(existingChat._id);
+      } else {
+        // Create new chat only if one doesn't exist
+        const chat = await createChat([user.username, username]);
+        setSelectedChat(chat);
+        handleJoinChat(chat._id);
+      }
 
       setShowCreatePanel(false);
     } catch (err) {
