@@ -22,6 +22,12 @@ const DirectMessage = () => {
     handleChatSelect,
     handleUserSelect,
     handleCreateChat,
+    handleSendSpotifyPlaylist,
+    showPlaylistDropdown,
+    playlists,
+    selectedPlaylist,
+    setSelectedPlaylist,
+    fetchSpotifyPlaylists,
     error,
     searchTerm,
     setSearchTerm,
@@ -32,6 +38,8 @@ const DirectMessage = () => {
     highlightedMessageId,
     messageRefs,
   } = useDirectMessage();
+
+  // const handleSendSpotifyPlaylist = useSpotifyAuth()
 
   return (
     <>
@@ -122,6 +130,32 @@ const DirectMessage = () => {
                 <button className='custom-button' onClick={handleSendMessage}>
                   Send
                 </button>
+
+                {/* Spotify Playlist Dropdown */}
+                <button className='custom-button' onClick={fetchSpotifyPlaylists}>
+                  Share Spotify Playlist
+                </button>
+
+                {showPlaylistDropdown && (
+                  <>
+                  <div className='playlist-dropdown'>
+                    <select onChange={e => {
+                        const playlist = playlists?.find(p => p.id === e.target.value);
+                        setSelectedPlaylist(playlist || null); 
+                    }}>
+                      {playlists?.map(playlist => (
+                        <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
+                      ))}
+                    </select> 
+                  </div>
+                  <button
+                      className='custom-button'
+                      onClick={handleSendSpotifyPlaylist}
+                      disabled={!selectedPlaylist}>
+                      Send Playlist
+                  </button>
+                  </>
+                )}
               </div>
             </>
           ) : (
