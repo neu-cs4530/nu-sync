@@ -1,3 +1,9 @@
+// type for a song object
+export interface SearchedSong {
+    id: string;
+    name: string;
+    artists: { name: string }[];
+}
 // type for spotify playlist
 export interface SpotifyPlaylist {
     collaborative: boolean;

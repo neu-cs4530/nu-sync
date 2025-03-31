@@ -1,5 +1,5 @@
 import api from './config';
-import { SpotifyTrackItem } from '../types/spotify';
+import { SpotifyTrackItem, SearchedSong } from '../types/spotify';
 
 const SPOTIFY_API_URL = `${process.env.REACT_APP_SERVER_URL}/spotify`;
 
@@ -77,6 +77,24 @@ export const getSongsFromSpotifyPlaylist = async (playlistId: string) => {
   return res.data;
 };
 
+
+/**
+ * Helper function to check if a song in a playlist is the song we are searching for
+ * @param searchedSong - The song object user is finding recommendations for
+ * @param item - The current song in the playlist
+ * @param query - The name of the song user is finding recommendations for
+ * @returns True if the song is the song we are searching for, false otherwise
+ */
+const isSameSong = (searchedSong: SearchedSong, item: SpotifyTrackItem, songName:string) => {
+  const trackName = item.track.name.toLowerCase().trim();
+  const artists = item.track.artists.map((artist) => artist.name.toLowerCase().trim()).join(', ');
+  const combined = `${trackName} ${artists}`;
+  const searchQuery = songName.toLowerCase().trim();
+
+  return item.track.id === searchedSong.id || combined.includes(searchQuery);
+};
+
+
 /**
  * Function to recommend songs based on a song
  *
@@ -97,17 +115,13 @@ export const recommendSongs = async (songName: string) => {
   // remove the song itself, fields we don't need, and limit to 5 songs
   const cleanedSongs = (songsFromPlaylist as SpotifyTrackItem[])
     .filter((item) => item.track)
-    .filter((item) => item.track.id !== searchedSong.id)
+    .filter((item) => !isSameSong(searchedSong, item, songName))
     .map((item) => ({
       name: item.track.name,
       artist: item.track.artists.map((artist) => artist.name).join(', '),
       url: item.track.external_urls.spotify,
-    })).filter((song) => {
-      const modifiedName = song.name.toLowerCase().trim();
-      const modifiedQuery = songName.toLowerCase().trim();
-      return !modifiedName.includes(modifiedQuery);
-    }) // remove the song itself
-    .slice(0, 5); // limit to 5
+    }))
+    .slice(0, 5);
 
   return cleanedSongs;
 };
