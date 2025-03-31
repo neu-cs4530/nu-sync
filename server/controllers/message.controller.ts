@@ -1,6 +1,7 @@
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest, Message } from '../types/types';
 import { saveMessage, getMessages } from '../services/message.service';
+import MessageModel from '../models/messages.model';
 
 const messageController = (socket: FakeSOSocket) => {
   const router = express.Router();
@@ -22,13 +23,28 @@ const messageController = (socket: FakeSOSocket) => {
    *
    * @returns `true` if the message is valid, otherwise `false`.
    */
-  const isMessageValid = (message: Omit<Message, 'type'>): boolean =>
-    message.msg !== undefined &&
-    message.msg !== '' &&
-    message.msgFrom !== undefined &&
-    message.msgFrom !== '' &&
-    message.msgDateTime !== undefined &&
-    message.msgDateTime !== null;
+  const isMessageValid = (message: Omit<Message, 'type'>): boolean => {
+    if (message === null || message === undefined) {
+      return false;
+    }
+
+    // For code snippets, we need either msg or codeSnippet.code
+    if (message.isCodeSnippet) {
+      return (
+        (message.msg !== undefined && message.msg.trim() !== '') ||
+        (message.codeSnippet?.code !== undefined && message.codeSnippet.code.trim() !== '')
+      );
+    }
+
+    return (
+      message.msg !== undefined &&
+      message.msg !== '' &&
+      message.msgFrom !== undefined &&
+      message.msgFrom !== '' &&
+      message.msgDateTime !== undefined &&
+      message.msgDateTime !== null
+    );
+  }
 
   /**
    * Handles adding a new message. The message is first validated and then saved.
@@ -53,6 +69,20 @@ const messageController = (socket: FakeSOSocket) => {
     }
 
     try {
+      // For edit suggestions, verify oiginal message exists
+      if (msg.isEditSuggestion && msg.originalMessageId) {
+        const originalMessage = await MessageModel.findById(msg.originalMessageId);
+        if (!originalMessage) {
+          res.status(404).send('Original message not found');
+          return;
+        }
+
+        if (!originalMessage.isCodeSnippet) {
+          res.status(400).send('Can only suggest edits for code snippets');
+          return;
+        }
+      }
+
       const msgFromDb = await saveMessage({ ...msg, type: 'global' });
 
       if ('error' in msgFromDb) {
