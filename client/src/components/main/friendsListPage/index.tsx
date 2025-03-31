@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './index.css';
 import { getFriends } from '../../../services/friendService';
 import useUserContext from '../../../hooks/useUserContext';
@@ -26,7 +26,7 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     if (!user.username) return;
 
     try {
@@ -35,10 +35,11 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
       setFriends(friendsList);
     } catch (err) {
       setError('Failed to load friends list');
+      console.error('Error fetching friends:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.username]);
 
   useEffect(() => {
     fetchFriends();
@@ -62,7 +63,7 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
     return () => {
       socket.off('friendRequestUpdate', handleFriendRequestUpdate);
     };
-  }, [user.username, socket]);
+  }, [user.username, socket, fetchFriends]);
 
   const handleFriendRemoved = (friendId: string) => {
     setFriends((prevFriends) =>
