@@ -89,7 +89,16 @@ const messageController = (socket: FakeSOSocket) => {
         throw new Error(msgFromDb.error);
       }
 
-      socket.emit('messageUpdate', { msg: msgFromDb });
+      // For edit suggestions, include the original message in the event
+      if (msg.isEditSuggestion && msg.originalMessageId) {
+        const originalMessage = await MessageModel.findById(msg.originalMessageId);
+        socket.emit('messageUpdate', {
+          msg: msgFromDb,
+          originalMessage: originalMessage
+        });
+      } else {
+        socket.emit('messageUpdate', { msg: msgFromDb });
+      }
 
       res.json(msgFromDb);
     } catch (err: unknown) {
