@@ -1,16 +1,7 @@
 import api from './config';
+import { SpotifyTrackItem } from '../types/spotify';
 
 const SPOTIFY_API_URL = `${process.env.REACT_APP_SERVER_URL}/spotify`;
-
-// type for a track item from Spotify
-type SpotifyTrackItem = {
-  track: {
-    id: string;
-    name: string;
-    artists: { name: string }[];
-    external_urls: { spotify: string };
-  };
-};
 
 /**
  * Function to login with spotify

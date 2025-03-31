@@ -3,13 +3,8 @@ import querystring from 'querystring';
 import axios from 'axios';
 import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
+import { SpotifyTokenResponse } from '../types/spotify';
 
-// ensures correct response format from spotify
-interface SpotifyTokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-}
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();

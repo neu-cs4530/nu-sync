@@ -1,11 +1,11 @@
 import './index.css';
 import { useEffect } from 'react';
-import useDirectMessage, { RecommendedSong } from '../../../hooks/useDirectMessage';
+import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
-
+import { RecommendedSong } from '../../../types/spotify';
 
 /**
  * DirectMessage component renders a page for direct messaging between users.

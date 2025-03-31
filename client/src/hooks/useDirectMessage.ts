@@ -16,43 +16,7 @@ import {
   searchMessages,
 } from '../services/chatService';
 import { getSpotifyPlaylists, recommendSongs } from '../services/spotifyService';
-
-
-// type for recommended songs
-export type RecommendedSong = {
-  name: string;
-  artist: string;
-  url: string;
-};
-
-// type for spotify playlist
-interface SpotifyPlaylist {
-  collaborative: boolean;
-  description: string;
-  external_urls: {
-    spotify: string;
-  };
-  href: string;
-  id: string;
-  images: { url: string }[]; // Simplified - you can make it richer if you want
-  name: string;
-  owner: {
-    display_name: string;
-    external_urls: { spotify: string };
-    href: string;
-    id: string;
-    type: string;
-    uri: string;
-  };
-  public: boolean;
-  snapshot_id: string;
-  tracks: {
-    href: string;
-    total: number;
-  };
-  type: string;
-  uri: string;
-}
+import { RecommendedSong , SpotifyPlaylist } from '../types/spotify';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
