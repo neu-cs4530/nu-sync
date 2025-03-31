@@ -1,6 +1,6 @@
 import express, { Response, Request } from 'express';
 import { FakeSOSocket, AddMessageRequest, Message } from '../types/types';
-import { saveMessage, getMessages } from '../services/message.service';
+import { saveMessage, getMessages, getMessageById } from '../services/message.service';
 import MessageModel from '../models/messages.model';
 
 const messageController = (socket: FakeSOSocket) => {
@@ -108,9 +108,49 @@ const messageController = (socket: FakeSOSocket) => {
     res.json(messages);
   };
 
+  /**
+   * Get a specific message by ID
+   * @param req The request object containing the message ID in the URL parameters.
+   * @param res The HTTP response object used to send back the message.
+   * @returns A Promise that resolves to void.
+   */
+  const getMessageByIdRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const message = await getMessageById(req.params.id);
+      if (!message) {
+        res.status(404).send('Message not found');
+        return;
+      }
+      res.json(message);
+    } catch (err: unknown) {
+      res.status(500).send(`Error fetching message: ${(err as Error).message}`);
+    }
+  };
+
+  /**
+   * Fetch all edit suggestions for a specific message.
+   * @param req The request object containing the message ID in the URL parameters.
+   * @param res The HTTP response object used to send back the edit suggestions.
+   * @returns A Promise that resolves to void.
+   */
+  const getEditSuggestionsRoute = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const suggestions = await MessageModel.find({
+        originalMessageId: req.params.messageId,
+        isEditSuggestion: true,
+      }).sort({ msgDateTime: 1 });
+
+      res.json(suggestions);
+    } catch (err: unknown) {
+      res.status(500).send(`Error fetching edit suggestions: ${(err as Error).message}`);
+    }
+  };
+
   // Add appropriate HTTP verbs and their endpoints to the router
   router.post('/addMessage', addMessageRoute);
   router.get('/getMessages', getMessagesRoute);
+  router.get('/message/:id', getMessageByIdRoute);
+  router.get('/message/:messageId/suggestions', getEditSuggestionsRoute);
 
   return router;
 };
