@@ -29,6 +29,8 @@ const ProfileSettings: React.FC = () => {
     handleDeleteUser,
     mutualFriends,
     mutualFriendsLoading,
+    currentPlayingSong,
+    isCurrentlyPlayingSong,
   } = useProfileSettings();
 
   const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
@@ -72,6 +74,18 @@ const ProfileSettings: React.FC = () => {
                     }}>
                     Disconnect Spotify
                   </button>
+                  {isCurrentlyPlayingSong && currentPlayingSong ? (
+                    <p>Currently playing: <a
+                      href={currentPlayingSong.track.external_urls.spotify}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'blue', textDecoration: 'underline' }}
+                    >
+                      {currentPlayingSong.track.name} - {currentPlayingSong.track.artists[0].name}
+                    </a></p>
+                  ) : (
+                    <p>User is not currently playing a song.</p>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -82,6 +96,7 @@ const ProfileSettings: React.FC = () => {
                 </div>
               )}
             </div>
+
 
             {/* ---- Biography Section ---- */}
             {!editBioMode && (
