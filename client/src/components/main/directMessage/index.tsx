@@ -1,10 +1,11 @@
 import './index.css';
 import { useEffect } from 'react';
-import useDirectMessage from '../../../hooks/useDirectMessage';
+import useDirectMessage, { RecommendedSong } from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
+
 
 /**
  * DirectMessage component renders a page for direct messaging between users.
@@ -36,9 +37,14 @@ const DirectMessage = () => {
     handleSearchResultClick,
     highlightedMessageId,
     messageRefs,
+    handleRecommendSongs,
+    recommendedSongs,
+    songForRecommendation,
+    setSongForRecommendation,
+    showDisplayRecommendedSongs,
+    setShowDisplayRecommendedSongs
   } = useDirectMessage();
 
-  // const handleSendSpotifyPlaylist = useSpotifyAuth()
 
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
@@ -156,6 +162,8 @@ const DirectMessage = () => {
                   Share Spotify Playlist
                 </button>
 
+               
+
                 {showPlaylistDropdown && (
                   <>
                     <div className="playlist-dropdown">
@@ -184,6 +192,41 @@ const DirectMessage = () => {
                   </>
                 )}
               </div>
+              {/* Spotify Recommendation Input dialog */}
+              <div className="recommendation-input-dialog">
+                <input
+                  type="text"
+                  value={songForRecommendation}
+                  onChange={(e) => {
+                    setSongForRecommendation(e.target.value)
+                    setShowDisplayRecommendedSongs(false);
+                  }}
+                  className="recommendation-input"
+                  placeholder="Like a song you heard? Enter the name here to get recommendations based on it."
+                />
+              </div>
+              <button
+                className="custom-button"
+                onClick={() => {
+                  setSongForRecommendation('');
+                  handleRecommendSongs();
+                }}
+              >
+                Get Song Recommendations
+              </button>
+
+              {showDisplayRecommendedSongs && recommendedSongs.length > 0 && (
+                <div className="recommended-songs">
+                  {recommendedSongs.map((song: RecommendedSong) => (
+                    <p key={song.url}>
+                      {song.name} - {song.artist}.{' '}
+                      <a href={song.url} target="_blank" rel="noopener noreferrer">
+                        Listen on Spotify
+                      </a>
+                    </p>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <h2>Select a user to start chatting</h2>

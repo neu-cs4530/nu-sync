@@ -259,7 +259,9 @@ const spotifyController = (socket: FakeSOSocket) => {
         .status(500)
         .json({ error: 'Unknown error refreshing Spotify token' });
     }
-  }; /**
+  };
+  
+  /**
    * Fetches a user's Spotify playlists
    *
    * @param req The HTTP request object containing the username in the request body
@@ -288,11 +290,108 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Searches for a song on Spotify
+   *
+   * @param req The HTTP request object containing the access token and query (song name)in the request body
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * * */
+  const searchSpotifySong = async (req: Request, res: Response) => {
+    try {
+      const { access_token: accessToken, query } = req.body;
+
+      const searchResponse = await axios.get(
+        `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      res.status(200).json(searchResponse.data.tracks.items[0]);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: 'Error searching Spotify songs controller' });
+    }
+  };
+
+  /**
+   * Searches for a playlist containing a specified song on Spotify
+   *
+   * @param req The HTTP request object containing the access token and query (song name) in the request body
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * * */
+    const searchSpotifyPlaylistWithSong = async (req: Request, res: Response) => {
+        try {
+            const { access_token: accessToken, query } = req.body;
+
+            if (!accessToken || !query) {
+                return res.status(400).json({ error: 'Missing required parameters' });
+            }
+
+            const encodedQuery = encodeURIComponent(query);
+            const searchResponse = await axios.get(
+                `https://api.spotify.com/v1/search?q=${encodedQuery}&type=playlist&limit=5`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                },
+            );
+
+            const items = (searchResponse.data.playlists.items as SpotifyApi.PlaylistObjectSimplified[]).filter((playlist) => playlist !== null);
+
+            return res.status(200).json({items});
+            
+        } catch (error) {
+            return res.status(500).json({
+                error: 'Error searching for Spotify playlists'
+            });
+        }
+    };
+
+    /**
+     * Fetches the songs from a Spotify playlist
+     *
+     * @param req The HTTP request object containing the access token and playlist ID in the request body
+     * @param res The HTTP response object used to send the status of the function
+     *
+     * * */
+    const getSongsFromSpotifyPlaylist = async (req: Request, res: Response) => {
+        try {
+            const { access_token: accessToken, playlistId } = req.body;
+
+            const searchResponse = await axios.get(
+                `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                },
+            );
+
+            const modifiedResponse = searchResponse.data.items
+
+            res.status(200).json(modifiedResponse);
+        } catch (error) {
+            res
+                .status(500)
+                .json({ error: 'Error fetching Spotify songs from playlist Controller' });
+        }
+    };
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
   router.post('/auth/refresh', refreshSpotifyToken);
   router.post('/getPlaylists', getSpotifyPlaylists);
+  router.post('/searchSong', searchSpotifySong);
+  router.post('/searchSpotifyPlaylistWithSong', searchSpotifyPlaylistWithSong);
+  router.post('/getSongsFromSpotifyPlaylist', getSongsFromSpotifyPlaylist);
   return router;
 };
 

@@ -15,7 +15,15 @@ import {
   sendMessage,
   searchMessages,
 } from '../services/chatService';
-import { getSpotifyPlaylists } from '../services/spotifyService';
+import { getSpotifyPlaylists, recommendSongs } from '../services/spotifyService';
+
+
+// type for recommended songs
+export type RecommendedSong = {
+  name: string;
+  artist: string;
+  url: string;
+};
 
 // type for spotify playlist
 interface SpotifyPlaylist {
@@ -60,10 +68,17 @@ const useDirectMessage = () => {
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // states for sharing spotify playlists
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[] | null>([]);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
 
+  // states for recommending songs
+  const [recommendedSongs, setRecommendedSongs] = useState<RecommendedSong[]>([]);
+  const [songForRecommendation, setSongForRecommendation] = useState<string>('');
+  const [showRecommendationInputDialog, setShowRecommendationInputDialog] = useState(false);
+  const [showDisplayRecommendedSongs, setShowDisplayRecommendedSongs] = useState(false);
   const [highlightedMessageId, setHighlightedMessageId] =
     useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,6 +92,7 @@ const useDirectMessage = () => {
   };
 
   const handleSendMessage = async () => {
+
     if (newMessage.trim() && selectedChat?._id) {
       const message: Omit<Message, 'type'> = {
         msg: newMessage,
@@ -166,10 +182,11 @@ const useDirectMessage = () => {
       setPlaylists(allPlaylists);
 
       const message: Omit<Message, 'type'> = {
-        msg: `Check out this playlist: ${selectedPlaylist.name}\n${selectedPlaylist.external_urls.spotify}`,
+        msg: `Check out this playlist: ${selectedPlaylist.name} (link: ${selectedPlaylist.external_urls.spotify})`,
         msgFrom: user.username,
         msgDateTime: new Date(),
       };
+
 
       const chat = await sendMessage(message, selectedChat._id);
       setSelectedChat(chat);
@@ -180,6 +197,19 @@ const useDirectMessage = () => {
       setError('No chat selected');
     }
   };
+
+  const handleRecommendSongs = async () => {
+    if (!songForRecommendation) {
+      setError('Please enter a song name');
+      return;
+    }
+    const songRecommendations = await recommendSongs(songForRecommendation);
+    setRecommendedSongs(songRecommendations);
+    setShowDisplayRecommendedSongs(true);
+  };
+
+
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,6 +318,14 @@ const useDirectMessage = () => {
     highlightedMessageId,
     messageRefs,
     handleDirectChatWithFriend,
+    handleRecommendSongs,
+    recommendedSongs,
+    songForRecommendation,
+    setSongForRecommendation,
+    showRecommendationInputDialog,
+    setShowRecommendationInputDialog,
+    showDisplayRecommendedSongs,
+    setShowDisplayRecommendedSongs
   };
 };
 
