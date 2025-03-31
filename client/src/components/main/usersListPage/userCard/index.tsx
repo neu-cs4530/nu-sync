@@ -35,19 +35,16 @@ const UserCardView = (props: UserProps) => {
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [mutualFriendsCount, setMutualFriendsCount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Format the date to a more readable format
   const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
     const now = new Date();
 
-    // If the date is today, show as "Today"
+    // Show today and yesterday instead of date
     if (date.toDateString() === now.toDateString()) {
       return 'Today';
     }
 
-    // If the date is yesterday, show as "Yesterday"
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     if (date.toDateString() === yesterday.toDateString()) {
@@ -63,15 +60,12 @@ const UserCardView = (props: UserProps) => {
     return date.toLocaleDateString(undefined, options);
   };
 
-  // Check friendship status and fetch mutual friends on component mount
   useEffect(() => {
     if (
       currentUser.username &&
       user.username &&
       currentUser.username !== user.username
     ) {
-      setIsLoading(true);
-
       const checkFriendshipStatus = async () => {
         try {
           const requests = await getFriendRequests(currentUser.username);
@@ -106,6 +100,7 @@ const UserCardView = (props: UserProps) => {
                 );
                 setMutualFriendsCount(mutualFriends.length);
               } catch (error) {
+                // eslint-disable-next-line
                 console.error('Error fetching mutual friends:', error);
               }
             }
@@ -118,13 +113,12 @@ const UserCardView = (props: UserProps) => {
               );
               setMutualFriendsCount(mutualFriends.length);
             } catch (error) {
+              // eslint-disable-next-line
               console.error('Error fetching mutual friends:', error);
             }
           }
         } catch (error) {
           setStatusMessage('Error checking friendship status');
-        } finally {
-          setIsLoading(false);
         }
       };
 
