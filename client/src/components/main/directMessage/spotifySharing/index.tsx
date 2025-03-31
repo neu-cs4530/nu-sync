@@ -166,16 +166,33 @@ const SpotifySharingComponent = ({
         )}
 
         {view === 'tracks' && (
-          <div className='spotify-tracks scrollable'>
+          <div className='spotify-section'>
             <h4>Songs in Playlist</h4>
-            {playlistTracks.map((track, i) => (
-              <button
-                key={`track-${i}`}
-                className='spotify-track-button'
-                onClick={() => sendSong(track)}>
-                {track.name} — {track.artists.join(', ')}
-              </button>
-            ))}
+            <div className='playlist-dropdown'>
+              <select
+                size={8}
+                onChange={e => {
+                  const selectedIndex = parseInt(e.target.value, 10);
+                  const selectedTrack = playlistTracks[selectedIndex];
+                  if (selectedTrack) {
+                    sendSong(selectedTrack);
+                  }
+                }}>
+                <option value='' disabled selected>
+                  Select a song to share
+                </option>
+                {playlistTracks.map((trackItem, index) => {
+                  const artistNames = trackItem.track.artists?.map(a => a.name).join(', ');
+                  const trackName = trackItem.track.name;
+
+                  return (
+                    <option key={index} value={index}>
+                      {trackName} — {artistNames}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
           </div>
         )}
       </div>

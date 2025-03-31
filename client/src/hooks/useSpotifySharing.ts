@@ -34,10 +34,13 @@ export interface SpotifyPlaylist {
 }
 
 export interface SpotifyTrack {
-  name: string;
-  url: string;
-  artists: string[];
+  track: {
+    name?: string;
+    external_urls?: { spotify?: string };
+    artists?: { name: string }[];
+  };
 }
+
 
 const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
   const { user } = useUserContext();
@@ -75,8 +78,8 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
 
   const fetchTracks = async (playlistId: string) => {
     try {
-      const tracks = await getPlaylistTracks(playlistId);
-      setPlaylistTracks(tracks);
+      const data: SpotifyTrack[] = await getPlaylistTracks(playlistId);
+      setPlaylistTracks(data);
     } catch {
       setError('Failed to fetch tracks.');
     }
@@ -94,29 +97,46 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
 
   const sendSong = async (song: SpotifyTrack) => {
     if (!selectedChatId) return;
+
+    const artistNames = Array.isArray(song.track.artists)
+      ? song.track.artists.map(a => a.name).join(', ')
+      : 'Unknown Artist';
+
     const message: Omit<Message, 'type'> = {
-      msg: ` ${song.name} by ${song.artists.join(', ')}\n${song.url}`,
+      msg: ` ${song.track.name} by ${artistNames}\n${song.track.external_urls?.spotify}`,
       msgFrom: user.username,
       msgDateTime: new Date(),
     };
+
     await sendMessage(message, selectedChatId);
   };
 
   const sendCurrentTrack = async () => {
     if (!selectedChatId) return;
     try {
-      const track = await getCurrentlyPlaying();
-      if (!track?.isPlaying) return;
+      const res = await getCurrentlyPlaying(user.username);
+      if (!res?.isPlaying || !res.track) return;
+
+
+      const artistNames = Array.isArray(res.track.artists)
+        ? res.track.artists?.map((a : { name: string }) => a.name).join(', ')
+        : 'Unknown Artist';
+
+      const spotifyUrl = res.track.external_urls?.spotify || 'No URL';
+
       const message: Omit<Message, 'type'> = {
-        msg: `Now Playing: ${track.name} by ${track.artists.join(', ')}\n${track.url}`,
+        msg: `Now Playing: ${res.track.name} by ${artistNames}\n${spotifyUrl}`,
         msgFrom: user.username,
         msgDateTime: new Date(),
       };
+
       await sendMessage(message, selectedChatId);
-    } catch {
+    } catch (err) {
+      // console.error('Error sending current track:', err);
       setError('Could not get current track');
     }
   };
+
 
   return {
     playlists,
