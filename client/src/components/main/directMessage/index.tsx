@@ -1,7 +1,8 @@
 import './index.css';
+import { useEffect } from 'react';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
-import UsersListPage from '../usersListPage';
+import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
@@ -9,7 +10,6 @@ import SpotifySharingComponent from './spotifySharing';
 const DirectMessage = () => {
   const {
     selectedChat,
-    chatToCreate,
     chats,
     newMessage,
     setNewMessage,
@@ -17,8 +17,7 @@ const DirectMessage = () => {
     setShowCreatePanel,
     handleSendMessage,
     handleChatSelect,
-    handleUserSelect,
-    handleCreateChat,
+    handleDirectChatWithFriend,
     searchTerm,
     setSearchTerm,
     searchResults,
@@ -31,49 +30,62 @@ const DirectMessage = () => {
     spotifySharing,
   } = useDirectMessage();
 
+  // const handleSendSpotifyPlaylist = useSpotifyAuth()
+
+  useEffect(() => {
+    const userToChat = localStorage.getItem('openChatWith');
+    if (userToChat) {
+      // Remove from localStorage immediately
+      localStorage.removeItem('openChatWith');
+
+      handleDirectChatWithFriend(userToChat);
+    }
+  }, [handleDirectChatWithFriend]);
+
   return (
     <>
-      <div className='create-panel'>
-        <button className='custom-button' onClick={() => setShowCreatePanel(prev => !prev)}>
+      <div className="create-panel">
+        <button
+          className="custom-button"
+          onClick={() => setShowCreatePanel((prev) => !prev)}
+        >
           {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a Chat'}
         </button>
-        {error && <div className='direct-message-error'>{error}</div>}
+        {error && <div className="direct-message-error">{error}</div>}
         {showCreatePanel && (
           <>
-            <p>Selected user: {chatToCreate}</p>
-            <button className='custom-button' onClick={handleCreateChat}>
-              Create New Chat
-            </button>
-            <UsersListPage handleUserSelect={handleUserSelect} />
+            <p>Chat with your friends</p>
+            <FriendsListPage handleFriendSelect={handleDirectChatWithFriend} />
           </>
         )}
       </div>
 
-      <div className='direct-message-container'>
-        <div className='chats-list'>
-          <form onSubmit={handleSearch} className='search-bar'>
+      <div className="direct-message-container">
+        <div className="chgiats-list">
+          <form onSubmit={handleSearch} className="search-bar">
             <input
-              type='text'
-              placeholder='Search messages...'
+              type="text"
+              placeholder="Search messages..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className='custom-input'
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="custom-input"
             />
-            <button type='submit' className='custom-button'>
+            <button type="submit" className="custom-button">
               Search
             </button>
           </form>
 
-          {searchError && <div className='error'>{searchError}</div>}
+          {searchError && <div className="error">{searchError}</div>}
 
           {searchResults.length > 0 && (
-            <div className='search-results'>
+            <div className="search-results">
               <p>
-                Found {searchResults.length} result{searchResults.length > 1 ? 's' : ''} for &quot;
+                Found {searchResults.length} result
+                {searchResults.length > 1 ? 's' : ''} for &quot;
                 {searchTerm}&quot;
               </p>
               <ul>
-                {searchResults.map(result => (
+                {searchResults.map((result) => (
                   <SearchResultCard
                     key={String(result._id)}
                     result={result}
@@ -89,33 +101,36 @@ const DirectMessage = () => {
           ))}
         </div>
 
-        <div className='chat-container'>
+        <div className="chat-container">
           {selectedChat ? (
             <>
               <h2>Chat Participants: {selectedChat.participants.join(', ')}</h2>
-              <div className='chat-messages'>
-                {selectedChat.messages.map(message => (
+              <div className="chat-messages">
+                {selectedChat.messages.map((message) => (
                   <div
                     key={String(message._id)}
-                    ref={el => {
+                    ref={(el) => {
                       messageRefs.current[String(message._id)] = el;
                     }}
                     className={`message-wrapper${
-                      highlightedMessageId?.toString() === String(message._id) ? ' highlight' : ''
-                    }`}>
+                      highlightedMessageId?.toString() === String(message._id)
+                        ? ' highlight'
+                        : ''
+                    }`}
+                  >
                     <MessageCard message={message} />
                   </div>
                 ))}
               </div>
-              <div className='message-input'>
+              <div className="message-input">
                 <input
-                  className='custom-input'
-                  type='text'
+                  className="custom-input"
+                  type="text"
                   value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  placeholder='Type a message...'
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
                 />
-                <button className='custom-button' onClick={handleSendMessage}>
+                <button className="custom-button" onClick={handleSendMessage}>
                   Send
                 </button>
 

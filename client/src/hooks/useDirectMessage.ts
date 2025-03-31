@@ -28,12 +28,14 @@ const useDirectMessage = () => {
   const { user, socket } = useUserContext();
   const [showCreatePanel, setShowCreatePanel] = useState<boolean>(false);
   const [chatToCreate, setChatToCreate] = useState<string>('');
-  const [selectedChat, setSelectedChat] = useState<PopulatedDatabaseChat | null>(null);
+  const [selectedChat, setSelectedChat] =
+    useState<PopulatedDatabaseChat | null>(null);
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] =
+    useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([]);
   const [searchError, setSearchError] = useState('');
@@ -80,16 +82,41 @@ const useDirectMessage = () => {
   };
 
   const handleCreateChat = async () => {
-    if (!chatToCreate) {
-      setError('Please select a user to chat with');
-      return;
-    }
-
     const chat = await createChat([user.username, chatToCreate]);
     setSelectedChat(chat);
     handleJoinChat(chat._id);
     setShowCreatePanel(false);
   };
+
+  const handleDirectChatWithFriend = async (username: string) => {
+    try {
+      const latestChats = await getChatsByUser(user.username);
+
+      // Check if a chat already exists
+      const existingChat = latestChats.find(
+        (chat) =>
+          chat.participants.length === 2 &&
+          chat.participants.includes(user.username) &&
+          chat.participants.includes(username),
+      );
+
+      if (existingChat) {
+        // If chat exists, just select it
+        setSelectedChat(existingChat);
+        handleJoinChat(existingChat._id);
+      } else {
+        // Create new chat only if one doesn't exist
+        const chat = await createChat([user.username, username]);
+        setSelectedChat(chat);
+        handleJoinChat(chat._id);
+      }
+
+      setShowCreatePanel(false);
+    } catch (err) {
+      setError(`Failed to create chat: ${(err as Error).message}`);
+    }
+  };
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +162,7 @@ const useDirectMessage = () => {
       switch (type) {
         case 'created': {
           if (chat.participants.includes(user.username)) {
-            setChats(prevChats => [chat, ...prevChats]);
+            setChats((prevChats) => [chat, ...prevChats]);
           }
           return;
         }
@@ -145,9 +172,9 @@ const useDirectMessage = () => {
         }
         case 'newParticipant': {
           if (chat.participants.includes(user.username)) {
-            setChats(prevChats => {
-              if (prevChats.some(c => chat._id === c._id)) {
-                return prevChats.map(c => (c._id === chat._id ? chat : c));
+            setChats((prevChats) => {
+              if (prevChats.some((c) => chat._id === c._id)) {
+                return prevChats.map((c) => (c._id === chat._id ? chat : c));
               }
               return [chat, ...prevChats];
             });
@@ -192,6 +219,7 @@ const useDirectMessage = () => {
     highlightedMessageId,
     messageRefs,
     spotifySharing,
+    handleDirectChatWithFriend,
   };
 };
 

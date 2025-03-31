@@ -6,9 +6,9 @@ import UserModel from '../models/users.model';
 
 // ensures correct response format from spotify
 interface SpotifyTokenResponse {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
 }
 
 const spotifyController = (socket: FakeSOSocket) => {
@@ -76,7 +76,6 @@ const spotifyController = (socket: FakeSOSocket) => {
       );
       return;
     }
-
     try {
       const tokenParams = {
         code: code?.toString() || '',
@@ -304,6 +303,9 @@ const spotifyController = (socket: FakeSOSocket) => {
       return;
     }
 
+    res.clearCookie('spotifyAccessToken');
+    res.clearCookie('spotifyRefreshToken');
+    res.clearCookie('spotifyId');
     res.clearCookie('spotifyAccessToken');
     res.clearCookie('spotifyRefreshToken');
     res.clearCookie('spotifyId');
