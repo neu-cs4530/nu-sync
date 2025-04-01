@@ -1,5 +1,7 @@
 import React from 'react';
 import './index.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { DatabaseMessage } from '../../../types/types';
 import { getMetaData } from '../../../tool';
 
@@ -34,11 +36,26 @@ const MessageCard = ({ message }: { message: DatabaseMessage }) => {
       );
     }
 
+    // Handle code snippets
+    if (message.isCodeSnippet && message.codeSnippet) {
+      return (
+        <div className="code-snippet">
+          <SyntaxHighlighter
+            language={message.codeSnippet.language || 'javascript'}
+            style={tomorrow}
+            showLineNumbers={true}
+          >
+            {message.codeSnippet.code}
+          </SyntaxHighlighter>
+        </div>
+      );
+    }
+
     return text; // fallback if no match
   };
 
   return (
-    <div className='message'>
+    <div className={`message ${message.isCodeSnippet ? 'code-message' : ''}`}>
       <div className='message-header'>
         <div className='message-sender'>{message.msgFrom}</div>
         <div className='message-time'>{getMetaData(new Date(message.msgDateTime))}</div>
