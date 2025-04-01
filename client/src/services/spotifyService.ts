@@ -58,14 +58,18 @@ export const getPlaylistTracks = async (playlistId: string, market = 'US') => {
  * @throws Error if the request fails.
  */
 export const getCurrentlyPlaying = async (username: string) => {
-  try {
-    const res = await api.get(`${SPOTIFY_API_URL}/current-track`, {
-      params: { username },
-    });
-    return { isPlaying: true, ...res.data };
-  } catch (err) {
-    return { isPlaying: false, error: true };
-  }
+  // try {
+  //   const res = await api.get(`${SPOTIFY_API_URL}/current-track`, {
+  //     params: { username },
+  //   });
+  //   return { isPlaying: true, ...res.data };
+  // } catch (err) {
+  //   return { isPlaying: false, error: true };
+  // }
+  const res = await api.get(`${SPOTIFY_API_URL}/current-track`, {
+    params: { username },
+  });
+  return res.data;
 };
 
 
