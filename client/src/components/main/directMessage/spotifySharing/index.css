@@ -3,6 +3,10 @@
   width: 100%;
 }
 
+.white-text {
+  color: white;
+}
+
 .spotify-toggle-button {
   background-color: #111;
   color: #1db954;
