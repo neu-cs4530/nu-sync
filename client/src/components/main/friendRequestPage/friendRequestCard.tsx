@@ -1,6 +1,6 @@
 import React from 'react';
 import { DatabaseFriendRequest } from '../../../types/types';
-// import './index.css';
+import './friendRequestPage.css';
 
 /**
  * FriendRequestCard component displays a single friend request with action buttons.
@@ -22,12 +22,21 @@ const FriendRequestCard = ({
   const displayUser = isOutgoing ? request.recipient : request.requester;
   const { username } = displayUser;
 
+  const formatDate = (date: Date): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    };
+    return new Date(date).toLocaleDateString(undefined, options);
+  };
+
   return (
     <div className="friend-card">
       <div className="request-user-info">
         <h3>{username}</h3>
         <p className="request-date">
-          Requested {new Date(request.requestedAt).toLocaleDateString()}
+          Requested {formatDate(request.requestedAt)}
         </p>
       </div>
 

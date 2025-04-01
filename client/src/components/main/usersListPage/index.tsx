@@ -2,7 +2,6 @@ import React from 'react';
 import './index.css';
 import { useNavigate } from 'react-router-dom';
 import UserCardView from './userCard';
-import UsersListHeader from './header';
 import useUsersListPage from '../../../hooks/useUsersListPage';
 import { SafeDatabaseUser } from '../../../types/types';
 
@@ -36,21 +35,47 @@ const UsersListPage = (props: UserListPageProps) => {
       navigate(`/user/${user.username}`);
     }
   };
+
+  /**
+   * Handles the search input change.
+   */
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserFilter(e.target.value);
+  };
+
   return (
-    <div className='user-card-container'>
-      <UsersListHeader userCount={userList.length} setUserFilter={setUserFilter} />
-      <div id='users_list' className='users_list'>
-        {userList.map(user => (
+    <div className="users-page-container">
+      <div className="users-list-header">
+        <div>
+          <h2 className="users-list-title">Users</h2>
+          <span className="users-count">{userList.length} users found</span>
+        </div>
+        <div className="search-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search users..."
+            onChange={handleSearchChange}
+          />
+        </div>
+      </div>
+
+      <div className="users-list">
+        {userList.map((user) => (
           <UserCardView
             user={user}
             key={user.username}
             handleUserCardViewClickHandler={handleUserCardViewClickHandler}
           />
         ))}
+
+        {(!userList || userList.length === 0) && (
+          <div className="empty-state">
+            <p>No users found matching your search.</p>
+            <p>Try a different search term or browse all users.</p>
+          </div>
+        )}
       </div>
-      {(!userList.length || userList.length === 0) && (
-        <div className='bold_title right_padding'>No Users Found</div>
-      )}
     </div>
   );
 };

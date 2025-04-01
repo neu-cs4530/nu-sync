@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import FriendRequestCard from './friendRequestCard';
 import useFriendRequests from '../../../hooks/useFriendRequests';
 import useUserContext from '../../../hooks/useUserContext';
-// import './index.css';
+import './friendRequestPage.css';
 
 const FriendRequestPage = () => {
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>(
