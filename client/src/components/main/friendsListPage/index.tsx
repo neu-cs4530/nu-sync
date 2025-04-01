@@ -81,7 +81,7 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
   if (friends.length === 0) {
     return (
       <div className="empty-state">
-        <p>You don`&apos;`t have any friends yet.</p>
+        <p>You don&apos;t have any friends yet.</p>
         <p>Add friends to start messaging!</p>
       </div>
     );
