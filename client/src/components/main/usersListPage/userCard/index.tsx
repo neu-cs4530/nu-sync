@@ -6,6 +6,7 @@ import {
   sendFriendRequest,
   getFriendRequests,
   updateFriendRequestStatus,
+  getMutualFriends,
 } from '../../../../services/friendService';
 import useUserContext from '../../../../hooks/useUserContext';
 
@@ -33,10 +34,38 @@ const UserCardView = (props: UserProps) => {
   >('none');
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [mutualFriendsCount, setMutualFriendsCount] = useState<number>(0);
 
-  // Check friendship status on component mount
+  const formatDate = (dateString: Date) => {
+    const date = new Date(dateString);
+    const now = new Date();
+
+    // Show today and yesterday instead of date
+    if (date.toDateString() === now.toDateString()) {
+      return 'Today';
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+
+    // For other dates, show in a nice format
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    };
+    return date.toLocaleDateString(undefined, options);
+  };
+
   useEffect(() => {
-    if (currentUser.username && user.username) {
+    if (
+      currentUser.username &&
+      user.username &&
+      currentUser.username !== user.username
+    ) {
       const checkFriendshipStatus = async () => {
         try {
           const requests = await getFriendRequests(currentUser.username);
@@ -62,6 +91,30 @@ const UserCardView = (props: UserProps) => {
               }
             } else if (existingRequest.status === 'accepted') {
               setFriendshipStatus('friends');
+
+              // Fetch mutual friends when they're friends
+              try {
+                const mutualFriends = await getMutualFriends(
+                  currentUser.username,
+                  user.username,
+                );
+                setMutualFriendsCount(mutualFriends.length);
+              } catch (error) {
+                // eslint-disable-next-line
+                console.error('Error fetching mutual friends:', error);
+              }
+            }
+          } else {
+            // If they're not friends, still check for mutual friends
+            try {
+              const mutualFriends = await getMutualFriends(
+                currentUser.username,
+                user.username,
+              );
+              setMutualFriendsCount(mutualFriends.length);
+            } catch (error) {
+              // eslint-disable-next-line
+              console.error('Error fetching mutual friends:', error);
             }
           }
         } catch (error) {
@@ -160,22 +213,28 @@ const UserCardView = (props: UserProps) => {
   return (
     <div className="user-card-container">
       <div
-        className="user right_padding"
+        className="user-card"
         onClick={() => handleUserCardViewClickHandler(user)}
       >
-        <div className="user_mid">
-          <div className="userUsername">{user.username}</div>
+        <div className="user-info">
+          <div className="user-name">{user.username}</div>
+          <div className="user-details">
+            {!isCurrentUser && mutualFriendsCount > 0 && (
+              <span className="mutual-friends-label">
+                {mutualFriendsCount} mutual{' '}
+                {mutualFriendsCount === 1 ? 'friend' : 'friends'}
+              </span>
+            )}
+            <span className="join-date">
+              Joined {formatDate(user.dateJoined)}
+            </span>
+          </div>
         </div>
-        <div className="userStats">
-          <div>joined {new Date(user.dateJoined).toUTCString()}</div>
-        </div>
+
+        <div className="user-actions">{renderActionButton()}</div>
       </div>
 
-      {renderActionButton()}
-
-      {statusMessage && (
-        <div className="friend-status-message">{statusMessage}</div>
-      )}
+      {statusMessage && <div className="status-message">{statusMessage}</div>}
     </div>
   );
 };
