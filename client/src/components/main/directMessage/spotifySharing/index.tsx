@@ -1,18 +1,26 @@
 import { useState } from 'react';
 import './index.css';
-import { SpotifyPlaylist, SpotifyTrack } from '../../../../hooks/useSpotifySharing';
+import { SpotifyTrackItem, RecommendedSong, SpotifyPlaylist } from '../../../../types/spotify';
 
 interface SpotifySharingProps {
   isConnected: boolean;
   playlists: SpotifyPlaylist[];
-  playlistTracks: SpotifyTrack[];
+  playlistTracks: SpotifyTrackItem[];
   currentlyPlayingAvailable: boolean;
   fetchPlaylists: () => Promise<void>;
   fetchTracks: (playlistId: string) => Promise<void>;
   sendPlaylist: (playlist: SpotifyPlaylist) => Promise<void>;
-  sendSong: (song: SpotifyTrack) => Promise<void>;
+  sendSong: (song: SpotifyTrackItem) => Promise<void>;
   sendCurrentTrack: () => Promise<void>;
   error: string | null;
+  handleRecommendSongs: () => void;
+  recommendedSongs: RecommendedSong[];
+  songForRecommendation: string;
+  setSongForRecommendation: (value: string) => void;
+  showDisplayRecommendedSongs: boolean;
+  setShowDisplayRecommendedSongs: (value: boolean) => void;
+  showRecommendationInputDialog: boolean;
+  setShowRecommendationInputDialog: (value: boolean) => void;
 }
 
 type PanelView = 'main' | 'playlists' | 'songs' | 'tracks';
@@ -27,6 +35,12 @@ const SpotifySharingComponent = ({
   sendPlaylist,
   sendSong,
   sendCurrentTrack,
+  handleRecommendSongs,
+  recommendedSongs,
+  songForRecommendation,
+  setSongForRecommendation,
+  showDisplayRecommendedSongs,
+  setShowDisplayRecommendedSongs,
 }: SpotifySharingProps) => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [view, setView] = useState<PanelView>('main');
@@ -136,6 +150,40 @@ const SpotifySharingComponent = ({
               disabled={!selectedPlaylist}>
               Send Playlist
             </button>
+          </div>
+        )}
+        {/* Spotify Recommendation Input dialog */}
+        <div className='recommendation-input-dialog'>
+          <input
+            type='text'
+            value={songForRecommendation}
+            onChange={e => {
+              setSongForRecommendation(e.target.value);
+              setShowDisplayRecommendedSongs(false);
+            }}
+            className='recommendation-input'
+            placeholder='Like a song you heard? Enter the name here to get recommendations based on it.'
+          />
+        </div>
+        <button
+          className='custom-button'
+          onClick={() => {
+            setSongForRecommendation('');
+            handleRecommendSongs();
+          }}>
+          Get Song Recommendations
+        </button>
+
+        {showDisplayRecommendedSongs && recommendedSongs.length > 0 && (
+          <div className='recommended-songs'>
+            {recommendedSongs.map((song: RecommendedSong) => (
+              <p key={song.url}>
+                {song.name} - {song.artist}.{' '}
+                <a href={song.url} target='_blank' rel='noopener noreferrer'>
+                  Listen on Spotify
+                </a>
+              </p>
+            ))}
           </div>
         )}
 

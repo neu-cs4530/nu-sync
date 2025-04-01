@@ -5,6 +5,7 @@ import { app } from '../../app';
 import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
 
+
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 

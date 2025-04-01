@@ -3,52 +3,27 @@ import { ObjectId } from 'mongodb';
 import {
   getSpotifyPlaylists,
   getPlaylistTracks,
+  recommendSongs,
   getCurrentlyPlaying,
   checkSpotifyStatus,
 } from '../services/spotifyService';
 import { Message } from '../types/types';
 import useUserContext from './useUserContext';
 import { sendMessage } from '../services/chatService';
-
-export interface SpotifyPlaylist {
-  collaborative: boolean;
-  description: string;
-  external_urls: { spotify: string };
-  href: string;
-  id: string;
-  images: { url: string }[];
-  name: string;
-  owner: {
-    display_name: string;
-    external_urls: { spotify: string };
-    href: string;
-    id: string;
-    type: string;
-    uri: string;
-  };
-  public: boolean;
-  snapshot_id: string;
-  tracks: { href: string; total: number };
-  type: string;
-  uri: string;
-}
-
-export interface SpotifyTrack {
-  track: {
-    name?: string;
-    external_urls?: { spotify?: string };
-    artists?: { name: string }[];
-  };
-}
+import { RecommendedSong, SpotifyPlaylist, SpotifyTrackItem } from '../types/spotify';
 
 
 const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
   const { user } = useUserContext();
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
-  const [playlistTracks, setPlaylistTracks] = useState<SpotifyTrack[]>([]);
+  const [playlistTracks, setPlaylistTracks] = useState<SpotifyTrackItem[]>([]);
   const [currentlyPlayingAvailable, setCurrentlyPlayingAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [recommendedSongs, setRecommendedSongs] = useState<RecommendedSong[]>([]);
+  const [songForRecommendation, setSongForRecommendation] = useState<string>('');
+  const [showRecommendationInputDialog, setShowRecommendationInputDialog] = useState(false);
+  const [showDisplayRecommendedSongs, setShowDisplayRecommendedSongs] = useState(false);
 
   useEffect(() => {
     const checkSpotifyConnection = async () => {
@@ -78,7 +53,7 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
 
   const fetchTracks = async (playlistId: string) => {
     try {
-      const data: SpotifyTrack[] = await getPlaylistTracks(playlistId);
+      const data: SpotifyTrackItem[] = await getPlaylistTracks(playlistId);
       setPlaylistTracks(data);
     } catch {
       setError('Failed to fetch tracks.');
@@ -88,14 +63,14 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
   const sendPlaylist = async (playlist: SpotifyPlaylist) => {
     if (!selectedChatId) return;
     const message: Omit<Message, 'type'> = {
-      msg: ` Playlist: ${playlist.name}\n${playlist.external_urls.spotify}`,
+      msg: `Check out this playlist: ${playlist.name} (link: ${playlist.external_urls.spotify})`,
       msgFrom: user.username,
       msgDateTime: new Date(),
     };
     await sendMessage(message, selectedChatId);
   };
 
-  const sendSong = async (song: SpotifyTrack) => {
+  const sendSong = async (song: SpotifyTrackItem) => {
     if (!selectedChatId) return;
 
     const artistNames = Array.isArray(song.track.artists)
@@ -109,6 +84,16 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     };
 
     await sendMessage(message, selectedChatId);
+  };
+
+  const handleRecommendSongs = async () => {
+    if (!songForRecommendation) {
+      setError('Please enter a song name');
+      return;
+    }
+    const songRecommendations = await recommendSongs(songForRecommendation);
+    setRecommendedSongs(songRecommendations);
+    setShowDisplayRecommendedSongs(true);
   };
 
   const sendCurrentTrack = async () => {
@@ -149,6 +134,14 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
     sendSong,
     sendCurrentTrack,
     error,
+    handleRecommendSongs,
+    recommendedSongs,
+    songForRecommendation,
+    setSongForRecommendation,
+    showRecommendationInputDialog,
+    setShowRecommendationInputDialog,
+    showDisplayRecommendedSongs,
+    setShowDisplayRecommendedSongs,
   };
 };
 
