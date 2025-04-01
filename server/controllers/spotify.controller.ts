@@ -230,12 +230,13 @@ const spotifyController = (socket: FakeSOSocket) => {
           res.status(200).json({ isPlaying: false });
           return;
         }
-
+        const {data} = nowPlayingResponse;
+        const isPlaying = data.is_playing === true;
         res.status(200).json({
-          isPlaying: true,
-          track: nowPlayingResponse.data.item,
-          progress_ms: nowPlayingResponse.data.progress_ms,
-          timestamp: nowPlayingResponse.data.timestamp,
+          isPlaying,
+          track: data.item,
+          progress_ms: data.progress_ms,
+          timestamp: data.timestamp,
         });
       } catch (error) {
         if (error instanceof Error) {

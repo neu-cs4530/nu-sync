@@ -81,6 +81,7 @@ const useProfileSettings = () => {
           setCurrentPlayingSong(currentlyPlaying);
           setIsCurrentlyPlayingSong(true);
         } else {
+          setCurrentPlayingSong(null);
           setIsCurrentlyPlayingSong(false);
         }
       } catch (error) {

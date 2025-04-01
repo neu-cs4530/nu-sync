@@ -60,43 +60,83 @@ const ProfileSettings: React.FC = () => {
               <strong>Username:</strong> {userData.username}
             </p>
 
-            {/* Spotify Connection Status */}
             <div className='spotify-section'>
               <h3>Spotify Connection</h3>
-              {isSpotifyConnected ? (
-                <div>
-                  <p className='success-message'>Connected to Spotify!</p>
-                  {spotifyUserId && <p>Spotify User ID: {spotifyUserId}</p>}
-                  <button
-                    className='delete-button'
-                    onClick={() => {
-                      disconnect();
-                    }}>
-                    Disconnect Spotify
-                  </button>
-                  {isCurrentlyPlayingSong && currentPlayingSong ? (
-                    <p>Currently playing: <a
-                      href={currentPlayingSong.track.external_urls.spotify}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: 'blue', textDecoration: 'underline' }}
-                    >
-                      {currentPlayingSong.track.name} - {currentPlayingSong.track.artists[0].name}
-                    </a></p>
+
+              {canEditProfile && (
+                <>
+                  {isSpotifyConnected ? (
+                    <>
+                      <p className='success-message'>Connected to Spotify!</p>
+                      {spotifyUserId && <p>Spotify User ID: {spotifyUserId}</p>}
+                      <button className='delete-button' onClick={disconnect}>
+                        Disconnect Spotify
+                      </button>
+                    </>
                   ) : (
-                    <p>User is not currently playing a song.</p>
+                    <>
+                      <p>Not connected to Spotify</p>
+                      <button className='login-button' onClick={handleLoginUserSpotify}>
+                        Connect Spotify
+                      </button>
+                    </>
                   )}
-                </div>
-              ) : (
-                <div>
-                  <p>Not connected to Spotify</p>
-                  <button className='login-button' onClick={handleLoginUserSpotify}>
-                    Connect Spotify
-                  </button>
-                </div>
+
+                  {(() => {
+                    if (
+                      currentPlayingSong &&
+                      'isPlaying' in currentPlayingSong &&
+                      currentPlayingSong.isPlaying
+                    ) {
+                      return (
+                        <p>
+                          Currently playing:{' '}
+                          <a
+                            href={currentPlayingSong.track.external_urls.spotify}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            style={{ color: 'blue', textDecoration: 'underline' }}>
+                            {currentPlayingSong.track.name} -{' '}
+                            {currentPlayingSong.track.artists[0].name}
+                          </a>
+                        </p>
+                      );
+                    }
+
+                    if (
+                      currentPlayingSong &&
+                      'error' in currentPlayingSong &&
+                      currentPlayingSong.error
+                    ) {
+                      return (
+                        <p>Unable to fetch currently playing song. Please reconnect Spotify.</p>
+                      );
+                    }
+
+                    return <p>No song is currently playing.</p>;
+                  })()}
+                </>
+              )}
+
+              {!canEditProfile && (
+                <>
+                  {isCurrentlyPlayingSong && currentPlayingSong ? (
+                    <p>
+                      Currently playing:{' '}
+                      <a
+                        href={currentPlayingSong.track.external_urls.spotify}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        style={{ color: 'blue', textDecoration: 'underline' }}>
+                        {currentPlayingSong.track.name} - {currentPlayingSong.track.artists[0].name}
+                      </a>
+                    </p>
+                  ) : (
+                    <p>No song is currently playing or Spotify data could not be retrieved.</p>
+                  )}
+                </>
               )}
             </div>
-
 
             {/* ---- Biography Section ---- */}
             {!editBioMode && (
