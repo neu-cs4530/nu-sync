@@ -178,7 +178,7 @@ const SpotifySharingComponent = ({
           <div className='recommended-songs'>
             {recommendedSongs.map((song: RecommendedSong) => (
               <p key={song.url}>
-                {song.name} - {song.artist}.{' '}
+                <span className='white-text'>{song.name} - {song.artist}. </span>
                 <a href={song.url} target='_blank' rel='noopener noreferrer'>
                   Listen on Spotify
                 </a>
