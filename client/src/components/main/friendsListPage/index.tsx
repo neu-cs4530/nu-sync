@@ -35,7 +35,6 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
       setFriends(friendsList);
     } catch (err) {
       setError('Failed to load friends list');
-      console.error('Error fetching friends:', err);
     } finally {
       setLoading(false);
     }
