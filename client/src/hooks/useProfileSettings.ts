@@ -9,8 +9,20 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
+import { checkSpotifyStatus, getCurrentlyPlaying } from '../services/spotifyService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
+
+// type for the currently playing song
+type CurrentlyPlaying = {
+  track: {
+    name: string;
+    artists: { name: string }[];
+    external_urls: { spotify: string };
+  };
+  progress_ms: number;
+  timestamp: number;
+};
 
 /**
  * A custom hook to encapsulate all logic/state for the ProfileSettings component.
@@ -38,11 +50,14 @@ const useProfileSettings = () => {
 
   const [loggedInSpotify, setLoggedInSpotify] = useState(false);
 
+  const [currentPlayingSong, setCurrentPlayingSong] = useState<CurrentlyPlaying | null>(null);
+  const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] = useState<boolean>(false);
+
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
 
   useEffect(() => {
-    if (!username) return;
+    if (!username) return undefined;
 
     const fetchUserData = async () => {
       try {
@@ -57,7 +72,39 @@ const useProfileSettings = () => {
       }
     };
 
-    fetchUserData();
+    const fetchCurrentSong = async () => {
+      try {
+        const currentlyPlaying = await getCurrentlyPlaying(username);
+        const currentStatus = await checkSpotifyStatus(username);
+
+        if (currentStatus.isConnected && currentlyPlaying.isPlaying) {
+          setCurrentPlayingSong(currentlyPlaying);
+          setIsCurrentlyPlayingSong(true);
+        } else {
+          setCurrentPlayingSong(null);
+          setIsCurrentlyPlayingSong(false);
+        }
+      } catch (error) {
+        setErrorMessage('Error fetching currently playing song');
+        setIsCurrentlyPlayingSong(false);
+      }
+    };
+
+    // automatically fetch the currently playing song every 'interval' seconds
+    let interval: NodeJS.Timeout;
+
+    fetchUserData().then(() => {
+      fetchCurrentSong();
+      interval = setInterval(() => {
+        fetchCurrentSong();
+      }, 10000);
+    });
+
+    return () => {
+      clearInterval(interval);
+      setCurrentPlayingSong(null);
+      setIsCurrentlyPlayingSong(false);
+    };
   }, [username]);
 
   // Fetch mutual friends only when viewing another user's profile
@@ -215,6 +262,10 @@ const useProfileSettings = () => {
     handleDeleteUser,
     mutualFriends,
     mutualFriendsLoading,
+    currentPlayingSong,
+    isCurrentlyPlayingSong,
+    setCurrentPlayingSong,
+    setIsCurrentlyPlayingSong,
   };
 };
 

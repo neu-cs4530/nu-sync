@@ -10,30 +10,31 @@ import { getMetaData } from '../../../tool';
  * @param message: The message object to display.
  */
 const MessageCard = ({ message }: { message: DatabaseMessage }) => {
-  // comnverts URLs in a message to clickable links
+  // converts URLs in a message to clickable links
   const renderMessageWithLinks = (text: string) => {
     // regular expression to match Spotify URLs
-    const spotifyUrlRegex = /(https:\/\/open\.spotify\.com\/playlist\/[a-zA-Z0-9]+)/g;
-    const parts = text.split(spotifyUrlRegex);
-    
-    // if part of the message is a Spotify URL, render it as a link
-    return parts.map((part, index) => {
-      if (part.match(spotifyUrlRegex)) {
-        return (
-          <a 
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="spotify-link"
-          >
-            {part}
+    const playlistRegex =
+      /Check out this playlist: (.+) \(link: (https:\/\/open\.spotify\.com\/playlist\/[a-zA-Z0-9]+)\)/;
+
+    // check if the message contains a Spotify playlist link
+    const match = text.match(playlistRegex);
+    if (match) {
+      const [, name, url] = match;
+      return (
+        <>
+          Check out this playlist:{' '}
+          <a
+            href={url}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='spotify-link'>
+            {name}
           </a>
-        );
-      }
-      // otherwise it is just a normal message
-      return part;
-    });
+        </>
+      );
+    }
+
+    return text; // fallback if no match
   };
 
   return (

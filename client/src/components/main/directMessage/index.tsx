@@ -5,11 +5,8 @@ import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
+import SpotifySharingComponent from './spotifySharing';
 
-/**
- * DirectMessage component renders a page for direct messaging between users.
- * It includes a list of users and a chat window to send and receive messages.
- */
 const DirectMessage = () => {
   const {
     selectedChat,
@@ -21,13 +18,6 @@ const DirectMessage = () => {
     handleSendMessage,
     handleChatSelect,
     handleDirectChatWithFriend,
-    handleSendSpotifyPlaylist,
-    showPlaylistDropdown,
-    playlists,
-    selectedPlaylist,
-    setSelectedPlaylist,
-    fetchSpotifyPlaylists,
-    error,
     searchTerm,
     setSearchTerm,
     searchResults,
@@ -36,6 +26,8 @@ const DirectMessage = () => {
     handleSearchResultClick,
     highlightedMessageId,
     messageRefs,
+    error,
+    spotifySharing,
   } = useDirectMessage();
 
   // const handleSendSpotifyPlaylist = useSpotifyAuth()
@@ -85,7 +77,6 @@ const DirectMessage = () => {
 
           {searchError && <div className="error">{searchError}</div>}
 
-          {/* search results */}
           {searchResults.length > 0 && (
             <div className="search-results">
               <p>
@@ -105,13 +96,8 @@ const DirectMessage = () => {
             </div>
           )}
 
-          {/* chat list */}
-          {chats.map((chat) => (
-            <ChatsListCard
-              key={String(chat._id)}
-              chat={chat}
-              handleChatSelect={handleChatSelect}
-            />
+          {chats.map(chat => (
+            <ChatsListCard key={String(chat._id)} chat={chat} handleChatSelect={handleChatSelect} />
           ))}
         </div>
 
@@ -148,41 +134,9 @@ const DirectMessage = () => {
                   Send
                 </button>
 
-                {/* Spotify Playlist Dropdown */}
-                <button
-                  className="custom-button"
-                  onClick={fetchSpotifyPlaylists}
-                >
-                  Share Spotify Playlist
-                </button>
-
-                {showPlaylistDropdown && (
-                  <>
-                    <div className="playlist-dropdown">
-                      <select
-                        onChange={(e) => {
-                          const playlist = playlists?.find(
-                            (p) => p.id === e.target.value,
-                          );
-                          setSelectedPlaylist(playlist || null);
-                        }}
-                      >
-                        {playlists?.map((playlist) => (
-                          <option key={playlist.id} value={playlist.id}>
-                            {playlist.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      className="custom-button"
-                      onClick={handleSendSpotifyPlaylist}
-                      disabled={!selectedPlaylist}
-                    >
-                      Send Playlist
-                    </button>
-                  </>
-                )}
+                <div className='spotify-panel-wrapper'>
+                  <SpotifySharingComponent {...spotifySharing} />
+                </div>
               </div>
             </>
           ) : (

@@ -1,0 +1,113 @@
+.spotify-container {
+  position: relative;
+  width: 100%;
+}
+
+.spotify-toggle-button {
+  background-color: #111;
+  color: #1db954;
+  border: 1px solid #1db954;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.spotify-panel {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  background-color: #1c1c1c;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.spotify-panel.slide-in {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.spotify-panel.slide-out {
+  transform: translateY(-10px);
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+}
+
+.spotify-action-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.spotify-action-button {
+  background-color: #111;
+  color: #1db954;
+  border: 1px solid #1db954;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.spotify-action-button.half-width {
+  flex: 1;
+}
+
+.spotify-button {
+  background-color: #1db954;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.spotify-section h4 {
+  color: #1db954;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.recommendation-input {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.recommendation-input:focus {
+  border-color: #1e90ff;
+  box-shadow: 0 0 4px rgba(30, 144, 255, 0.4);
+}
+
+.playlist-dropdown select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: #1c1c1c;
+  color: #fff;
+  border: 1px solid #1db954;
+  font-family: inherit;
+  font-size: 14px;
+  height: auto;
+  box-shadow: 0 0 4px rgba(29, 185, 84, 0.4);
+}
+
+.playlist-dropdown select option {
+  background-color: #121212;
+  color: #1db954;
+  padding: 6px;
+}
+
+.playlist-dropdown select:focus {
+  outline: none;
+  border: 1px solid #1ed760;
+}

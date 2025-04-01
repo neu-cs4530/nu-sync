@@ -28,7 +28,9 @@ const getUsers = async (): Promise<SafeDatabaseUser[]> => {
  *
  * @throws Error if there is an issue fetching users.
  */
-const getUserByUsername = async (username: string): Promise<SafeDatabaseUser> => {
+const getUserByUsername = async (
+  username: string,
+): Promise<SafeDatabaseUser> => {
   const res = await api.get(`${USER_API_URL}/getUser/${username}`);
   if (res.status !== 200) {
     throw new Error('Error when fetching user');
@@ -97,7 +99,10 @@ const deleteUser = async (username: string): Promise<SafeDatabaseUser> => {
  * @returns A promise that resolves to the updated user data
  * @throws {Error} If the request to the server is unsuccessful
  */
-const resetPassword = async (username: string, newPassword: string): Promise<SafeDatabaseUser> => {
+const resetPassword = async (
+  username: string,
+  newPassword: string,
+): Promise<SafeDatabaseUser> => {
   const res = await api.patch(`${USER_API_URL}/resetPassword`, {
     username,
     password: newPassword,
@@ -139,7 +144,9 @@ const getMutualFriends = async (
   username: string,
   viewedUser: string,
 ): Promise<SafeDatabaseUser[]> => {
-  const res = await api.get(`${USER_API_URL}/getMutualFriends/${username}/${viewedUser}`);
+  const res = await api.get(
+    `${process.env.REACT_APP_SERVER_URL}/friend/mutual/${username}/${viewedUser}`,
+  );
   if (res.status !== 200) {
     throw new Error('Error when fetching mutual friends');
   }
@@ -151,7 +158,9 @@ const getMutualFriends = async (
  * @param data Object containing username and Spotify tokens
  * @returns The updated user object
  */
-const updateSpotifyTokens = async (data: SpotifyTokens): Promise<SafeDatabaseUser> => {
+const updateSpotifyTokens = async (
+  data: SpotifyTokens,
+): Promise<SafeDatabaseUser> => {
   try {
     const res = await api.post(`${USER_API_URL}/spotify/tokens`, data);
     return res.data;

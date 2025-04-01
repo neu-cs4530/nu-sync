@@ -1,9 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './index.css';
 import { getFriends } from '../../../services/friendService';
 import useUserContext from '../../../hooks/useUserContext';
 import FriendCard from './friendCard';
-import { FriendConnection } from '../../../types/types';
+import {
+  FriendConnection,
+  FriendRequestUpdatePayload,
+} from '../../../types/types';
 
 /**
  * Interface representing the props for the FriendsListPage component.
@@ -18,28 +21,54 @@ interface FriendsListPageProps {
  * with options to view their profile or send them messages.
  */
 const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
-  const { user } = useUserContext();
+  const { user, socket } = useUserContext();
   const [friends, setFriends] = useState<FriendConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchFriends = async () => {
-      if (!user.username) return;
+  const fetchFriends = useCallback(async () => {
+    if (!user.username) return;
 
-      try {
-        setLoading(true);
-        const friendsList = await getFriends(user.username);
-        setFriends(friendsList);
-      } catch (err) {
-        setError('Failed to load friends list');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      const friendsList = await getFriends(user.username);
+      setFriends(friendsList);
+    } catch (err) {
+      setError('Failed to load friends list');
+    } finally {
+      setLoading(false);
+    }
+  }, [user.username]);
+
+  useEffect(() => {
+    fetchFriends();
+
+    // Listen for friend request updates via socket
+    const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
+      const { friendRequest, type } = payload;
+
+      // If a friend request was deleted or updated, refresh the friend list
+      if (
+        (type === 'deleted' || type === 'updated') &&
+        (friendRequest.requester.username === user.username ||
+          friendRequest.recipient.username === user.username)
+      ) {
+        fetchFriends();
       }
     };
 
-    fetchFriends();
-  }, [user.username]);
+    socket.on('friendRequestUpdate', handleFriendRequestUpdate);
+
+    return () => {
+      socket.off('friendRequestUpdate', handleFriendRequestUpdate);
+    };
+  }, [user.username, socket, fetchFriends]);
+
+  const handleFriendRemoved = (friendId: string) => {
+    setFriends((prevFriends) =>
+      prevFriends.filter((friend) => friend._id.toString() !== friendId),
+    );
+  };
 
   if (loading) {
     return <div className="loading-indicator">Loading friends...</div>;
@@ -52,7 +81,7 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
   if (friends.length === 0) {
     return (
       <div className="empty-state">
-        <p>You don`&apos;`t have any friends yet.</p>
+        <p>You don&apos;t have any friends yet.</p>
         <p>Add friends to start messaging!</p>
       </div>
     );
@@ -67,6 +96,7 @@ const FriendsListPage = ({ handleFriendSelect }: FriendsListPageProps) => {
             key={friend._id.toString()}
             friend={friend}
             handleFriendSelect={handleFriendSelect}
+            onFriendRemoved={handleFriendRemoved}
           />
         ))}
       </div>
