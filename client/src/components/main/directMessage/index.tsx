@@ -1,7 +1,8 @@
 import './index.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CodeEditor from '@uiw/react-textarea-code-editor';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
 import FriendsListPage from '../friendsListPage';
@@ -44,28 +45,6 @@ const DirectMessage = () => {
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('javascript');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
-
-  const handleScroll = () => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  };
-
-  useEffect(() => {
-    const syncDimensions = () => {
-      if (textareaRef.current && preRef.current) {
-        preRef.current.style.width = `${textareaRef.current.offsetWidth}px`;
-        preRef.current.style.height = `${textareaRef.current.offsetHeight}px`;
-      }
-    };
-
-    syncDimensions();
-    window.addEventListener('resize', syncDimensions);
-    return () => window.removeEventListener('resize', syncDimensions);
-  }, []);
 
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
@@ -154,8 +133,8 @@ const DirectMessage = () => {
                       messageRefs.current[String(message._id)] = el;
                     }}
                     className={`message-wrapper${highlightedMessageId?.toString() === String(message._id)
-                        ? ' highlight'
-                        : ''
+                      ? ' highlight'
+                      : ''
                       }`}
                   >
                     <MessageCard message={message} />
@@ -185,33 +164,22 @@ const DirectMessage = () => {
                         Cancel
                       </button>
                     </div>
-                    <div style={{ position: 'relative' }}>
-                      <textarea
-                        ref={textareaRef}
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        onScroll={handleScroll}
-                        className="code-textarea"
-                        placeholder="Type your code here..."
-                      />
-                      <pre
-                        ref={preRef}
-                        className="code-highlight"
-                      >
-                        <SyntaxHighlighter
-                          language={language}
-                          style={tomorrow}
-                          showLineNumbers
-                          customStyle={{
-                            background: 'transparent',
-                            margin: 0,
-                            padding: '10px',
-                          }}
-                        >
-                          {code}
-                        </SyntaxHighlighter>
-                      </pre>
-                    </div>
+
+                    <CodeEditor
+                      value={code}
+                      language={language}
+                      onChange={(e) => setCode(e.target.value)}
+                      padding={10}
+                      style={{
+                        fontSize: 14,
+                        minHeight: 200,
+                        backgroundColor: "#2d2d2d",
+                        fontFamily: 'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
+                        borderRadius: '4px',
+                      }}
+                      data-color-mode="dark"
+                    />
+
                     <button
                       className="custom-button primary"
                       onClick={handleSendCodeMessage}
