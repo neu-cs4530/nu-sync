@@ -42,7 +42,6 @@ const userSchema: Schema = new Schema(
     },
     spotifyId: {
       type: String,
-      // unique: true,
       sparse: true, // Allows for null values without violating uniqueness
     },
     spotifyAccessToken: {

@@ -278,7 +278,7 @@ const spotifyController = (socket: FakeSOSocket) => {
         { username },
         {
           $set: {
-            spotifyId: '',
+            spotifyId: null,
             spotifyAccessToken: '',
             spotifyRefreshToken: '',
           },
