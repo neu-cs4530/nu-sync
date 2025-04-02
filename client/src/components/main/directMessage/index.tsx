@@ -9,6 +9,7 @@ import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
+import { DatabaseMessage, CodeSnippet } from '../../../types/types';
 
 const SUPPORTED_LANGUAGES = [
   { value: 'python', label: 'Python' },
@@ -55,10 +56,64 @@ const DirectMessage = () => {
 
   const handleSendCodeMessage = () => {
     if (code.trim()) {
-      setNewMessage(`\`\`\`${language}\n${code}\n\`\`\``);
+      // Using the CodeSnippet interface to structure the code message
+      const codeSnippet: CodeSnippet = {
+        code,
+        language,
+      };
+
+      // Set the newMessage with information that this is a code snippet
+      setNewMessage(JSON.stringify({
+        isCodeSnippet: true,
+        codeSnippet
+      }));
+
       setCode('');
       setShowCodeEditor(false);
     }
+  };
+
+  // Render message with support for code snippets
+  const renderMessage = (message: DatabaseMessage) => {
+    // Check if the message has a code snippet
+    if (message.isCodeSnippet && message.codeSnippet) {
+      return (
+        <SyntaxHighlighter
+          language={message.codeSnippet.language}
+          style={tomorrow}
+          customStyle={{
+            borderRadius: '4px',
+            margin: '10px 0'
+          }}
+        >
+          {message.codeSnippet.code}
+        </SyntaxHighlighter>
+      );
+    }
+
+    // For backward compatibility, try to parse the message to check if it contains code snippet info
+    try {
+      const parsedContent = JSON.parse(message.msg);
+      if (parsedContent.isCodeSnippet && parsedContent.codeSnippet) {
+        return (
+          <SyntaxHighlighter
+            language={parsedContent.codeSnippet.language}
+            style={tomorrow}
+            customStyle={{
+              borderRadius: '4px',
+              margin: '10px 0'
+            }}
+          >
+            {parsedContent.codeSnippet.code}
+          </SyntaxHighlighter>
+        );
+      }
+    } catch (e) {
+      // Not a JSON message, render normally
+    }
+
+    // Default case, render normally
+    return <MessageCard message={message} />;
   };
 
   return (
@@ -132,11 +187,11 @@ const DirectMessage = () => {
                       messageRefs.current[String(message._id)] = el;
                     }}
                     className={`message-wrapper${highlightedMessageId?.toString() === String(message._id)
-                      ? ' highlight'
-                      : ''
+                        ? ' highlight'
+                        : ''
                       }`}
                   >
-                    <MessageCard message={message} />
+                    {renderMessage(message)}
                   </div>
                 ))}
               </div>
