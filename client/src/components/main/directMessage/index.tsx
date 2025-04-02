@@ -11,12 +11,11 @@ import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
 
 const SUPPORTED_LANGUAGES = [
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
+  { value: 'python', label: 'python' },
+  { value: 'csharp', label: 'C#' },
   { value: 'java', label: 'Java' },
-  { value: 'html', label: 'HTML' },
-  { value: 'css', label: 'CSS' },
+  { value: 'go', label: 'Go' },
+  { value: 'rust', label: 'Rust' },
 ];
 
 const DirectMessage = () => {
@@ -44,7 +43,7 @@ const DirectMessage = () => {
 
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [code, setCode] = useState('');
-  const [language, setLanguage] = useState('javascript');
+  const [language, setLanguage] = useState('python');
 
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
