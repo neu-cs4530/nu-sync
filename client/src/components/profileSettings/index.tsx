@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
 import useSpotifyAuth from '../../hooks/useSpotifyAuth';
+import SpotifyConflictModal from './spotifyConflict';
 
 const ProfileSettings: React.FC = () => {
   const {
@@ -31,9 +32,16 @@ const ProfileSettings: React.FC = () => {
     mutualFriendsLoading,
     currentPlayingSong,
     isCurrentlyPlayingSong,
+    showSpotifyConflictModal,
+    setShowSpotifyConflictModal,
+    handleUnlinkAllAndRetry,
   } = useProfileSettings();
 
-  const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
+  const {
+    isSpotifyConnected,
+    spotifyUserId,
+    disconnect,
+  } = useSpotifyAuth();
 
   useEffect(() => {}, [isSpotifyConnected, spotifyUserId]);
 
@@ -135,6 +143,13 @@ const ProfileSettings: React.FC = () => {
                     <p>No song is currently playing or Spotify data could not be retrieved.</p>
                   )}
                 </>
+              )}
+
+              {showSpotifyConflictModal && (
+                <SpotifyConflictModal
+                  onConfirm={handleUnlinkAllAndRetry}
+                  onCancel={() => setShowSpotifyConflictModal(false)}
+                />
               )}
             </div>
 

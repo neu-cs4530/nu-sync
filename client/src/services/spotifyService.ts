@@ -13,6 +13,33 @@ export const loginSpotify = async () => {
   window.location.href = `${SPOTIFY_API_URL}/auth/spotify`;
 };
 
+
+/**
+ * Disconnects a Spotify account from all users who are currently linked to it.
+ * @param spotifyUserId - The Spotify user ID to unlink across accounts.
+ */
+export const disconnectAllSpotifyAccounts = async (spotifyUserId: string) => {
+  if (!spotifyUserId) throw new Error('Missing Spotify User ID');
+  const res = await api.post(`${SPOTIFY_API_URL}/disconnectFromAllAccounts`, {
+    spotifyUserId,
+  });
+  return res.data;
+};
+
+
+  /**
+ * Fetches whether the user's Spotify account had a conflict during login.
+ * @param username - The username to check for a conflict.
+ * @returns An object with a boolean `conflict` property.
+ */
+export const getSpotifyConflictStatus = async (
+  username: string,
+): Promise<{ conflict: boolean; spotifyUserId?: string }> => {
+  const res = await api.get(`${SPOTIFY_API_URL}/conflict-status/${username}`);
+  return res.data; // { conflict: true, spotifyUserId: "userID" }
+};
+
+
 /**
  * Fetches the user's Spotify playlists from the backend using their stored access token.
  * @param username The username of the user for whom to fetch playlists.
