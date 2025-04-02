@@ -11,7 +11,7 @@ import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
 
 const SUPPORTED_LANGUAGES = [
-  { value: 'python', label: 'python' },
+  { value: 'python', label: 'Python' },
   { value: 'csharp', label: 'C#' },
   { value: 'java', label: 'Java' },
   { value: 'go', label: 'Go' },
@@ -172,11 +172,14 @@ const DirectMessage = () => {
                       style={{
                         fontSize: 14,
                         minHeight: 200,
-                        backgroundColor: "#2d2d2d",
-                        fontFamily: 'ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace',
+                        backgroundColor: "#ffffff",
+                        fontFamily: 'monospace',
+                        lineHeight: '1.5',
                         borderRadius: '4px',
+                        border: '1px solid #ccc',
                       }}
-                      data-color-mode="dark"
+                      data-color-mode="light"
+                      className="code-editor-fix"
                     />
 
                     <button
