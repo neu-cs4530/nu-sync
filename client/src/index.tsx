@@ -3,6 +3,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import './index.css';
 import { io } from 'socket.io-client';
 import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
 import FakeStackOverflow from './components/fakestackoverflow';
 import { FakeSOSocket } from './types/types';
 
@@ -32,6 +33,7 @@ const App = () => {
   return (
     <Router>
       <FakeStackOverflow socket={socket} />
+      <ToastContainer position='top-right' autoClose={3000} hideProgressBar={false} />
     </Router>
   );
 };

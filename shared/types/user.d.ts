@@ -48,6 +48,8 @@ export interface User extends UserCredentials {
   playlists?: Playlist[];
   currentlyPlaying?: CurrentlyPlayingTrack;
   playlistHistory?: PlaylistHistory[];
+  spotifyConflictTemp?: boolean;
+  spotifyConflictUserId?: string;
 }
 
 /**

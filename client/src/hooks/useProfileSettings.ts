@@ -9,7 +9,7 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
-import { checkSpotifyStatus, getCurrentlyPlaying } from '../services/spotifyService';
+import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
 
@@ -53,9 +53,44 @@ const useProfileSettings = () => {
   const [currentPlayingSong, setCurrentPlayingSong] = useState<CurrentlyPlaying | null>(null);
   const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] = useState<boolean>(false);
 
+  const [showSpotifyConflictModal, setShowSpotifyConflictModal] = useState(false);
+  const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<string | null>(null);
+
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
 
+    useEffect(() => {
+      const fetchConflictStatus = async () => {
+        if (!username) return;
+
+        try {
+          const { conflict, spotifyUserId } = await getSpotifyConflictStatus(username);
+          if (conflict && spotifyUserId) {
+            setConflictSpotifyUserId(spotifyUserId);
+            setShowSpotifyConflictModal(true);
+          }
+        } catch (err) {
+          // console.error('Error checking Spotify conflict status:', err);
+        }
+      };
+
+      fetchConflictStatus();
+    }, [username]);
+
+
+    const handleUnlinkAllAndRetry = async () => {
+      if (!conflictSpotifyUserId) {
+        return;
+      }
+
+      try {
+        await disconnectAllSpotifyAccounts(conflictSpotifyUserId);
+        setShowSpotifyConflictModal(false);
+      } catch (err) {
+        setErrorMessage('Failed to unlink Spotify accounts.');
+      }
+    };
+  
   useEffect(() => {
     if (!username) return undefined;
 
@@ -266,6 +301,9 @@ const useProfileSettings = () => {
     isCurrentlyPlayingSong,
     setCurrentPlayingSong,
     setIsCurrentlyPlayingSong,
+    showSpotifyConflictModal,
+    setShowSpotifyConflictModal,
+    handleUnlinkAllAndRetry,
   };
 };
 
