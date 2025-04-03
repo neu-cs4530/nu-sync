@@ -3,13 +3,48 @@
   flex-direction: column;
   width: 15%;
   border-right: 1px solid #e2e8f0;
-  /* Changed from dashed to subtle solid */
   padding: 4% 0 4% 0;
   align-items: center;
   background: #ffffff;
-  /* Added clean white background */
   box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
-  /* Subtle depth */
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.status-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+
+.status-row {
+  width: 80%;
+  margin: 20px 0;
+  text-align: center;
+  line-height: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background-color: #f1f1f1;
+  color: #4a5568;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #d0d0d0;
+}
+
+.status-row:hover {
+  background-color: #f7f7f7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border-color: #333;
 }
 
 .menu_button:first-child {

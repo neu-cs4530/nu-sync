@@ -105,6 +105,23 @@ const userSchema: Schema = new Schema(
       ],
       default: [],
     },
+    onlineStatus: {
+      status: {
+        type: String,
+        enum: ['online', 'away', 'busy', 'invisible'],
+        default: 'online',
+      },
+      busySettings: {
+        type: {
+          muteScope: {
+            type: String,
+            enum: ['friends-only', 'everyone'],
+            default: 'everyone',
+          },
+        },
+        default: undefined,
+      },
+    },
   },
   { collection: 'User' },
 );

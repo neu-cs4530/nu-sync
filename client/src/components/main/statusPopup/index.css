@@ -1,0 +1,89 @@
+.status-popup {
+  position: absolute;
+  bottom: 60px;
+  left: 5%;
+  background-color: #2f3136;
+  border-radius: 8px;
+  padding: 8px 0;
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+.status-option {
+  padding: 8px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+}
+
+.status-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+
+.chevron-icon {
+  font-size: 14px;
+  color: #a0aec0;
+  margin-left: 26%;
+}
+
+.status-option:hover {
+  background-color: #40444b;
+}
+
+.status-desc {
+  font-size: 12px;
+  color: #b9bbbe;
+}
+
+.status-label {
+  font-weight: 500;
+}
+
+.status-info {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+
+.status-icon.invisible {
+  color: #9ca3af;
+  font-size: 29px;
+  margin-bottom: -2px;
+}
+
+
+
+
+
+
+
+.dnd-submenu {
+  background-color: #2f3136;
+  padding: 8px 0;
+  margin-left: 8px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
+
+.status-icon.online {
+  color: #22c55e;
+}
+
+.status-icon.away {
+  color: #facc15;
+}
+
+.status-icon.busy {
+  color: #ef4444;
+}
