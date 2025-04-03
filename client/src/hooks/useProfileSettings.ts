@@ -64,10 +64,35 @@ const useProfileSettings = () => {
   const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] =
     useState<boolean>(false);
 
+  const [showSpotifyConflictModal, setShowSpotifyConflictModal] =
+    useState(false);
+  const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<
+    string | null
+  >(null);
+
   const canEditProfile =
     currentUser.username && userData?.username
       ? currentUser.username === userData.username
       : false;
+
+  useEffect(() => {
+    const fetchConflictStatus = async () => {
+      if (!username) return;
+
+      try {
+        const { conflict, spotifyUserId } =
+          await getSpotifyConflictStatus(username);
+        if (conflict && spotifyUserId) {
+          setConflictSpotifyUserId(spotifyUserId);
+          setShowSpotifyConflictModal(true);
+        }
+      } catch (err) {
+        // console.error('Error checking Spotify conflict status:', err);
+      }
+    };
+
+    fetchConflictStatus();
+  }, [username]);
 
   useEffect(() => {
     if (!username) return undefined;
@@ -279,6 +304,19 @@ const useProfileSettings = () => {
       window.location.href = `${SERVER_URL}/spotify/auth/spotify?username=${user.username}`;
     } catch (error) {
       setErrorMessage('Failed to log into Spotify');
+    }
+  };
+
+  const handleUnlinkAllAndRetry = async () => {
+    if (!conflictSpotifyUserId) {
+      return;
+    }
+
+    try {
+      await disconnectAllSpotifyAccounts(conflictSpotifyUserId);
+      setShowSpotifyConflictModal(false);
+    } catch (err) {
+      setErrorMessage('Failed to unlink Spotify accounts.');
     }
   };
 
