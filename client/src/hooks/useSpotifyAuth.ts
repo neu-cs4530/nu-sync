@@ -60,7 +60,7 @@ const useSpotifyAuth = () => {
 
       const updatedUser = {
         ...user,
-        spotifyId: '',
+        spotifyId: null,
         spotifyAccessToken: '',
         spotifyRefreshToken: '',
       };
