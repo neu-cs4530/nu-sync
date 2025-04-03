@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { UserCredentials, SafeDatabaseUser } from '../types/types';
+import {
+  UserCredentials,
+  SafeDatabaseUser,
+  PrivacySettings,
+} from '../types/types';
 import api from './config';
 
 const USER_API_URL = `${process.env.REACT_APP_SERVER_URL}/user`;
@@ -172,6 +176,27 @@ const updateSpotifyTokens = async (
   }
 };
 
+/**
+ * Updates a user's privacy settings.
+ * @param username The unique username of the user
+ * @param settings The new privacy settings to apply
+ * @returns A promise resolving to the updated user
+ * @throws Error if the request fails
+ */
+const updatePrivacySettings = async (
+  username: string,
+  settings: PrivacySettings,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.patch(`${USER_API_URL}/updatePrivacySettings`, {
+    username,
+    privacySettings: settings,
+  });
+  if (res.status !== 200) {
+    throw new Error('Error when updating privacy settings');
+  }
+  return res.data;
+};
+
 export {
   getUsers,
   getUserByUsername,
@@ -182,4 +207,5 @@ export {
   updateBiography,
   getMutualFriends,
   updateSpotifyTokens,
+  updatePrivacySettings,
 };

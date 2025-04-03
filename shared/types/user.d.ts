@@ -127,11 +127,21 @@ export interface UpdateBiographyRequest extends Request {
 /**
  * Represents the user's privacy settings.
  * - `profileVisibility`: Controls the visibility of the user's profile.
- * - `musicHistoryVisibility`: Controls the visibility of the user's music history.
  */
 export interface PrivacySettings {
   profileVisibility: 'public' | 'private';
-  musicHistoryVisibility: 'public' | 'private';
+}
+
+/**
+ * Express request for updating a user's privacy settings.
+ * - `username`: The username whose privacy settings are being updated (body).
+ * - `privacySettings`: The new privacy settings to be applied (body).
+ */
+export interface UpdatePrivacySettingsRequest extends Request {
+  body: {
+    username: string;
+    privacySettings: PrivacySettings;
+  };
 }
 
 /**

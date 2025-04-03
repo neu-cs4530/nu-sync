@@ -6,6 +6,7 @@ import {
   UserByUsernameRequest,
   FakeSOSocket,
   UpdateBiographyRequest,
+  UpdatePrivacySettingsRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
@@ -14,6 +15,7 @@ import {
   loginUser,
   saveUser,
   updateUser,
+  updateUserPrivacySettings,
 } from '../services/user.service';
 
 const userController = (socket: FakeSOSocket) => {
@@ -41,6 +43,22 @@ const userController = (socket: FakeSOSocket) => {
     req.body.username !== undefined &&
     req.body.username.trim() !== '' &&
     req.body.biography !== undefined;
+
+  /**
+   * Validates that the request body contains all required fields to update privacy settings.
+   * @param req The incoming request containing user data.
+   * @returns `true` if the body contains valid user fields; otherwise, `false`.
+   */
+  const isUpdatePrivacySettingsBodyValid = (
+    req: UpdatePrivacySettingsRequest,
+  ): boolean =>
+    req.body !== undefined &&
+    req.body.username !== undefined &&
+    req.body.username.trim() !== '' &&
+    req.body.privacySettings !== undefined &&
+    req.body.privacySettings.profileVisibility !== undefined &&
+    (req.body.privacySettings.profileVisibility === 'public' ||
+      req.body.privacySettings.profileVisibility === 'private');
 
   /**
    * Handles the creation of a new user account.
@@ -250,6 +268,47 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Updates a user's privacy settings.
+   * @param req The request containing the username and privacy settings in the body.
+   * @param res The response, either confirming the update or returning an error.
+   * @returns A promise resolving to void.
+   */
+  const updatePrivacySettings = async (
+    req: UpdatePrivacySettingsRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      if (!isUpdatePrivacySettingsBodyValid(req)) {
+        res.status(400).send('Invalid privacy settings body');
+        return;
+      }
+
+      // Extract the username and privacy settings from the request body
+      const { username, privacySettings } = req.body;
+
+      // Call the user service function to update the privacy settings
+      const updatedUser = await updateUserPrivacySettings(
+        username,
+        privacySettings,
+      );
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
+
+      // Emit socket event for real-time updates
+      socket.emit('userUpdate', {
+        user: updatedUser,
+        type: 'updated',
+      });
+
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      res.status(500).send(`Error when updating privacy settings: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -258,6 +317,7 @@ const userController = (socket: FakeSOSocket) => {
   router.get('/getUsers', getUsers);
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
+  router.patch('/updatePrivacySettings', updatePrivacySettings);
   return router;
 };
 
