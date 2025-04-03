@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './layout';
 import Login from './auth/login';
-import { FakeSOSocket, SafeDatabaseUser } from '../types/types';
+import {
+  FakeSOSocket,
+  SafeDatabaseUser,
+  FriendRequestUpdatePayload,
+} from '../types/types';
 import LoginContext from '../contexts/LoginContext';
 import UserContext from '../contexts/UserContext';
 import QuestionPage from './main/questionPage';
@@ -19,6 +23,10 @@ import AllGamesPage from './main/games/allGamesPage';
 import GamePage from './main/games/gamePage';
 import FriendsListPage from './main/friendsListPage';
 import FriendRequestPage from './main/friendRequestPage/friendRequestPage';
+import NotificationContext, {
+  Notification,
+} from '../contexts/NotificationContext';
+import NotificationContainer from './main/notifications/NotificationContainer';
 
 const ProtectedRoute = ({
   user,
@@ -69,6 +77,27 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const removeNotification = useCallback((id: string) => {
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id),
+    );
+  }, []);
+
+  const addNotification = useCallback(
+    (notification: Omit<Notification, 'id'>) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      const newNotification = { ...notification, id };
+
+      setNotifications((prev) => [newNotification, ...prev]);
+
+      setTimeout(() => {
+        removeNotification(id);
+      }, 5000);
+    },
+    [removeNotification],
+  );
 
   // update user data if needed
   useEffect(() => {
@@ -79,40 +108,87 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!socket || !user) return undefined; // Return undefined explicitly
+
+    // Listen for friend request updates
+    const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
+      const { friendRequest, type } = payload;
+
+      // New friend request received
+      if (
+        type === 'created' &&
+        friendRequest.recipient.username === user.username
+      ) {
+        addNotification({
+          message: `${friendRequest.requester.username} sent you a friend request`,
+          link: '/requests',
+        });
+      }
+      // Friend request accepted
+      else if (
+        type === 'updated' &&
+        friendRequest.status === 'accepted' &&
+        friendRequest.requester.username === user.username
+      ) {
+        addNotification({
+          message: `${friendRequest.recipient.username} accepted your friend request`,
+          link: '/friends',
+        });
+      }
+    };
+
+    socket.on('friendRequestUpdate', handleFriendRequestUpdate);
+
+    return () => {
+      socket.off('friendRequestUpdate', handleFriendRequestUpdate);
+    };
+  }, [socket, user, addNotification]);
+
   return (
     <LoginContext.Provider value={{ setUser }}>
-      <Routes>
-        {/* Public Route */}
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        {/* Protected Routes */}
-        {
-          <Route
-            element={
-              <ProtectedRoute user={user} socket={socket}>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/home" element={<QuestionPage />} />
-            <Route path="tags" element={<TagPage />} />
-            <Route path="/messaging" element={<MessagingPage />} />
+      <NotificationContext.Provider
+        value={{
+          notifications,
+          addNotification,
+          removeNotification,
+        }}
+      >
+        {user && socket && <NotificationContainer />}
+
+        <Routes>
+          {/* Public Route */}
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          {/* Protected Routes */}
+          {
             <Route
-              path="/messaging/direct-message"
-              element={<DirectMessage />}
-            />
-            <Route path="/question/:qid" element={<AnswerPage />} />
-            <Route path="/new/question" element={<NewQuestionPage />} />
-            <Route path="/new/answer/:qid" element={<NewAnswerPage />} />
-            <Route path="/users" element={<UsersListPage />} />
-            <Route path="/user/:username" element={<ProfileSettings />} />
-            <Route path="/games" element={<AllGamesPage />} />
-            <Route path="/games/:gameID" element={<GamePage />} />
-            <Route path="/friends" element={<FriendsListPage />} />
-            <Route path="/requests" element={<FriendRequestPage />} />
-          </Route>
-        }
-      </Routes>
+              element={
+                <ProtectedRoute user={user} socket={socket}>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/home" element={<QuestionPage />} />
+              <Route path="tags" element={<TagPage />} />
+              <Route path="/messaging" element={<MessagingPage />} />
+              <Route
+                path="/messaging/direct-message"
+                element={<DirectMessage />}
+              />
+              <Route path="/question/:qid" element={<AnswerPage />} />
+              <Route path="/new/question" element={<NewQuestionPage />} />
+              <Route path="/new/answer/:qid" element={<NewAnswerPage />} />
+              <Route path="/users" element={<UsersListPage />} />
+              <Route path="/user/:username" element={<ProfileSettings />} />
+              <Route path="/games" element={<AllGamesPage />} />
+              <Route path="/games/:gameID" element={<GamePage />} />
+              <Route path="/friends" element={<FriendsListPage />} />
+              <Route path="/requests" element={<FriendRequestPage />} />
+            </Route>
+          }
+        </Routes>
+      </NotificationContext.Provider>
     </LoginContext.Provider>
   );
 };

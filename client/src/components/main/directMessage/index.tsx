@@ -96,8 +96,12 @@ const DirectMessage = () => {
             </div>
           )}
 
-          {chats.map(chat => (
-            <ChatsListCard key={String(chat._id)} chat={chat} handleChatSelect={handleChatSelect} />
+          {chats.map((chat) => (
+            <ChatsListCard
+              key={String(chat._id)}
+              chat={chat}
+              handleChatSelect={handleChatSelect}
+            />
           ))}
         </div>
 
@@ -134,13 +138,13 @@ const DirectMessage = () => {
                   Send
                 </button>
 
-                <div className='spotify-panel-wrapper'>
+                <div className="spotify-panel-wrapper">
                   <SpotifySharingComponent {...spotifySharing} />
                 </div>
               </div>
             </>
           ) : (
-            <h2>Select a user to start chatting</h2>
+            <h2>Start A New Chat</h2>
           )}
         </div>
       </div>
