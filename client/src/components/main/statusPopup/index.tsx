@@ -5,8 +5,8 @@ import {
   BsMoonFill,
   BsDashCircleFill,
   BsSlashCircleFill,
-  BsChevronDown,
-  BsChevronUp,
+  BsChevronLeft,
+  BsChevronRight,
 } from 'react-icons/bs';
 
 interface StatusPopupProps {
@@ -61,33 +61,35 @@ const StatusPopup = ({
       </div>
 
       <div
-        className={`status-option ${currentStatus === 'busy' ? 'selected' : ''}`}
-        onClick={() => setShowDndOptions(!showDndOptions)}>
+        className={`status-option dnd ${currentStatus === 'busy' ? 'selected' : ''}`}
+        onClick={() => setShowDndOptions(!showDndOptions)}
+        style={{ position: 'relative' }} // important for submenu alignment
+      >
         <BsDashCircleFill className='status-icon busy' />
         <div className='status-info'>
-          <div className='status-label'>Do Not Disturb  </div>
+          <div className='status-label'>Do Not Disturb</div>
         </div>
         {showDndOptions ? (
-          <BsChevronUp className='chevron-icon' />
+          <BsChevronLeft className='chevron-icon' />
         ) : (
-          <BsChevronDown className='chevron-icon' />
+          <BsChevronRight className='chevron-icon' />
+        )}
+
+        {showDndOptions && (
+          <div className='dnd-submenu'>
+            <div
+              className={`status-option ${isSelected('busy', 'everyone') ? 'selected' : ''}`}
+              onClick={() => handleSelect('busy', 'everyone')}>
+              Mute Everyone
+            </div>
+            <div
+              className={`status-option ${isSelected('busy', 'friends-only') ? 'selected' : ''}`}
+              onClick={() => handleSelect('busy', 'friends-only')}>
+              Mute Everyone But Friends
+            </div>
+          </div>
         )}
       </div>
-
-      {showDndOptions && (
-        <div className='dnd-submenu'>
-          <div
-            className={`status-option ${isSelected('busy', 'everyone') ? 'selected' : ''}`}
-            onClick={() => handleSelect('busy', 'everyone')}>
-            Mute Everyone
-          </div>
-          <div
-            className={`status-option ${isSelected('busy', 'friends-only') ? 'selected' : ''}`}
-            onClick={() => handleSelect('busy', 'friends-only')}>
-            Mute Everyone But Friends
-          </div>
-        </div>
-      )}
 
       <div
         className={`status-option ${isSelected('invisible') ? 'selected' : ''}`}

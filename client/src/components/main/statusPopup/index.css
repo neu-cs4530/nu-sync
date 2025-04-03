@@ -65,13 +65,19 @@
 
 
 .dnd-submenu {
-  background-color: #2f3136;
-  padding: 8px 0;
-  margin-left: 8px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: absolute;
+    top: 0;
+    left: 100%;
+    margin-left: 0px;
+    background-color: #2f3136;
+    border-radius: 8px;
+    padding: 8px 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    width: 220px;
 }
-
 
 
 
