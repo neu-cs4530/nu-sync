@@ -71,7 +71,7 @@ const ProtectedRoute = ({
 const shouldShowNotification = (user: SafeDatabaseUser, senderUsername: string): boolean => {
   const { status, busySettings } = user.onlineStatus || {};
 
-  console.log('[notif check]', { status, busySettings });
+  // console.log('[notif check]', { status, busySettings });
 
   if (status === 'online' || status === 'away') return true;
   if (status === 'invisible') return false;
@@ -137,7 +137,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       const { friendRequest, type } = payload;
 
       if (type === 'created' && friendRequest.recipient.username === user.username) {
-        console.log('STATUS CHECK:', user.onlineStatus);
+        // console.log('STATUS CHECK:', user.onlineStatus);
         if (shouldShowNotification(user, friendRequest.requester.username)) {
           addNotification({
             message: `${friendRequest.requester.username} sent you a friend request`,
@@ -160,7 +160,7 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
 
     const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
       if (payload.user.username === user.username) {
-        console.log('Updating user status from socket:', payload.user.onlineStatus);
+        // console.log('Updating user status from socket:', payload.user.onlineStatus);
         setUser(payload.user);
       }
     };
