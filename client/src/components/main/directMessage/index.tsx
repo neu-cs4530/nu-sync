@@ -10,6 +10,7 @@ import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
 import { DatabaseMessage, CodeSnippet } from '../../../types/types';
+import { getMetaData } from '../../../tool';
 
 const SUPPORTED_LANGUAGES = [
   { value: 'python', label: 'Python' },
@@ -75,19 +76,30 @@ const DirectMessage = () => {
 
   // Render message with support for code snippets
   const renderMessage = (message: DatabaseMessage) => {
+    // Add message header with username and timestamp
+    const messageHeader = (
+      <div className="message-header">
+        <div className="message-sender">{message.msgFrom}</div>
+        <div className="message-time">{getMetaData(new Date(message.msgDateTime))}</div>
+      </div>
+    );
+
     // Check if the message has a code snippet
     if (message.isCodeSnippet && message.codeSnippet) {
       return (
-        <SyntaxHighlighter
-          language={message.codeSnippet.language}
-          style={tomorrow}
-          customStyle={{
-            borderRadius: '4px',
-            margin: '10px 0'
-          }}
-        >
-          {message.codeSnippet.code}
-        </SyntaxHighlighter>
+        <div className="message">
+          {messageHeader}
+          <SyntaxHighlighter
+            language={message.codeSnippet.language}
+            style={tomorrow}
+            customStyle={{
+              borderRadius: '4px',
+              margin: '10px 0'
+            }}
+          >
+            {message.codeSnippet.code}
+          </SyntaxHighlighter>
+        </div>
       );
     }
 
@@ -96,16 +108,19 @@ const DirectMessage = () => {
       const parsedContent = JSON.parse(message.msg);
       if (parsedContent.isCodeSnippet && parsedContent.codeSnippet) {
         return (
-          <SyntaxHighlighter
-            language={parsedContent.codeSnippet.language}
-            style={tomorrow}
-            customStyle={{
-              borderRadius: '4px',
-              margin: '10px 0'
-            }}
-          >
-            {parsedContent.codeSnippet.code}
-          </SyntaxHighlighter>
+          <div className="message">
+            {messageHeader}
+            <SyntaxHighlighter
+              language={parsedContent.codeSnippet.language}
+              style={tomorrow}
+              customStyle={{
+                borderRadius: '4px',
+                margin: '10px 0'
+              }}
+            >
+              {parsedContent.codeSnippet.code}
+            </SyntaxHighlighter>
+          </div>
         );
       }
     } catch (e) {
@@ -187,8 +202,8 @@ const DirectMessage = () => {
                       messageRefs.current[String(message._id)] = el;
                     }}
                     className={`message-wrapper${highlightedMessageId?.toString() === String(message._id)
-                        ? ' highlight'
-                        : ''
+                      ? ' highlight'
+                      : ''
                       }`}
                   >
                     {renderMessage(message)}
