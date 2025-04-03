@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import './index.css';
 import {
-  BsCircleFill,
-  BsMoonFill,
-  BsDashCircleFill,
-  BsSlashCircleFill,
   BsChevronLeft,
   BsChevronRight,
 } from 'react-icons/bs';
+import UserStatusIcon from '../UserStatusIcon';
 
 interface StatusPopupProps {
   username: string;
@@ -45,7 +42,7 @@ const StatusPopup = ({
       <div
         className={`status-option ${isSelected('online') ? 'selected' : ''}`}
         onClick={() => handleSelect('online')}>
-        <BsCircleFill className='status-icon online' />
+        <UserStatusIcon status='online' />
         <div className='status-info'>
           <div className='status-label'>Online</div>
         </div>
@@ -54,7 +51,7 @@ const StatusPopup = ({
       <div
         className={`status-option ${isSelected('away') ? 'selected' : ''}`}
         onClick={() => handleSelect('away')}>
-        <BsMoonFill className='status-icon away' />
+        <UserStatusIcon status='away' />
         <div className='status-info'>
           <div className='status-label'>Idle</div>
         </div>
@@ -63,9 +60,8 @@ const StatusPopup = ({
       <div
         className={`status-option dnd ${currentStatus === 'busy' ? 'selected' : ''}`}
         onClick={() => setShowDndOptions(!showDndOptions)}
-        style={{ position: 'relative' }} // important for submenu alignment
-      >
-        <BsDashCircleFill className='status-icon busy' />
+        style={{ position: 'relative' }}>
+        <UserStatusIcon status='busy' />
         <div className='status-info'>
           <div className='status-label'>Do Not Disturb</div>
         </div>
@@ -94,7 +90,7 @@ const StatusPopup = ({
       <div
         className={`status-option ${isSelected('invisible') ? 'selected' : ''}`}
         onClick={() => handleSelect('invisible')}>
-        <BsSlashCircleFill className='status-icon invisible' />
+        <UserStatusIcon status='invisible' />
         <div className='status-info'>
           <div className='status-label'>Invisible</div>
           <div className='status-desc'>You will not appear online, but still have access.</div>
