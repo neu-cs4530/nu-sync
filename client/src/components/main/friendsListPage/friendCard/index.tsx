@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './index.css';
 import { FriendConnection } from '../../../../types/types';
 import { deleteFriendRequest } from '../../../../services/friendService';
+import UserStatusIcon from '../../UserStatusIcon';
 
 /**
  * Interface representing the props for the FriendCard component.
@@ -18,11 +19,7 @@ interface FriendCardProps {
 /**
  * FriendCard component displays information about a friend with action buttons.
  */
-const FriendCard = ({
-  friend,
-  handleFriendSelect,
-  onFriendRemoved,
-}: FriendCardProps) => {
+const FriendCard = ({ friend, handleFriendSelect, onFriendRemoved }: FriendCardProps) => {
   const navigate = useNavigate();
   const [isRemoving, setIsRemoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +44,6 @@ const FriendCard = ({
     try {
       setIsRemoving(true);
       setError(null);
-
       // The requestId is stored in the friend object
       await deleteFriendRequest(friend.requestId.toString());
 
@@ -60,51 +56,49 @@ const FriendCard = ({
       setIsRemoving(false);
     }
   };
+  // console.log(friend);
 
   return (
-    <div className="friend-card">
-      <div className="friend-info" onClick={handleViewProfile}>
-        <div className="friend-username">{friend.username}</div>
+    <div className='friend-card'>
+      <div className='friend-info' onClick={handleViewProfile}>
+        <div className='friend-meta'>
+          {friend.onlineStatus?.status && <UserStatusIcon status={friend.onlineStatus.status} />}
+          <div className='friend-username'>{friend.username}</div>
+        </div>
       </div>
 
       {!showRemoveConfirmation ? (
-        <div className="friend-actions">
-          <button
-            className="send-message-button small-button"
-            onClick={handleSendMessage}
-          >
+        <div className='friend-actions'>
+          <button className='send-message-button small-button' onClick={handleSendMessage}>
             Message
           </button>
           <button
-            className="remove-friend-button small-button"
-            onClick={() => setShowRemoveConfirmation(true)}
-          >
+            className='remove-friend-button small-button'
+            onClick={() => setShowRemoveConfirmation(true)}>
             Remove
           </button>
         </div>
       ) : (
-        <div className="friend-actions-confirmation">
-          <span className="confirmation-text">Confirm?</span>
-          <div className="confirmation-buttons">
+        <div className='friend-actions-confirmation'>
+          <span className='confirmation-text'>Confirm?</span>
+          <div className='confirmation-buttons'>
             <button
-              className="confirm-yes-button small-button"
+              className='confirm-yes-button small-button'
               onClick={handleRemoveFriend}
-              disabled={isRemoving}
-            >
+              disabled={isRemoving}>
               {isRemoving ? '...' : 'Yes'}
             </button>
             <button
-              className="confirm-no-button small-button"
+              className='confirm-no-button small-button'
               onClick={() => setShowRemoveConfirmation(false)}
-              disabled={isRemoving}
-            >
+              disabled={isRemoving}>
               No
             </button>
           </div>
         </div>
       )}
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className='error-message'>{error}</div>}
     </div>
   );
 };

@@ -22,6 +22,17 @@
     sans-serif;
 }
 
+.friend-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.friend-username {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
 .friend-info {
   text-align: left;
   cursor: pointer;

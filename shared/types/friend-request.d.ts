@@ -8,6 +8,12 @@ import { ObjectId } from 'mongodb';
 export interface FriendUser {
   _id: ObjectId;
   username: string;
+  onlineStatus?: {
+    status: 'online' | 'away' | 'busy' | 'invisible';
+    busySettings?: {
+      muteScope: 'friends-only' | 'everyone';
+    };
+  };
 }
 
 /**
@@ -40,6 +46,12 @@ export interface FriendConnection {
   _id: ObjectId;
   username: string;
   requestId: ObjectId;
+  onlineStatus?: {
+    status: 'online' | 'away' | 'busy' | 'invisible';
+    busySettings?: {
+      muteScope: 'friends-only' | 'everyone';
+    };
+  };
 }
 
 /**
