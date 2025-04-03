@@ -48,6 +48,14 @@ const userSchema: Schema = new Schema(
       type: String,
       default: null,
     },
+    spotifyConflictTemp: {
+      type: Boolean,
+      default: false,
+    },
+    spotifyConflictUserId: {
+      type: String,
+      default: null,
+    },
     spotifyRefreshToken: {
       type: String,
       default: null,

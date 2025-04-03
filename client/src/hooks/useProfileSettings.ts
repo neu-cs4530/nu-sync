@@ -12,7 +12,9 @@ import { SafeDatabaseUser, PrivacySettings } from '../types/types';
 import useUserContext from './useUserContext';
 import {
   checkSpotifyStatus,
+  disconnectAllSpotifyAccounts,
   getCurrentlyPlaying,
+  getSpotifyConflictStatus,
 } from '../services/spotifyService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
@@ -312,6 +314,9 @@ const useProfileSettings = () => {
     isCurrentlyPlayingSong,
     setCurrentPlayingSong,
     setIsCurrentlyPlayingSong,
+    showSpotifyConflictModal,
+    setShowSpotifyConflictModal,
+    handleUnlinkAllAndRetry,
     profileVisibility,
     setProfileVisibility,
     handleUpdateProfileVisibility,
