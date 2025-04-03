@@ -92,12 +92,11 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
 
       setNotifications((prev) => [newNotification, ...prev]);
 
-      // Auto-remove notification after 5 seconds
       setTimeout(() => {
         removeNotification(id);
       }, 5000);
     },
-    [],
+    [removeNotification],
   );
 
   // update user data if needed
