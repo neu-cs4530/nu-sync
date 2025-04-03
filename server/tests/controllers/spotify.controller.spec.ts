@@ -36,7 +36,7 @@ describe('Spotify Controller Tests', () => {
         '/spotify/auth/callback?code=abc&state=TEST:testuser',
       );
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Error when fetching spotify user profile: profile failed');
+      expect(response.text).toBe('Invalid spotify access token: profile failed');
     });
     it('should redirect to frontend after successful auth', async () => {
       const code = 'testcode';
@@ -88,7 +88,7 @@ describe('Spotify Controller Tests', () => {
         '/spotify/auth/callback?code=code&state=TEST:testuser',
       );
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Error when fetching spotify user profile');
+      expect(response.text).toBe('Invalid spotify access token');
     });
 
     it('should handle access token fetch error', async () => {
