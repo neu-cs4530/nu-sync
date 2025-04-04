@@ -94,7 +94,7 @@ const messageController = (socket: FakeSOSocket) => {
         const originalMessage = await MessageModel.findById(msg.originalMessageId);
         socket.emit('messageUpdate', {
           msg: msgFromDb,
-          originalMessage: originalMessage
+          originalMessage
         });
       } else {
         socket.emit('messageUpdate', { msg: msgFromDb });

@@ -2,7 +2,6 @@ import React from 'react';
 import './index.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { ObjectId } from 'mongodb';
 import { MessageSearchResult } from '../../../../types/types';
 
 /**

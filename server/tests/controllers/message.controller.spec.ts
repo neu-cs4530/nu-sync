@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import supertest from 'supertest';
 import { app } from '../../app';
 import * as util from '../../services/message.service';
-import MessageModel from '../../models/messages.model';
 import { DatabaseMessage, Message } from '../../types/types';
 
 const saveMessageSpy = jest.spyOn(util, 'saveMessage');

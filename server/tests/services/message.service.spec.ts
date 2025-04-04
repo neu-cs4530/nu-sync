@@ -2,8 +2,7 @@ import mongoose from 'mongoose';
 import MessageModel from '../../models/messages.model';
 import UserModel from '../../models/users.model';
 import { getMessages, saveMessage, getMessageById } from '../../services/message.service';
-import { Message } from '../../types/types';
-import { DatabaseMessage } from '../../types/types';
+import { Message, DatabaseMessage } from '../../types/types';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockingoose = require('mockingoose');
@@ -104,20 +103,6 @@ describe('Message model', () => {
 
   describe('getMessageById', () => {
     const mockMessageId = new mongoose.Types.ObjectId();
-    const mockMessage: DatabaseMessage = {
-      _id: mockMessageId,
-      msg: 'Test message',
-      msgFrom: 'testUser',
-      msgDateTime: new Date('2024-06-06'),
-      type: 'global',
-      isCodeSnippet: false,
-      codeSnippet: {
-        isEdited: false,
-        code: '',
-        language: ''
-      },
-      isEditSuggestion: false
-    };
 
     beforeEach(() => {
       mockingoose.resetAll();
