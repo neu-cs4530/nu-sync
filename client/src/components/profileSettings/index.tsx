@@ -3,6 +3,7 @@ import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
 import useSpotifyAuth from '../../hooks/useSpotifyAuth';
 import SpotifyConflictModal from './spotifyConflict';
+import UserStatusIcon from '../main/UserStatusIcon';
 
 const ProfileSettings: React.FC = () => {
   const {
@@ -65,7 +66,10 @@ const ProfileSettings: React.FC = () => {
           <>
             <h4>General Information</h4>
             <p>
-              <strong>Username:</strong> {userData.username}
+              <strong>Username:</strong> {userData.username}{' '}
+              <span style={{ marginLeft: '0.5rem' }}>
+                <UserStatusIcon status={userData.onlineStatus?.status ?? 'online'} />
+              </span>
             </p>
 
             <div className='spotify-section'>

@@ -113,10 +113,32 @@ const userController = (socket: FakeSOSocket) => {
         throw Error(user.error);
       }
 
-      res.status(200).json(user);
+      // Preserve previous status if not "online"
+      const finalStatus =
+        user.onlineStatus?.status && user.onlineStatus.status !== 'online'
+          ? user.onlineStatus
+          : { status: 'online' };
+
+      // Update the user's status in the DB (only if necessary)
+      const updatedUser = await updateUser(user.username, {
+        onlineStatus: finalStatus,
+      });
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
+
+      // Emit real-time update to other users
+      socket.emit('userUpdate', {
+        user: updatedUser,
+        type: 'updated',
+      });
+
+      // Return the updated user to the logging-in user
+      res.status(200).json(updatedUser);
     } catch (error) {
-      res.status(500).send('Login failed');
-    }
+    res.status(500).send('Login failed');
+  }
   };
 
   /**

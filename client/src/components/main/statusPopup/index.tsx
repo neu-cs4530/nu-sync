@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './index.css';
 import {
   BsChevronLeft,
@@ -17,25 +17,28 @@ interface StatusPopupProps {
   ) => void;
 }
 
-const StatusPopup = ({
-  currentStatus,
-  currentBusyScope,
-  onClose,
-  onSelect,
-}: StatusPopupProps) => {
+const StatusPopup = ({ currentStatus, currentBusyScope, onClose, onSelect }: StatusPopupProps) => {
+  const [status, setStatus] = useState(currentStatus);
+  const [busyScope, setBusyScope] = useState(currentBusyScope);
   const [showDndOptions, setShowDndOptions] = useState(false);
+
+  useEffect(() => {
+    setStatus(currentStatus);
+    setBusyScope(currentBusyScope);
+  }, [currentStatus, currentBusyScope]);
+
   const handleSelect = (
-    status: 'online' | 'away' | 'busy' | 'invisible',
-    busyScope?: 'friends-only' | 'everyone',
+    newStatus: 'online' | 'away' | 'busy' | 'invisible',
+    newScope?: 'friends-only' | 'everyone',
   ) => {
-    onSelect(status, busyScope);
+    onSelect(newStatus, newScope);
     onClose();
   };
 
   const isSelected = (
-    status: 'online' | 'away' | 'busy' | 'invisible',
+    targetStatus: 'online' | 'away' | 'busy' | 'invisible',
     scope?: 'friends-only' | 'everyone',
-  ) => currentStatus === status && (status !== 'busy' || currentBusyScope === scope);
+  ) => status === targetStatus && (targetStatus !== 'busy' || busyScope === scope);
 
   return (
     <div className='status-popup'>

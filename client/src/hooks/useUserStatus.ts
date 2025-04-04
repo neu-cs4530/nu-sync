@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { setUserStatus } from '../services/userService';
 import useUserContext from './useUserContext';
 
@@ -12,6 +12,14 @@ const useUserStatus = () => {
     user.onlineStatus?.busySettings?.muteScope ?? 'everyone',
   );
 
+  useEffect(() => {
+    const newStatus = user.onlineStatus?.status ?? 'online';
+    const newScope = user.onlineStatus?.busySettings?.muteScope ?? 'everyone';
+
+    setStatus(newStatus);
+    setBusyScope(newScope);
+  }, [user]);
+
   const updateStatus = async (newStatus: Status, newBusyScope?: BusyScope) => {
     await setUserStatus(
       user.username,
@@ -19,10 +27,7 @@ const useUserStatus = () => {
       newStatus === 'busy' ? { muteScope: newBusyScope ?? 'everyone' } : undefined,
     );
 
-    setStatus(newStatus);
-    if (newStatus === 'busy') {
-      setBusyScope(newBusyScope ?? 'everyone');
-    }
+    // Let backend and socket update the user context
   };
 
   const statusLabel = useMemo(() => {

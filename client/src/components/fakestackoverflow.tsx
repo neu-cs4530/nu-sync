@@ -99,7 +99,19 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
   });
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (socket && user?.username) {
+        socket.emit('logout_user', user.username);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [socket, user]);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -129,6 +141,14 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       localStorage.removeItem('user');
     }
   }, [user]);
+  
+
+  useEffect(() => {
+    if (user?.username && socket) {
+      socket.emit('connect_user', user.username);
+      // console.log('Sent connect_user event for', user.username);
+    }
+  }, [user?.username, socket]);
 
   useEffect(() => {
     if (!socket || !user) return () => {};

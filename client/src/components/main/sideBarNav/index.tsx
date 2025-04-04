@@ -1,9 +1,9 @@
-import React, { useContext, useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './index.css';
 import { NavLink, useLocation } from 'react-router-dom';
 import StatusPopup from '../statusPopup';
-import UserContext from '../../../contexts/UserContext';
 import useUserStatus from '../../../hooks/useUserStatus';
+import useUserContext from '../../../hooks/useUserContext';
 
 /**
  * The SideBarNav component has four menu items: "Questions", "Tags", "Messaging", and "Users".
@@ -14,10 +14,8 @@ const SideBarNav = () => {
   const [showOptions, setShowOptions] = useState(false);
   const [showStatusPopup, setShowStatusPopup] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
-  const context = useContext(UserContext);
-  const username = context?.user?.username || '';
-
-  const { status, busyScope, updateStatus, statusLabel, statusIcon } = useUserStatus();
+  const { user } = useUserContext();
+  const { updateStatus, statusLabel, statusIcon } = useUserStatus();
   const location = useLocation();
 
   const toggleOptions = () => {
@@ -119,9 +117,9 @@ const SideBarNav = () => {
         </div>
         {showStatusPopup && (
           <StatusPopup
-            username={username}
-            currentStatus={status}
-            currentBusyScope={busyScope}
+            username={user.username}
+            currentStatus={user.onlineStatus.status}
+            currentBusyScope={user.onlineStatus.busySettings?.muteScope}
             onClose={() => setShowStatusPopup(false)}
             onSelect={handleStatusSelect}
           />
