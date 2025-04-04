@@ -1,5 +1,5 @@
 import './index.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CodeEditor from '@uiw/react-textarea-code-editor';
@@ -9,7 +9,7 @@ import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
-import { DatabaseMessage, CodeSnippet } from '../../../types/types';
+import { DatabaseMessage, CodeSnippet, MessageSearchResult } from '../../../types/types';
 import { getMetaData } from '../../../tool';
 
 const SUPPORTED_LANGUAGES = [
@@ -194,7 +194,7 @@ const DirectMessage = () => {
                 {searchTerm}&quot;
               </p>
               <ul>
-                {searchResults.map((result) => (
+                {searchResults.map((result: MessageSearchResult) => (
                   <SearchResultCard
                     key={String(result._id)}
                     result={result}
@@ -219,7 +219,9 @@ const DirectMessage = () => {
                   <div
                     key={String(message._id)}
                     ref={(el) => {
-                      messageRefs.current[String(message._id)] = el;
+                      if (messageRefs.current && el) {
+                        messageRefs.current[String(message._id)] = el;
+                      }
                     }}
                     className={`message-wrapper${highlightedMessageId?.toString() === String(message._id)
                       ? ' highlight'

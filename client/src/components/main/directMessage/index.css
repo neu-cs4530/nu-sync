@@ -85,6 +85,10 @@
   background-color: #6c757d;
 }
 
+.custom-button.secondary:hover {
+  background-color: #5a6268;
+}
+
 .custom-input {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -162,12 +166,170 @@
   margin-bottom: 16px;
 }
 
+/* Search Results Styles */
 .search-results {
   background-color: white;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  max-height: 350px;
+  overflow-y: auto;
+  transition: var(--transition);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-results>p {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.search-result-card {
+  cursor: pointer;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.search-result-card:hover {
+  background-color: #f0f8ff;
+  box-shadow: 0 0 6px rgba(0, 140, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.search-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.search-result-header strong {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.search-result-time {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.search-result-text {
+  font-size: 14px;
+  margin: 8px 0;
+  color: var(--text-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.search-result-meta {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 8px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+}
+
+.search-result-data {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Highlighted search terms */
+.search-result-text mark {
+  background-color: rgba(255, 230, 0, 0.4);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Code preview in search results */
+.search-result-code-preview {
+  margin: 8px 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.search-result-code-preview .code-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background-color: #f1f3f5;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-result-code-preview .preview-language {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.search-result-code-preview .language-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+}
+
+.search-result-code-preview .match-indicator {
+  font-size: 11px;
+  color: var(--text-light);
+  background-color: rgba(67, 97, 238, 0.1);
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(67, 97, 238, 0.2);
+}
+
+/* Customize scrollbars for code preview */
+.search-result-code-preview ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.search-result-code-preview ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.search-result-code-preview ::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.search-result-code-preview ::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
 }
 
 /* Error States */
@@ -191,6 +353,14 @@
   .chats-list {
     width: 100%;
   }
+
+  .search-results {
+    max-height: 300px;
+  }
+
+  .search-result-card {
+    padding: 10px;
+  }
 }
 
 /* Spotify Panel */
@@ -210,7 +380,11 @@
 .message-input-row .custom-input {
   flex: 1;
 }
-/* Add these styles to your index.css file */
+
+/* Message input adjustments */
+.message-input {
+  position: relative;
+}
 
 /* Code Snippet Preview Styles */
 .code-snippet-preview {
@@ -281,17 +455,4 @@
 
 .code-snippet-preview pre::-webkit-scrollbar-thumb:hover {
   background: #aaa;
-}
-
-/* Message input adjustments */
-.message-input {
-  position: relative;
-}
-
-.custom-button.secondary {
-  background-color: #6c757d;
-}
-
-.custom-button.secondary:hover {
-  background-color: #5a6268;
 }
