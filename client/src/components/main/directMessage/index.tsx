@@ -205,8 +205,12 @@ const DirectMessage = () => {
             </div>
           )}
 
-          {chats.map(chat => (
-            <ChatsListCard key={String(chat._id)} chat={chat} handleChatSelect={handleChatSelect} />
+          {chats.map((chat) => (
+            <ChatsListCard
+              key={String(chat._id)}
+              chat={chat}
+              handleChatSelect={handleChatSelect}
+            />
           ))}
         </div>
 
@@ -345,7 +349,7 @@ const DirectMessage = () => {
               </div>
             </>
           ) : (
-            <h2>Select a user to start chatting</h2>
+            <h2>Start A New Chat</h2>
           )}
         </div>
       </div>

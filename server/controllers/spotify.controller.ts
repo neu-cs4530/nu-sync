@@ -48,6 +48,18 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  const isSpotifyLinkedToAnotherUser = async (
+    spotifyId: string,
+    currentUsername: string,
+  ): Promise<boolean> => {
+    const existingUser = await UserModel.findOne({
+      spotifyId,
+      username: { $ne: currentUsername },
+    });
+
+    return !!existingUser;
+  };
+
   /**
    * Handles callback from Spotify after user authorization
    * Exchanges the authorization code for access tokens and fetches user's Spotify profile
@@ -58,21 +70,22 @@ const spotifyController = (socket: FakeSOSocket) => {
    * @returns A Promise that resolves to void.
    */
   const callbackFunc = async (req: Request, res: Response): Promise<void> => {
-    const code = req.query.code || null;
-    const state = req.query.state || null;
-    const username = req.query.state?.toString().split(':')[1] || '';
+    const code = req.query.code?.toString() || null;
+    const state = req.query.state?.toString() || null;
+    const username = state?.split(':')[1] || '';
 
-    if (state === null) {
+    if (!state || !code || !username) {
       res.redirect(
         `${clientUrl}/home#${querystring.stringify({
-          error: 'state_mismatch',
+          error: 'state_mismatch_or_missing_data',
         })}`,
       );
       return;
     }
+
     try {
       const tokenParams = {
-        code: code?.toString() || '',
+        code,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       };
@@ -92,67 +105,84 @@ const spotifyController = (socket: FakeSOSocket) => {
       const refreshToken = tokenResponse.data.refresh_token;
       const expiresIn = tokenResponse.data.expires_in;
 
-      try {
-        const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+      const profileResponse = await axios.get('https://api.spotify.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
+      const spotifyId = profileResponse.data.id;
+
+      const alreadyLinked = await isSpotifyLinkedToAnotherUser(spotifyId, username);
+
+      if (alreadyLinked) {
+        await UserModel.findOneAndUpdate(
+          { username },
+          {
+            $set: {
+              spotifyConflictTemp: true,
+              spotifyConflictUserId: spotifyId,
+            },
+          },
+        );
+      } else {
         const updatedUser = await UserModel.findOneAndUpdate(
           { username },
           {
             $set: {
-              spotifyId: profileResponse.data.id,
+              spotifyId,
               spotifyAccessToken: accessToken,
               spotifyRefreshToken: refreshToken,
+              spotifyConflictTemp: false,
+              spotifyConflictUserId: null,
             },
           },
           { new: true },
         );
+
         if (!updatedUser) {
           res.status(404).send(`User "${username}" not found in database.`);
           return;
         }
-
-        const spotifyData = {
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          expires_in: expiresIn,
-          spotify_connected: 'true',
-          spotify_user_id: profileResponse.data.id,
-        };
-
-        res.redirect(
-          `${clientUrl}/user/${username}?spotify_data=${Buffer.from(
-            JSON.stringify(spotifyData),
-          ).toString('base64')}`,
-        );
-      } catch (error) {
-        // const axiosError = error as AxiosError;
-        // console.error(
-        //   'Error when fetching Spotify profile:',
-        //   axiosError.response?.status,
-        //   axiosError.response?.data,
-        // );
-        if (error instanceof Error) {
-          res.status(500).send(`Error when fetching spotify user profile: ${error.message}`);
-        } else {
-          res.status(500).send(`Error when fetching spotify user profile`);
-        }
       }
+
+      const spotifyData = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_in: expiresIn,
+        spotify_connected: 'true',
+        spotify_user_id: profileResponse.data.id,
+      };
+
+      res.redirect(
+        `${clientUrl}/user/${username}?spotify_data=${Buffer.from(
+          JSON.stringify(spotifyData),
+        ).toString('base64')}`,
+      );
     } catch (error) {
-      // const axiosError = error as AxiosError;
-      //   console.error(
-      //     'Error when fetching access token:',
-      //     axiosError.response?.status,
-      //     axiosError.response?.data,
-      //   );
       if (error instanceof Error) {
         res.status(500).send(`Invalid spotify access token: ${error.message}`);
       } else {
         res.status(500).send(`Invalid spotify access token`);
       }
+    }
+  };
+
+
+  const getSpotifyConflictUserId = async (req: Request, res: Response): Promise<void> => {
+    const { username } = req.params;
+
+    try {
+      const user = await UserModel.findOne({ username });
+      if (!user || !user.spotifyConflictTemp || !user.spotifyConflictUserId) {
+        res.status(404).send({ error: 'No Spotify conflict data available' });
+        return;
+      }
+
+      res.send({ spotifyUserId: user.spotifyConflictUserId });
+    } catch (err) {
+      // console.error('Error fetching conflict user ID:', err);
+      res.status(500).send({ error: 'Failed to get Spotify user ID' });
     }
   };
 
@@ -230,7 +260,7 @@ const spotifyController = (socket: FakeSOSocket) => {
           res.status(200).json({ isPlaying: false });
           return;
         }
-        const {data} = nowPlayingResponse;
+        const { data } = nowPlayingResponse;
         const isPlaying = data.is_playing === true;
         res.status(200).json({
           isPlaying,
@@ -278,7 +308,7 @@ const spotifyController = (socket: FakeSOSocket) => {
         { username },
         {
           $set: {
-            spotifyId: '',
+            spotifyId: null,
             spotifyAccessToken: '',
             spotifyRefreshToken: '',
           },
@@ -599,6 +629,74 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Disconnects a Spotify account from all users who have linked it.
+   * Expects the Spotify user ID in the request body.
+   *
+   * @param req The HTTP request containing spotify_user_id in the body.
+   * @param res The HTTP response returning the result of the operation.
+   */
+  const disconnectSpotifyFromAllAccounts = async (req: Request, res: Response): Promise<void> => {
+    const { spotifyUserId } = req.body;
+
+    if (!spotifyUserId || typeof spotifyUserId !== 'string') {
+      res.status(400).json({ error: 'spotifyUserId is required in the request body' });
+      return;
+    }
+
+    try {
+      const result = await UserModel.updateMany(
+        { spotifyId: spotifyUserId },
+        {
+          $set: {
+            spotifyId: null,
+            spotifyAccessToken: '',
+            spotifyRefreshToken: '',
+          },
+        },
+      );
+
+      res.status(200).json({
+        message: `Disconnected Spotify account from ${result.modifiedCount} user(s).`,
+        modifiedCount: result.modifiedCount,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ error: `Failed to disconnect Spotify from all accounts: ${message}` });
+    }
+  };
+
+  /**
+   * Checks if there was a Spotify conflict for this user
+   * and resets the flag after reading.
+   */
+   const getSpotifyConflictStatus = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { username } = req.params;
+
+      const user = await UserModel.findOne({ username });
+      if (!user) {
+        res.status(404).send({ error: 'User not found' });
+        return;
+      }
+
+      const conflict = !!user.spotifyConflictTemp;
+
+      if (conflict) {
+        user.spotifyConflictTemp = false;
+        await user.save();
+      }
+
+      res.send({
+        conflict,
+        spotifyUserId: conflict ? user.spotifyConflictUserId : null,
+      });
+    } catch (err) {
+      // console.error('Error checking Spotify conflict status:', err);
+      res.status(500).send({ error: 'Failed to fetch conflict status' });
+    }
+  };
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
@@ -610,6 +708,9 @@ const spotifyController = (socket: FakeSOSocket) => {
   router.post('/searchSong', searchSpotifySong);
   router.post('/searchSpotifyPlaylistWithSong', searchSpotifyPlaylistWithSong);
   router.post('/getSongsFromSpotifyPlaylist', getSongsFromSpotifyPlaylist);
+  router.post('/disconnectFromAllAccounts', disconnectSpotifyFromAllAccounts);
+  router.get('/conflict-status/:username', getSpotifyConflictStatus);
+  router.get('/conflict-user-id/:username', getSpotifyConflictUserId);
   return router;
 };
 
