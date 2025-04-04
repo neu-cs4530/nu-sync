@@ -77,6 +77,7 @@ export interface CommentUpdatePayload {
  */
 export interface MessageUpdatePayload {
   msg: DatabaseMessage;
+  originalMessage?: Message;
 }
 
 /**

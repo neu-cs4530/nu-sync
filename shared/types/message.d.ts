@@ -2,17 +2,39 @@ import { ObjectId } from 'mongodb';
 import { Request } from 'express';
 
 /**
+ * Represents a code snippet.
+ * - 'code': The code snippet content.
+ * - 'language': The programming language of the code snippet.
+ * - 'isEdited': Indicates if the code snippet has been edited.
+ * - 'originalMessageId': The ID of the original message, if applicable.
+ */
+export interface CodeSnippet {
+  code: string;
+  language: string;
+  isEdited?: boolean;
+  originalMessageId?: string;
+}
+
+/**
  * Represents a message in a chat.
  * - `msg`: The text content of the message.
  * - `msgFrom`: The username of the user sending the message.
  * - `msgDateTime`: The date and time when the message was sent.
  * - `type`: The type of the message, either 'global' or 'direct'.
+ * - 'isCodeSnippet': Indicates if the message is a code snippet.
+ * - 'codeSnippet': The code snippet content, if applicable.
+ * - 'isEditSuggestion': Indicates if the message is an edit suggestion.
+ * - 'originalMessageId': The ID of the original message, if applicable.
  */
 export interface Message {
   msg: string;
   msgFrom: string;
   msgDateTime: Date;
   type: 'global' | 'direct';
+  isCodeSnippet?: boolean;
+  codeSnippet?: CodeSnippet;
+  isEditSuggestion?: boolean;
+  originalMessageId?: ObjectId;
 }
 
 /**

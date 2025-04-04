@@ -6,6 +6,10 @@
     "@cypress/instrument-cra": "^1.4.0",
     "@fake-stack-overflow/server": "^1.0.0",
     "@fake-stack-overflow/shared": "^1.0.0",
+    "@uiw/react-textarea-code-editor": "^3.1.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/react-toastify": "^4.0.2",
+    "react-syntax-highlighter": "^15.6.1",
     "axios": "^1.7.9",
     "mongodb": "6.12.0",
     "react": "^18.3.1",
@@ -13,8 +17,8 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^6.28.1",
     "react-scripts": "5.0.1",
-    "socket.io-client": "^4.8.1",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.1"
   },
   "scripts": {
     "start": "react-scripts -r @cypress/instrument-cra start",
