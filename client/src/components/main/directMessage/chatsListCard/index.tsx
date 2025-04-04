@@ -1,7 +1,9 @@
 import React from 'react';
 import './index.css';
 import { ObjectId } from 'mongodb';
-import { PopulatedDatabaseChat } from '../../../../types/types';
+import { PopulatedDatabaseChat, SafeDatabaseUser } from '../../../../types/types';
+import UserStatusIcon from '../../UserStatusIcon';
+
 
 /**
  * ChatsListCard component displays information about a chat and allows the user to select it.
@@ -12,15 +14,35 @@ import { PopulatedDatabaseChat } from '../../../../types/types';
 const ChatsListCard = ({
   chat,
   handleChatSelect,
+  currentUsername,
+  userMap,
 }: {
   chat: PopulatedDatabaseChat;
   handleChatSelect: (chatID: ObjectId | undefined) => void;
-}) => (
-  <div onClick={() => handleChatSelect(chat._id)} className='chats-list-card'>
-    <p>
-      <strong>Chat with:</strong> {chat.participants.join(', ')}
-    </p>
-  </div>
-);
+  currentUsername: string;
+  userMap: Record<string, SafeDatabaseUser>;
+}) => {
+  const otherParticipants = chat.participants.filter(p => p !== currentUsername);
+
+  return (
+    <div onClick={() => handleChatSelect(chat._id)} className='chats-list-card'>
+      <p>
+        <strong>Chat with:</strong>{' '}
+        {otherParticipants.map(username => {
+          const user = userMap[username];
+          const status = user?.onlineStatus?.status ?? 'offline';
+
+          return (
+            <span key={username} className='chat-user'>
+              <UserStatusIcon status={status} />
+              {username}
+            </span>
+          );
+        })}
+      </p>
+    </div>
+  );
+};
+
 
 export default ChatsListCard;
