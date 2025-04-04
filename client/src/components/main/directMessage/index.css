@@ -210,3 +210,88 @@
 .message-input-row .custom-input {
   flex: 1;
 }
+/* Add these styles to your index.css file */
+
+/* Code Snippet Preview Styles */
+.code-snippet-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.code-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.preview-language {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.language-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+}
+
+.clear-button {
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  opacity: 0.8;
+}
+
+.clear-button:hover {
+  opacity: 1;
+}
+
+/* Customize the syntax highlighter scrollbar */
+.code-snippet-preview pre {
+  margin: 0 !important;
+}
+
+.code-snippet-preview pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.code-snippet-preview pre::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.code-snippet-preview pre::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.code-snippet-preview pre::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Message input adjustments */
+.message-input {
+  position: relative;
+}
+
+.custom-button.secondary {
+  background-color: #6c757d;
+}
+
+.custom-button.secondary:hover {
+  background-color: #5a6268;
+}

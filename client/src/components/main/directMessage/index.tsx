@@ -46,6 +46,8 @@ const DirectMessage = () => {
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('python');
+  const [isCodeSnippetPreview, setIsCodeSnippetPreview] = useState(false);
+  const [codeSnippetPreview, setCodeSnippetPreview] = useState<CodeSnippet | null>(null);
 
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
@@ -54,6 +56,24 @@ const DirectMessage = () => {
       handleDirectChatWithFriend(userToChat);
     }
   }, [handleDirectChatWithFriend]);
+
+  // Check if the new message is a code snippet
+  useEffect(() => {
+    try {
+      const parsedMessage = JSON.parse(newMessage);
+      if (parsedMessage.isCodeSnippet && parsedMessage.codeSnippet) {
+        setIsCodeSnippetPreview(true);
+        setCodeSnippetPreview(parsedMessage.codeSnippet);
+      } else {
+        setIsCodeSnippetPreview(false);
+        setCodeSnippetPreview(null);
+      }
+    } catch (e) {
+      // Not a JSON message
+      setIsCodeSnippetPreview(false);
+      setCodeSnippetPreview(null);
+    }
+  }, [newMessage]);
 
   const handleSendCodeMessage = () => {
     if (code.trim()) {
@@ -262,13 +282,48 @@ const DirectMessage = () => {
                 ) : (
                   <>
                     <div className="message-input-row">
-                      <input
-                        className="custom-input"
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type a message..."
-                      />
+                      {isCodeSnippetPreview && codeSnippetPreview ? (
+                        <div className="code-snippet-preview">
+                          <div className="code-preview-header">
+                            <div className="preview-language">
+                              <div className="language-indicator"></div>
+                              <span>{SUPPORTED_LANGUAGES.find(lang => lang.value === codeSnippetPreview.language)?.label || codeSnippetPreview.language} Code</span>
+                            </div>
+                            <button
+                              className="custom-button secondary clear-button"
+                              onClick={() => {
+                                setNewMessage('');
+                                setIsCodeSnippetPreview(false);
+                                setCodeSnippetPreview(null);
+                              }}
+                            >
+                              Clear
+                            </button>
+                          </div>
+                          <SyntaxHighlighter
+                            language={codeSnippetPreview.language}
+                            style={tomorrow}
+                            customStyle={{
+                              borderRadius: 'var(--radius-sm)',
+                              margin: '0',
+                              maxHeight: '120px',
+                              overflow: 'auto',
+                              boxShadow: 'var(--shadow-sm)',
+                              border: '1px solid var(--border-color)'
+                            }}
+                          >
+                            {codeSnippetPreview.code}
+                          </SyntaxHighlighter>
+                        </div>
+                      ) : (
+                        <input
+                          className="custom-input"
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type a message..."
+                        />
+                      )}
                       <button
                         className="custom-button"
                         onClick={() => setShowCodeEditor(true)}
