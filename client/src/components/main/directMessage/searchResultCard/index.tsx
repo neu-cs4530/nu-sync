@@ -2,6 +2,7 @@ import React from 'react';
 import './index.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ObjectId } from 'mongodb';
 import { MessageSearchResult } from '../../../../types/types';
 
 /**
@@ -55,7 +56,7 @@ const SearchResultCard = ({
   };
 
   // Function to render highlighted text for normal messages
-  const renderHighlightedText = () => 
+  const renderHighlightedText = () =>
     result.msg
       .split(new RegExp(`(${result.matchedKeyword})`, 'gi'))
       .map((part, i) =>
@@ -77,9 +78,10 @@ const SearchResultCard = ({
     const matchLines: number[] = [];
 
     // Find which lines contain the search term
-    codeLines.forEach((line: string, index: number) => {
+    // Store the index+1 to match the 1-indexed line numbers shown to users
+    codeLines.forEach((line: string, index: number): void => {
       if (line.toLowerCase().includes(result.matchedKeyword.toLowerCase())) {
-      matchLines.push(index);
+      matchLines.push(index + 1);
       }
     });
 
@@ -92,7 +94,7 @@ const SearchResultCard = ({
           </div>
           {matchLines.length > 0 && (
             <span className="match-indicator">
-              Found on line{matchLines.length > 1 ? 's' : ''}: {matchLines.map(l => l + 1).join(', ')}
+              Found on line{matchLines.length > 1 ? 's' : ''}: {matchLines.join(', ')}
             </span>
           )}
         </div>
@@ -110,6 +112,8 @@ const SearchResultCard = ({
           showLineNumbers={true}
           lineProps={lineNumber => {
             const style = { display: 'block' };
+            // SyntaxHighlighter has zero-indexed line numbers but we display one-indexed
+            // The +1 in the indicator but not here was causing the off-by-one issue
             if (matchLines.includes(lineNumber)) {
               return {
                 style: {
