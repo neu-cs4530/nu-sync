@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import e, { Request } from 'express';
+import { Request } from 'express';
 import { DatabaseMessage, Message } from './message';
 import { DatabaseUser } from './user';
 
