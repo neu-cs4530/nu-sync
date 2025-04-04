@@ -47,6 +47,11 @@ const useProfileSettings = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mutualFriends, setMutualFriends] = useState<string[]>([]);
   const [mutualFriendsLoading, setMutualFriendsLoading] = useState(false);
+
+  const [showVisibilityModal, setShowVisibilityModal] = useState(false);
+  const [pendingVisibility, setPendingVisibility] = useState<
+    'public' | 'private' | null
+  >(null);
   const [profileVisibility, setProfileVisibility] = useState<
     'public' | 'private'
   >('private');
@@ -259,6 +264,8 @@ const useProfileSettings = () => {
 
       setProfileVisibility(newVisibility);
       setUserData(updatedUser);
+      setShowVisibilityModal(false);
+      setPendingVisibility(null);
 
       setSuccessMessage(`Profile is now ${newVisibility}`);
       setErrorMessage(null);
@@ -320,6 +327,11 @@ const useProfileSettings = () => {
     }
   };
 
+  const openVisibilityConfirmation = (newVisibility: 'public' | 'private') => {
+    setPendingVisibility(newVisibility);
+    setShowVisibilityModal(true);
+  };
+
   return {
     loggedInSpotify,
     setLoggedInSpotify,
@@ -358,6 +370,11 @@ const useProfileSettings = () => {
     profileVisibility,
     setProfileVisibility,
     handleUpdateProfileVisibility,
+    showVisibilityModal,
+    setShowVisibilityModal,
+    pendingVisibility,
+    setPendingVisibility,
+    openVisibilityConfirmation,
   };
 };
 

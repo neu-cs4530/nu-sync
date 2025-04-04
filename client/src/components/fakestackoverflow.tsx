@@ -115,15 +115,23 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
       const { friendRequest, type } = payload;
 
-      // New friend request received
+      // New friend request received on private account
       if (
         type === 'created' &&
         friendRequest.recipient.username === user.username
       ) {
-        addNotification({
-          message: `${friendRequest.requester.username} sent you a friend request`,
-          link: '/requests',
-        });
+        if (friendRequest.status === 'accepted') {
+          addNotification({
+            message: `${friendRequest.requester.username} added you as a friend`,
+            link: '/friends',
+          });
+        } else {
+          // Normal pending request (private profile)
+          addNotification({
+            message: `${friendRequest.requester.username} sent you a friend request`,
+            link: '/requests',
+          });
+        }
       }
       // Friend request accepted
       else if (
