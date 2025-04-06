@@ -36,13 +36,10 @@ const ProfileSettings: React.FC = () => {
     showSpotifyConflictModal,
     setShowSpotifyConflictModal,
     handleUnlinkAllAndRetry,
+    friendList,
   } = useProfileSettings();
 
-  const {
-    isSpotifyConnected,
-    spotifyUserId,
-    disconnect,
-  } = useSpotifyAuth();
+  const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
 
   useEffect(() => {}, [isSpotifyConnected, spotifyUserId]);
 
@@ -72,10 +69,33 @@ const ProfileSettings: React.FC = () => {
               </span>
             </p>
 
+            {/* ---- Friends Section ---- */}
+            <div className='friend-section'>
+              <p>
+                <strong>Friends:</strong>{' '}
+                {friendList.length === 0
+                  ? 'No friends yet.'
+                  : friendList.map((f, i) => f.username).join(', ')}
+              </p>
+            </div>
+
+            {/* ---- Mutual Friends Section ---- */}
+            {!canEditProfile && (
+              <div className='mutual-friends'>
+                <p>
+                  <strong>Mutual Friends:</strong> {mutualFriendsLoading && 'Loading...'}
+                  {!mutualFriendsLoading &&
+                    mutualFriends.length === 0 &&
+                    'No mutual friends found.'}
+                  {!mutualFriendsLoading && mutualFriends.length > 0 && mutualFriends.join(', ')}
+                </p>
+              </div>
+            )}
+
             <div className='spotify-section'>
               <h3>Spotify Connection</h3>
 
-              {canEditProfile && (
+              {canEditProfile ? (
                 <>
                   {isSpotifyConnected ? (
                     <>
@@ -94,43 +114,22 @@ const ProfileSettings: React.FC = () => {
                     </>
                   )}
 
-                  {(() => {
-                    if (
-                      currentPlayingSong &&
-                      'isPlaying' in currentPlayingSong &&
-                      currentPlayingSong.isPlaying
-                    ) {
-                      return (
-                        <p>
-                          Currently playing:{' '}
-                          <a
-                            href={currentPlayingSong.track.external_urls.spotify}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            style={{ color: 'blue', textDecoration: 'underline' }}>
-                            {currentPlayingSong.track.name} -{' '}
-                            {currentPlayingSong.track.artists[0].name}
-                          </a>
-                        </p>
-                      );
-                    }
-
-                    if (
-                      currentPlayingSong &&
-                      'error' in currentPlayingSong &&
-                      currentPlayingSong.error
-                    ) {
-                      return (
-                        <p>Unable to fetch currently playing song. Please reconnect Spotify.</p>
-                      );
-                    }
-
-                    return <p>No song is currently playing.</p>;
-                  })()}
+                  {currentPlayingSong?.track ? (
+                    <p>
+                      Currently playing:{' '}
+                      <a
+                        href={currentPlayingSong.track.external_urls.spotify}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        style={{ color: 'blue', textDecoration: 'underline' }}>
+                        {currentPlayingSong.track.name} - {currentPlayingSong.track.artists[0].name}
+                      </a>
+                    </p>
+                  ) : (
+                    <p>No song is currently playing.</p>
+                  )}
                 </>
-              )}
-
-              {!canEditProfile && (
+              ) : (
                 <>
                   {isCurrentlyPlayingSong && currentPlayingSong ? (
                     <p>
@@ -203,27 +202,6 @@ const ProfileSettings: React.FC = () => {
               {userData.dateJoined ? new Date(userData.dateJoined).toLocaleDateString() : 'N/A'}
             </p>
 
-            {!canEditProfile && (
-              <div className='mutual-friends'>
-                <h4>Mutual Friends</h4>
-                {(() => {
-                  if (mutualFriendsLoading) {
-                    return <p>Loading mutual friends...</p>;
-                  }
-                  if (mutualFriends.length > 0) {
-                    return (
-                      <ul>
-                        {mutualFriends.map(friend => (
-                          <li key={friend}>{friend}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  return <p>No mutual friends found.</p>;
-                })()}
-              </div>
-            )}
-
             {/* ---- Reset Password Section ---- */}
             {canEditProfile && (
               <>
@@ -251,7 +229,7 @@ const ProfileSettings: React.FC = () => {
               </>
             )}
 
-            {/* ---- Danger Zone (Delete User) ---- */}
+            {/* ---- Danger Zone ---- */}
             {canEditProfile && (
               <>
                 <h4>Danger Zone</h4>
@@ -265,7 +243,7 @@ const ProfileSettings: React.FC = () => {
           <p>No user data found. Make sure the username parameter is correct.</p>
         )}
 
-        {/* ---- Confirmation Modal for Delete ---- */}
+        {/* ---- Delete Confirmation Modal ---- */}
         {showConfirmation && (
           <div className='modal'>
             <div className='modal-content'>

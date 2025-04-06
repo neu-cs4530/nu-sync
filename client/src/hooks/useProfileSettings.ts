@@ -7,9 +7,10 @@ import {
   updateBiography,
   getMutualFriends,
 } from '../services/userService';
-import { SafeDatabaseUser } from '../types/types';
+import { FriendConnection, SafeDatabaseUser } from '../types/types';
 import useUserContext from './useUserContext';
 import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
+import { getFriends } from '../services/friendService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
 
@@ -55,6 +56,8 @@ const useProfileSettings = () => {
 
   const [showSpotifyConflictModal, setShowSpotifyConflictModal] = useState(false);
   const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<string | null>(null);
+  const [friendList, setFriendList] = useState<FriendConnection[]>([]);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
 
   const canEditProfile =
     currentUser.username && userData?.username ? currentUser.username === userData.username : false;
@@ -166,6 +169,21 @@ const useProfileSettings = () => {
 
     fetchMutualFriends();
   }, [username, userData, currentUser.username]);
+
+  useEffect(() => {
+    if (!username) return;
+
+    const fetchFriends = async () => {
+      try {
+        const data = await getFriends(username);
+        setFriendList(data);
+      } catch {
+        setFriendList([]);
+      }
+    };
+
+    fetchFriends();
+  }, [username]);
 
   /**
    * Toggles the visibility of the password fields.
@@ -304,6 +322,9 @@ const useProfileSettings = () => {
     showSpotifyConflictModal,
     setShowSpotifyConflictModal,
     handleUnlinkAllAndRetry,
+    friendList, 
+    showFriendsModal,
+    setShowFriendsModal,
   };
 };
 

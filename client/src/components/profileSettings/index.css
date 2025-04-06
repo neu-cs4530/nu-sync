@@ -136,3 +136,17 @@
   .toggle-password-button:hover {
     background-color: #bbb;
   }
+
+  .friend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.friend-item {
+  padding: 0.5rem;
+  border-radius: 6px;
+  background-color: #f2f2f2;
+  font-weight: 500;
+}
