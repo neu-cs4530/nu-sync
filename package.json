@@ -8,7 +8,14 @@
     "shared"
   ],
   "dependencies": {
+    "@uiw/react-textarea-code-editor": "^3.1.0",
+    "axios": "^1.8.4",
     "escape-string-regexp": "^5.0.0",
-    "fake-stack-overflow": "file:"
+    "fake-stack-overflow": "file:",
+    "react-syntax-highlighter": "^15.6.1"
+  },
+  "devDependencies": {
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/spotify-api": "^0.0.25"
   }
 }

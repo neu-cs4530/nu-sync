@@ -8,14 +8,10 @@ import {
   getMutualFriends,
   updatePrivacySettings,
 } from '../services/userService';
-import { SafeDatabaseUser, PrivacySettings } from '../types/types';
+import { SafeDatabaseUser, PrivacySettings, FriendConnection } from '../types/types';
 import useUserContext from './useUserContext';
-import {
-  checkSpotifyStatus,
-  disconnectAllSpotifyAccounts,
-  getCurrentlyPlaying,
-  getSpotifyConflictStatus,
-} from '../services/spotifyService';
+import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
+import { getFriends } from '../services/friendService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
 
@@ -69,11 +65,10 @@ const useProfileSettings = () => {
   const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] =
     useState<boolean>(false);
 
-  const [showSpotifyConflictModal, setShowSpotifyConflictModal] =
-    useState(false);
-  const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<
-    string | null
-  >(null);
+  const [showSpotifyConflictModal, setShowSpotifyConflictModal] = useState(false);
+  const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<string | null>(null);
+  const [friendList, setFriendList] = useState<FriendConnection[]>([]);
+  const [showFriendsModal, setShowFriendsModal] = useState(false);
 
   const canEditProfile =
     currentUser.username && userData?.username
@@ -180,6 +175,21 @@ const useProfileSettings = () => {
 
     fetchMutualFriends();
   }, [username, userData, currentUser.username]);
+
+  useEffect(() => {
+    if (!username) return;
+
+    const fetchFriends = async () => {
+      try {
+        const data = await getFriends(username);
+        setFriendList(data);
+      } catch {
+        setFriendList([]);
+      }
+    };
+
+    fetchFriends();
+  }, [username]);
 
   /**
    * Toggles the visibility of the password fields.
@@ -375,6 +385,9 @@ const useProfileSettings = () => {
     pendingVisibility,
     setPendingVisibility,
     openVisibilityConfirmation,
+    friendList, 
+    showFriendsModal,
+    setShowFriendsModal,
   };
 };
 

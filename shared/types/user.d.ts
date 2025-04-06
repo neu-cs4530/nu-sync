@@ -44,6 +44,7 @@ export interface User extends UserCredentials {
   spotifyRefreshToken?: string;
   musicPreferences?: string[];
   privacySettings?: PrivacySettings;
+  onlineStatus?: OnlineStatus;
   playlists?: Playlist[];
   currentlyPlaying?: CurrentlyPlayingTrack;
   playlistHistory?: PlaylistHistory[];
@@ -198,4 +199,20 @@ export interface PlaylistHistory {
   playlistId: string;
   playlistName: string;
   lastPlayed: Date;
+}
+
+
+/**
+ * Express request for updating a user's online status.
+ */
+export interface UpdateOnlineStatusRequest extends Request {
+  body: {
+    username: string;
+    onlineStatus: {
+      status: 'online' | 'away' | 'busy' | 'invisible';
+      busySettings?: {
+        muteScope: 'friends-only' | 'everyone';
+      };
+    };
+  };
 }

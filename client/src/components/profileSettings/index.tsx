@@ -3,6 +3,7 @@ import './index.css';
 import useProfileSettings from '../../hooks/useProfileSettings';
 import useSpotifyAuth from '../../hooks/useSpotifyAuth';
 import SpotifyConflictModal from './spotifyConflict';
+import UserStatusIcon from '../main/UserStatusIcon';
 
 const ProfileSettings: React.FC = () => {
   const {
@@ -42,6 +43,7 @@ const ProfileSettings: React.FC = () => {
     openVisibilityConfirmation,
     showVisibilityModal,
     setShowVisibilityModal,
+    friendList,
   } = useProfileSettings();
 
   const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
@@ -68,10 +70,12 @@ const ProfileSettings: React.FC = () => {
           <>
             <h4>General Information</h4>
             <p>
-              <strong>Username:</strong> {userData.username}
+              <strong>Username:</strong> {userData.username}{' '}
+              <span style={{ marginLeft: '0.5rem' }}>
+                <UserStatusIcon status={userData.onlineStatus?.status ?? 'online'} />
+              </span>
             </p>
-
-            {/* ---- Profile Visibility Toggle (Only for profile owner) ---- */}
+          {/* ---- Profile Visibility Toggle (Only for profile owner) ---- */}
             {canEditProfile && (
               <div className="profile-settings-section">
                 <h4>Profile Visibility</h4>
@@ -139,11 +143,33 @@ const ProfileSettings: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* ---- Friends Section ---- */}
+            <div className='friend-section'>
+              <p>
+                <strong>Friends:</strong>{' '}
+                {friendList.length === 0
+                  ? 'No friends yet.'
+                  : friendList.map((f, i) => f.username).join(', ')}
+              </p>
+            </div>
 
-            <div className="spotify-section">
+            {/* ---- Mutual Friends Section ---- */}
+            {!canEditProfile && (
+              <div className='mutual-friends'>
+                <p>
+                  <strong>Mutual Friends:</strong> {mutualFriendsLoading && 'Loading...'}
+                  {!mutualFriendsLoading &&
+                    mutualFriends.length === 0 &&
+                    'No mutual friends found.'}
+                  {!mutualFriendsLoading && mutualFriends.length > 0 && mutualFriends.join(', ')}
+                </p>
+              </div>
+            )}
+
+            <div className='spotify-section'>
               <h3>Spotify Connection</h3>
 
-              {canEditProfile && (
+              {canEditProfile ? (
                 <>
                   {isSpotifyConnected ? (
                     <>
@@ -208,9 +234,7 @@ const ProfileSettings: React.FC = () => {
                     return <p>No song is currently playing.</p>;
                   })()}
                 </>
-              )}
-
-              {!canEditProfile && (
+              ) : (
                 <>
                   {isCurrentlyPlayingSong && currentPlayingSong ? (
                     <p>
@@ -294,27 +318,6 @@ const ProfileSettings: React.FC = () => {
                 : 'N/A'}
             </p>
 
-            {!canEditProfile && (
-              <div className="mutual-friends">
-                <h4>Mutual Friends</h4>
-                {(() => {
-                  if (mutualFriendsLoading) {
-                    return <p>Loading mutual friends...</p>;
-                  }
-                  if (mutualFriends.length > 0) {
-                    return (
-                      <ul>
-                        {mutualFriends.map((friend) => (
-                          <li key={friend}>{friend}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  return <p>No mutual friends found.</p>;
-                })()}
-              </div>
-            )}
-
             {/* ---- Reset Password Section ---- */}
             {canEditProfile && (
               <>
@@ -345,7 +348,7 @@ const ProfileSettings: React.FC = () => {
               </>
             )}
 
-            {/* ---- Danger Zone (Delete User) ---- */}
+            {/* ---- Danger Zone ---- */}
             {canEditProfile && (
               <>
                 <h4>Danger Zone</h4>
@@ -361,7 +364,7 @@ const ProfileSettings: React.FC = () => {
           </p>
         )}
 
-        {/* ---- Confirmation Modal for Delete ---- */}
+        {/* ---- Delete Confirmation Modal ---- */}
         {showConfirmation && (
           <div className="modal">
             <div className="modal-content">

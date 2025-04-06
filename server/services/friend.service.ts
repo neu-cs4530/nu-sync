@@ -227,42 +227,33 @@ export const getPendingFriendRequests = async (
  * @param {string} username - The username of the user.
  * @returns {Promise<{ _id: ObjectId; username: string; requestId: ObjectId }[] | { error: string }>} - All friends of the user or an error message.
  */
-export const getFriendsByUsername = async (
-  username: string,
-): Promise<FriendConnectionResponse> => {
+export const getFriendsByUsername = async (username: string): Promise<FriendConnectionResponse> => {
   try {
-    // Find user by username
     const user: DatabaseUser | null = await UserModel.findOne({ username });
 
     if (!user) {
       return { error: 'User not found' };
     }
 
-    // Find accepted friend requests
-    const acceptedRequests: DatabaseFriendRequest[] =
-      await FriendRequestModel.find({
-        $or: [
-          { requester: user._id, status: 'accepted' },
-          { recipient: user._id, status: 'accepted' },
-        ],
-      })
-        .populate('requester', 'username')
-        .populate('recipient', 'username');
+    const acceptedRequests: DatabaseFriendRequest[] = await FriendRequestModel.find({
+      $or: [
+        { requester: user._id, status: 'accepted' },
+        { recipient: user._id, status: 'accepted' },
+      ],
+    })
+      .populate('requester', 'username onlineStatus')
+      .populate('recipient', 'username onlineStatus');
 
-    // Extract friend details
-    const friends = acceptedRequests.map((request) => {
-      // Determine which user in the request is the friend
-      const isFriendRequester =
-        String(request.recipient._id) === String(user._id);
+    const friends = acceptedRequests.map(request => {
+      const isFriendRequester = String(request.recipient._id) === String(user._id);
 
-      const friendUser = isFriendRequester
-        ? request.requester
-        : request.recipient;
+      const friendUser = isFriendRequester ? request.requester : request.recipient;
 
       return {
         _id: friendUser._id,
         username: friendUser.username,
         requestId: request._id,
+        onlineStatus: friendUser.onlineStatus,
       };
     });
 
@@ -271,6 +262,7 @@ export const getFriendsByUsername = async (
     return { error: `Error occurred when getting friends: ${error}` };
   }
 };
+
 
 /**
  * Deletes a friend request or friendship.

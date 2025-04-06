@@ -6,6 +6,7 @@ import {
   FakeSOSocket,
   SafeDatabaseUser,
   FriendRequestUpdatePayload,
+  ChatUpdatePayload,
 } from '../types/types';
 import LoginContext from '../contexts/LoginContext';
 import UserContext from '../contexts/UserContext';
@@ -27,6 +28,7 @@ import NotificationContext, {
   Notification,
 } from '../contexts/NotificationContext';
 import NotificationContainer from './main/notifications/NotificationContainer';
+import { getChatsByUser } from '../services/chatService';
 
 const ProtectedRoute = ({
   user,
@@ -67,6 +69,26 @@ const ProtectedRoute = ({
   return <Navigate to="/" />;
 };
 
+
+const shouldShowNotification = (user: SafeDatabaseUser, senderUsername: string): boolean => {
+  const { status, busySettings } = user.onlineStatus || {};
+
+  // console.log('[notif check]', { status, busySettings });
+
+  if (status === 'online' || status === 'away') return true;
+  if (status === 'invisible') return false;
+
+  if (status === 'busy') {
+    if (busySettings?.muteScope === 'everyone') return false;
+    if (busySettings?.muteScope === 'friends-only') {
+      return user.friends?.includes(senderUsername) ?? false;
+    }
+  }
+
+  return true;
+};
+
+
 /**
  * Represents the main component of the application.
  * It manages the state for search terms and the main title.
@@ -78,6 +100,20 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (socket && user?.username) {
+        socket.emit('logout_user', user.username);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [socket, user]);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -107,11 +143,37 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       localStorage.removeItem('user');
     }
   }, [user]);
+  
 
   useEffect(() => {
-    if (!socket || !user) return undefined; // Return undefined explicitly
+    if (user?.username && socket) {
+      socket.emit('connect_user', user.username);
+      // console.log('Sent connect_user event for', user.username);
+    }
+  }, [user?.username, socket]);
 
-    // Listen for friend request updates
+  useEffect(() => {
+    if (!user || !socket) return;
+
+    const joinAllUserChats = async () => {
+      try {
+        const chats = await getChatsByUser(user.username);
+
+        for (const chat of chats) {
+          socket.emit('joinChat', String(chat._id));
+        }
+      } catch (err) {
+        // console.error('Failed to join chat rooms:', err);
+      }
+    };
+
+    joinAllUserChats();
+  }, [user, socket]);
+
+
+  useEffect(() => {
+    if (!socket || !user) return () => {};
+
     const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
       const { friendRequest, type } = payload;
 
@@ -139,17 +201,53 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
         friendRequest.status === 'accepted' &&
         friendRequest.requester.username === user.username
       ) {
-        addNotification({
-          message: `${friendRequest.recipient.username} accepted your friend request`,
-          link: '/friends',
-        });
+        if (shouldShowNotification(user, friendRequest.recipient.username)) {
+          addNotification({
+            message: `${friendRequest.recipient.username} accepted your friend request`,
+            link: '/friends',
+          });
+        }
+      }
+    };
+
+    const handleChatUpdate = (payload: ChatUpdatePayload) => {
+      const { chat, type } = payload;
+
+      if (type === 'created') {
+        if (chat.participants.includes(user.username)) {
+          socket.emit('joinChat', String(chat._id));
+        }
+        return;
+      }
+
+      if (type === 'newMessage') {
+        const lastMessage = chat.messages[chat.messages.length - 1];
+        const fromUser = lastMessage.msgFrom;
+
+        if (fromUser !== user.username && shouldShowNotification(user, fromUser)) {
+          addNotification({
+            message: `New message from ${fromUser}`,
+            link: '/messaging/direct-message',
+          });
+        }
+      }
+    };
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      if (payload.user.username === user.username) {
+        // console.log('Updating user status from socket:', payload.user.onlineStatus);
+        setUser(payload.user);
       }
     };
 
     socket.on('friendRequestUpdate', handleFriendRequestUpdate);
-
+    socket.on('chatUpdate', handleChatUpdate);
+    socket.on('userUpdate', handleUserUpdate);
+    
     return () => {
       socket.off('friendRequestUpdate', handleFriendRequestUpdate);
+      socket.off('chatUpdate', handleChatUpdate);
+      socket.off('userUpdate', handleUserUpdate);
     };
   }, [socket, user, addNotification]);
 

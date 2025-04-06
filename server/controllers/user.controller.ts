@@ -7,6 +7,7 @@ import {
   FakeSOSocket,
   UpdateBiographyRequest,
   UpdatePrivacySettingsRequest,
+  UpdateOnlineStatusRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
@@ -43,6 +44,15 @@ const userController = (socket: FakeSOSocket) => {
     req.body.username !== undefined &&
     req.body.username.trim() !== '' &&
     req.body.biography !== undefined;
+  
+  const isOnlineStatusBodyValid = (req: UpdateOnlineStatusRequest): boolean =>
+    req.body !== undefined &&
+    req.body.username !== undefined &&
+    req.body.username.trim() !== '' &&
+    req.body.onlineStatus !== undefined &&
+    ['online', 'away', 'busy', 'invisible'].includes(req.body.onlineStatus.status) &&
+    (req.body.onlineStatus.status !== 'busy' ||
+      ['friends-only', 'everyone'].includes(req.body.onlineStatus.busySettings?.muteScope || ''));
 
   /**
    * Validates that the request body contains all required fields to update privacy settings.
@@ -121,10 +131,32 @@ const userController = (socket: FakeSOSocket) => {
         throw Error(user.error);
       }
 
-      res.status(200).json(user);
+      // Preserve previous status if not "online"
+      const finalStatus =
+        user.onlineStatus?.status && user.onlineStatus.status !== 'online'
+          ? user.onlineStatus
+          : { status: 'online' };
+
+      // Update the user's status in the DB (only if necessary)
+      const updatedUser = await updateUser(user.username, {
+        onlineStatus: finalStatus,
+      });
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
+
+      // Emit real-time update to other users
+      socket.emit('userUpdate', {
+        user: updatedUser,
+        type: 'updated',
+      });
+
+      // Return the updated user to the logging-in user
+      res.status(200).json(updatedUser);
     } catch (error) {
-      res.status(500).send('Login failed');
-    }
+    res.status(500).send('Login failed');
+  }
   };
 
   /**
@@ -309,6 +341,35 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  const updateOnlineStatus = async (
+    req: UpdateOnlineStatusRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      if (!isOnlineStatusBodyValid(req)) {
+        res.status(400).send('Invalid status update body');
+        return;
+      }
+
+      const { username, onlineStatus } = req.body;
+
+      const updatedUser = await updateUser(username, { onlineStatus });
+
+      if ('error' in updatedUser) {
+        throw new Error(updatedUser.error);
+      }
+
+      socket.emit('userUpdate', {
+        user: updatedUser,
+        type: 'updated',
+      });
+
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      res.status(500).send(`Error when updating online status: ${error}`);
+    }
+  };
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);
@@ -318,6 +379,7 @@ const userController = (socket: FakeSOSocket) => {
   router.delete('/deleteUser/:username', deleteUser);
   router.patch('/updateBiography', updateBiography);
   router.patch('/updatePrivacySettings', updatePrivacySettings);
+  router.patch('/updateOnlineStatus', updateOnlineStatus);
   return router;
 };
 

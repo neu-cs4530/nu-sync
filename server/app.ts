@@ -20,6 +20,7 @@ import chatController from './controllers/chat.controller';
 import gameController from './controllers/game.controller';
 import friendRequestController from './controllers/friend.controller';
 import spotifyController from './controllers/spotify.controller';
+import UserModel from './models/users.model';
 
 dotenv.config();
 
@@ -46,11 +47,66 @@ function startServer() {
   });
 }
 
-socket.on('connection', (socket) => {
-  console.log('A user connected ->', socket.id);
+socket.on('connection', socket => {
+  // console.log('A user connected ->', socket.id);
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  // 1. Handle user login/online connection
+  socket.on('connect_user', async (username: string) => {
+    // console.log(`User ${username} connected`);
+    socket.data.username = username;
+
+    const user = await UserModel.findOne({ username });
+
+    // Only override to online if user was invisible (logged out)
+    let newStatus =
+      user?.onlineStatus?.status === 'invisible' ? { status: 'online' } : user?.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userStatusUpdate', {
+      username,
+      onlineStatus: newStatus,
+    });
+  });
+
+  // 2. Handle user disconnect (browser close, refresh, tab switch)
+  socket.on('disconnect', async () => {
+    const username = socket.data?.username;
+    if (!username) return;
+
+    const user = await UserModel.findOne({ username });
+
+    if (!user) return;
+
+    // Determine what status to preserve
+    const previousStatus = user.onlineStatus?.status || 'online';
+    const newStatus = previousStatus === 'online' ? { status: 'invisible' } : user.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userUpdate', {
+      user: { ...user.toObject(), onlineStatus: newStatus },
+      type: 'updated',
+    });
+
+    // console.log(`User ${username} disconnected — marked as ${newStatus.status}`);
+  });
+
+  socket.on('logout_user', async (username: string) => {
+    const user = await UserModel.findOne({ username });
+    if (!user) return;
+
+    const previousStatus = user.onlineStatus?.status || 'online';
+    const newStatus = previousStatus === 'online' ? { status: 'invisible' } : user.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userUpdate', {
+      user: { ...user.toObject(), onlineStatus: newStatus },
+      type: 'updated',
+    });
+
+    // console.log(`User ${username} logged out — marked as ${newStatus.status}`);
   });
 });
 

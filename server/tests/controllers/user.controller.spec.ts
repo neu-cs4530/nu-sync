@@ -121,12 +121,23 @@ describe('Test userController', () => {
       };
 
       loginUserSpy.mockResolvedValueOnce(mockSafeUser);
+      updatedUserSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        onlineStatus: { status: 'online' },
+      });
 
       const response = await supertest(app).post('/user/login').send(mockReqBody);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(mockUserJSONResponse);
+      expect(response.body).toEqual({
+        ...mockUserJSONResponse,
+        onlineStatus: { status: 'online' },
+      });
+
       expect(loginUserSpy).toHaveBeenCalledWith(mockReqBody);
+      expect(updatedUserSpy).toHaveBeenCalledWith(mockUser.username, {
+        onlineStatus: { status: 'online' },
+      });
     });
 
     it('should return 400 for request missing username', async () => {
