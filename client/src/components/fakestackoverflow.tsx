@@ -67,6 +67,26 @@ const ProtectedRoute = ({
   return <Navigate to="/" />;
 };
 
+
+const shouldShowNotification = (user: SafeDatabaseUser, senderUsername: string): boolean => {
+  const { status, busySettings } = user.onlineStatus || {};
+
+  // console.log('[notif check]', { status, busySettings });
+
+  if (status === 'online' || status === 'away') return true;
+  if (status === 'invisible') return false;
+
+  if (status === 'busy') {
+    if (busySettings?.muteScope === 'everyone') return false;
+    if (busySettings?.muteScope === 'friends-only') {
+      return user.friends?.includes(senderUsername) ?? false;
+    }
+  }
+
+  return true;
+};
+
+
 /**
  * Represents the main component of the application.
  * It manages the state for search terms and the main title.
@@ -78,6 +98,20 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (socket && user?.username) {
+        socket.emit('logout_user', user.username);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [socket, user]);
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -107,41 +141,56 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       localStorage.removeItem('user');
     }
   }, [user]);
+  
 
   useEffect(() => {
-    if (!socket || !user) return undefined; // Return undefined explicitly
+    if (user?.username && socket) {
+      socket.emit('connect_user', user.username);
+      // console.log('Sent connect_user event for', user.username);
+    }
+  }, [user?.username, socket]);
 
-    // Listen for friend request updates
+  useEffect(() => {
+    if (!socket || !user) return () => {};
+
     const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
       const { friendRequest, type } = payload;
 
-      // New friend request received
-      if (
-        type === 'created' &&
-        friendRequest.recipient.username === user.username
-      ) {
-        addNotification({
-          message: `${friendRequest.requester.username} sent you a friend request`,
-          link: '/requests',
-        });
-      }
-      // Friend request accepted
-      else if (
+      if (type === 'created' && friendRequest.recipient.username === user.username) {
+        // console.log('STATUS CHECK:', user.onlineStatus);
+        if (shouldShowNotification(user, friendRequest.requester.username)) {
+          addNotification({
+            message: `${friendRequest.requester.username} sent you a friend request`,
+            link: '/requests',
+          });
+        }
+      } else if (
         type === 'updated' &&
         friendRequest.status === 'accepted' &&
         friendRequest.requester.username === user.username
       ) {
-        addNotification({
-          message: `${friendRequest.recipient.username} accepted your friend request`,
-          link: '/friends',
-        });
+        if (shouldShowNotification(user, friendRequest.recipient.username)) {
+          addNotification({
+            message: `${friendRequest.recipient.username} accepted your friend request`,
+            link: '/friends',
+          });
+        }
+      }
+    };
+
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      if (payload.user.username === user.username) {
+        // console.log('Updating user status from socket:', payload.user.onlineStatus);
+        setUser(payload.user);
       }
     };
 
     socket.on('friendRequestUpdate', handleFriendRequestUpdate);
+    socket.on('userUpdate', handleUserUpdate);
 
     return () => {
       socket.off('friendRequestUpdate', handleFriendRequestUpdate);
+      socket.off('userUpdate', handleUserUpdate);
     };
   }, [socket, user, addNotification]);
 

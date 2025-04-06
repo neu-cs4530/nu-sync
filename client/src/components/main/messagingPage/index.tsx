@@ -7,8 +7,8 @@ import MessageCard from '../messageCard';
  * and provides functionality to send and receive messages.
  */
 const MessagingPage = () => {
-  const { messages, newMessage, setNewMessage, handleSendMessage, error } = useMessagingPage();
-
+  const { userMap, messages, newMessage, setNewMessage, handleSendMessage, error } =
+    useMessagingPage();
   return (
     <div className='chat-room'>
       <div className='chat-header'>
@@ -16,7 +16,11 @@ const MessagingPage = () => {
       </div>
       <div className='chat-messages'>
         {messages.map(message => (
-          <MessageCard key={String(message._id)} message={message} />
+          <MessageCard
+            key={String(message._id)}
+            message={message}
+            sender={userMap[message.msgFrom]}
+          />
         ))}
       </div>
       <div className='message-input'>

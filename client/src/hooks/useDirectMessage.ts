@@ -16,26 +16,23 @@ import {
   searchMessages,
 } from '../services/chatService';
 import useSpotifySharing from './useSpotifySharing';
-
-
+import { getUserByUsername } from '../services/userService';
 
 /**
  * useDirectMessage is a custom hook that provides state and functions for direct messaging between users.
- * It includes a selected user, messages, and a new message state.
+ * It includes a selected user, messages, a new message state, and real-time user status syncing.
  */
-
 const useDirectMessage = () => {
   const { user, socket } = useUserContext();
   const [showCreatePanel, setShowCreatePanel] = useState<boolean>(false);
   const [chatToCreate, setChatToCreate] = useState<string>('');
-  const [selectedChat, setSelectedChat] =
-    useState<PopulatedDatabaseChat | null>(null);
+  const [selectedChat, setSelectedChat] = useState<PopulatedDatabaseChat | null>(null);
   const [chats, setChats] = useState<PopulatedDatabaseChat[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [userMap, setUserMap] = useState<Record<string, SafeDatabaseUser>>({});
 
-  const [highlightedMessageId, setHighlightedMessageId] =
-    useState<ObjectId | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([]);
   const [searchError, setSearchError] = useState('');
@@ -45,6 +42,76 @@ const useDirectMessage = () => {
   const handleJoinChat = (chatID: ObjectId) => {
     socket.emit('joinChat', String(chatID));
   };
+
+  useEffect(() => {
+    const fetchMissingUsers = async () => {
+      if (!selectedChat) return;
+
+      const uniqueUsernames = Array.from(new Set(selectedChat.messages.map(msg => msg.msgFrom)));
+      const missingUsernames = uniqueUsernames.filter(username => !userMap[username]);
+
+      if (missingUsernames.length === 0) return;
+
+      const newMap = { ...userMap };
+
+      await Promise.all(
+        missingUsernames.map(async username => {
+          try {
+            const fetchedUser = await getUserByUsername(username);
+            newMap[username] = fetchedUser;
+          } catch (err) {
+            // fail silently
+          }
+        }),
+      );
+
+      setUserMap(newMap);
+    };
+
+    fetchMissingUsers();
+  }, [selectedChat, userMap]);
+
+  useEffect(() => {
+    const fetchMissingUsersFromChats = async () => {
+      const allUsernames = Array.from(
+        new Set(chats.flatMap(chat => chat.participants.filter(p => p !== user.username))),
+      );
+
+      const missing = allUsernames.filter(username => !userMap[username]);
+      if (missing.length === 0) return;
+
+      const newMap = { ...userMap };
+      await Promise.all(
+        missing.map(async username => {
+          try {
+            const fetched = await getUserByUsername(username);
+            newMap[username] = fetched;
+          } catch (err) {
+            // console.warn(`Error fetching ${username}`, err);
+          }
+        }),
+      );
+
+      setUserMap(newMap);
+    };
+
+    fetchMissingUsersFromChats();
+  }, [chats, user.username, userMap]);
+
+  useEffect(() => {
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      setUserMap(prev => ({
+        ...prev,
+        [payload.user.username]: payload.user,
+      }));
+    };
+
+    socket.on('userUpdate', handleUserUpdate);
+
+    return () => {
+      socket.off('userUpdate', handleUserUpdate);
+    };
+  }, [socket]);
 
   const spotifySharing = useSpotifySharing(selectedChat?._id);
 
@@ -94,7 +161,7 @@ const useDirectMessage = () => {
 
       // Check if a chat already exists
       const existingChat = latestChats.find(
-        (chat) =>
+        chat =>
           chat.participants.length === 2 &&
           chat.participants.includes(user.username) &&
           chat.participants.includes(username),
@@ -162,7 +229,7 @@ const useDirectMessage = () => {
       switch (type) {
         case 'created': {
           if (chat.participants.includes(user.username)) {
-            setChats((prevChats) => [chat, ...prevChats]);
+            setChats(prevChats => [chat, ...prevChats]);
           }
           return;
         }
@@ -172,9 +239,9 @@ const useDirectMessage = () => {
         }
         case 'newParticipant': {
           if (chat.participants.includes(user.username)) {
-            setChats((prevChats) => {
-              if (prevChats.some((c) => chat._id === c._id)) {
-                return prevChats.map((c) => (c._id === chat._id ? chat : c));
+            setChats(prevChats => {
+              if (prevChats.some(c => chat._id === c._id)) {
+                return prevChats.map(c => (c._id === chat._id ? chat : c));
               }
               return [chat, ...prevChats];
             });
@@ -198,6 +265,7 @@ const useDirectMessage = () => {
   }, [user.username, socket, selectedChat?._id]);
 
   return {
+    user,
     selectedChat,
     chatToCreate,
     chats,
@@ -207,6 +275,7 @@ const useDirectMessage = () => {
     setShowCreatePanel,
     handleSendMessage,
     handleChatSelect,
+    userMap,
     handleUserSelect,
     handleCreateChat,
     error,

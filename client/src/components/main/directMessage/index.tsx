@@ -9,8 +9,9 @@ import FriendsListPage from '../friendsListPage';
 import MessageCard from '../messageCard';
 import SearchResultCard from './searchResultCard';
 import SpotifySharingComponent from './spotifySharing';
-import { DatabaseMessage, CodeSnippet, MessageSearchResult } from '../../../types/types';
+import { DatabaseMessage, CodeSnippet, MessageSearchResult, SafeDatabaseUser } from '../../../types/types';
 import { getMetaData } from '../../../tool';
+import UserStatusIcon from '../UserStatusIcon';
 
 const SUPPORTED_LANGUAGES = [
   { value: 'python', label: 'Python' },
@@ -22,6 +23,7 @@ const SUPPORTED_LANGUAGES = [
 
 const DirectMessage = () => {
   const {
+    user,
     selectedChat,
     chats,
     newMessage,
@@ -41,6 +43,7 @@ const DirectMessage = () => {
     messageRefs,
     error,
     spotifySharing,
+    userMap,
   } = useDirectMessage();
 
   const [showCodeEditor, setShowCodeEditor] = useState(false);
@@ -95,28 +98,30 @@ const DirectMessage = () => {
   };
 
   // Render message with support for code snippets
-  const renderMessage = (message: DatabaseMessage) => {
+  const renderMessage = (message: DatabaseMessage, sender?: SafeDatabaseUser) => {
     // Add message header with username and timestamp
     const messageHeader = (
-      <div className="message-header">
-        <div className="message-sender">{message.msgFrom}</div>
-        <div className="message-time">{getMetaData(new Date(message.msgDateTime))}</div>
+      <div className='message-header'>
+        <div className='message-sender'>
+          {sender?.onlineStatus && <UserStatusIcon status={sender.onlineStatus.status} />}
+          {message.msgFrom}
+        </div>
+        <div className='message-time'>{getMetaData(new Date(message.msgDateTime))}</div>
       </div>
     );
 
     // Check if the message has a code snippet
     if (message.isCodeSnippet && message.codeSnippet) {
       return (
-        <div className="message">
+        <div className='message'>
           {messageHeader}
           <SyntaxHighlighter
             language={message.codeSnippet.language}
             style={tomorrow}
             customStyle={{
               borderRadius: '4px',
-              margin: '10px 0'
-            }}
-          >
+              margin: '10px 0',
+            }}>
             {message.codeSnippet.code}
           </SyntaxHighlighter>
         </div>
@@ -128,16 +133,15 @@ const DirectMessage = () => {
       const parsedContent = JSON.parse(message.msg);
       if (parsedContent.isCodeSnippet && parsedContent.codeSnippet) {
         return (
-          <div className="message">
+          <div className='message'>
             {messageHeader}
             <SyntaxHighlighter
               language={parsedContent.codeSnippet.language}
               style={tomorrow}
               customStyle={{
                 borderRadius: '4px',
-                margin: '10px 0'
-              }}
-            >
+                margin: '10px 0',
+              }}>
               {parsedContent.codeSnippet.code}
             </SyntaxHighlighter>
           </div>
@@ -148,19 +152,16 @@ const DirectMessage = () => {
     }
 
     // Default case, render normally
-    return <MessageCard message={message} />;
+    return <MessageCard message={message} sender={userMap[message.msgFrom]} />;
   };
 
   return (
     <>
-      <div className="create-panel">
-        <button
-          className="custom-button"
-          onClick={() => setShowCreatePanel((prev) => !prev)}
-        >
+      <div className='create-panel'>
+        <button className='custom-button' onClick={() => setShowCreatePanel(prev => !prev)}>
           {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a Chat'}
         </button>
-        {error && <div className="direct-message-error">{error}</div>}
+        {error && <div className='direct-message-error'>{error}</div>}
         {showCreatePanel && (
           <>
             <p>Chat with your friends</p>
@@ -169,25 +170,25 @@ const DirectMessage = () => {
         )}
       </div>
 
-      <div className="direct-message-container">
-        <div className="chats-list">
-          <form onSubmit={handleSearch} className="search-bar">
+      <div className='direct-message-container'>
+        <div className='chgiats-list'>
+          <form onSubmit={handleSearch} className='search-bar'>
             <input
-              type="text"
-              placeholder="Search messages..."
+              type='text'
+              placeholder='Search messages...'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="custom-input"
+              onChange={e => setSearchTerm(e.target.value)}
+              className='custom-input'
             />
-            <button type="submit" className="custom-button">
+            <button type='submit' className='custom-button'>
               Search
             </button>
           </form>
 
-          {searchError && <div className="error">{searchError}</div>}
+          {searchError && <div className='error'>{searchError}</div>}
 
           {searchResults.length > 0 && (
-            <div className="search-results">
+            <div className='search-results'>
               <p>
                 Found {searchResults.length} result
                 {searchResults.length > 1 ? 's' : ''} for &quot;
@@ -205,57 +206,53 @@ const DirectMessage = () => {
             </div>
           )}
 
-          {chats.map((chat) => (
+          {chats.map(chat => (
             <ChatsListCard
               key={String(chat._id)}
               chat={chat}
               handleChatSelect={handleChatSelect}
+              userMap={userMap}
+              currentUsername={user.username}
             />
           ))}
         </div>
 
-        <div className="chat-container">
+        <div className='chat-container'>
           {selectedChat ? (
             <>
               <h2>Chat Participants: {selectedChat.participants.join(', ')}</h2>
-              <div className="chat-messages">
-                {selectedChat.messages.map((message) => (
+              <div className='chat-messages'>
+                {selectedChat.messages.map(message => (
                   <div
                     key={String(message._id)}
-                    ref={(el) => {
+                    ref={el => {
                       if (messageRefs.current && el) {
                         messageRefs.current[String(message._id)] = el;
                       }
                     }}
-                    className={`message-wrapper${highlightedMessageId?.toString() === String(message._id)
-                      ? ' highlight'
-                      : ''
-                      }`}
-                  >
-                    {renderMessage(message)}
+                    className={`message-wrapper${
+                      highlightedMessageId?.toString() === String(message._id) ? ' highlight' : ''
+                    }`}>
+                    {renderMessage(message, userMap[message.msgFrom])}
                   </div>
                 ))}
               </div>
 
-              <div className="message-input">
+              <div className='message-input'>
                 {showCodeEditor ? (
-                  <div className="code-editor-container">
-                    <div className="code-editor-controls">
+                  <div className='code-editor-container'>
+                    <div className='code-editor-controls'>
                       <select
                         value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="language-select"
-                      >
-                        {SUPPORTED_LANGUAGES.map((lang) => (
+                        onChange={e => setLanguage(e.target.value)}
+                        className='language-select'>
+                        {SUPPORTED_LANGUAGES.map(lang => (
                           <option key={lang.value} value={lang.value}>
                             {lang.label}
                           </option>
                         ))}
                       </select>
-                      <button
-                        className="custom-button"
-                        onClick={() => setShowCodeEditor(false)}
-                      >
+                      <button className='custom-button' onClick={() => setShowCodeEditor(false)}>
                         Cancel
                       </button>
                     </div>
@@ -263,46 +260,47 @@ const DirectMessage = () => {
                     <CodeEditor
                       value={code}
                       language={language}
-                      onChange={(e) => setCode(e.target.value)}
+                      onChange={e => setCode(e.target.value)}
                       padding={10}
                       style={{
                         fontSize: 14,
                         minHeight: 200,
-                        backgroundColor: "#ffffff",
+                        backgroundColor: '#ffffff',
                         fontFamily: 'monospace',
                         lineHeight: '1.5',
                         borderRadius: '4px',
                         border: '1px solid #ccc',
                       }}
-                      data-color-mode="light"
-                      className="code-editor-fix"
+                      data-color-mode='light'
+                      className='code-editor-fix'
                     />
 
-                    <button
-                      className="custom-button primary"
-                      onClick={handleSendCodeMessage}
-                    >
+                    <button className='custom-button primary' onClick={handleSendCodeMessage}>
                       Send Code
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="message-input-row">
+                    <div className='message-input-row'>
                       {isCodeSnippetPreview && codeSnippetPreview ? (
-                        <div className="code-snippet-preview">
-                          <div className="code-preview-header">
-                            <div className="preview-language">
-                              <div className="language-indicator"></div>
-                              <span>{SUPPORTED_LANGUAGES.find(lang => lang.value === codeSnippetPreview.language)?.label || codeSnippetPreview.language} Code</span>
+                        <div className='code-snippet-preview'>
+                          <div className='code-preview-header'>
+                            <div className='preview-language'>
+                              <div className='language-indicator'></div>
+                              <span>
+                                {SUPPORTED_LANGUAGES.find(
+                                  lang => lang.value === codeSnippetPreview.language,
+                                )?.label || codeSnippetPreview.language}{' '}
+                                Code
+                              </span>
                             </div>
                             <button
-                              className="custom-button secondary clear-button"
+                              className='custom-button secondary clear-button'
                               onClick={() => {
                                 setNewMessage('');
                                 setIsCodeSnippetPreview(false);
                                 setCodeSnippetPreview(null);
-                              }}
-                            >
+                              }}>
                               Clear
                             </button>
                           </div>
@@ -315,29 +313,27 @@ const DirectMessage = () => {
                               maxHeight: '120px',
                               overflow: 'auto',
                               boxShadow: 'var(--shadow-sm)',
-                              border: '1px solid var(--border-color)'
-                            }}
-                          >
+                              border: '1px solid var(--border-color)',
+                            }}>
                             {codeSnippetPreview.code}
                           </SyntaxHighlighter>
                         </div>
                       ) : (
                         <input
-                          className="custom-input"
-                          type="text"
+                          className='custom-input'
+                          type='text'
                           value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type a message..."
+                          onChange={e => setNewMessage(e.target.value)}
+                          placeholder='Type a message...'
                         />
                       )}
                       <button
-                        className="custom-button"
+                        className='custom-button'
                         onClick={() => setShowCodeEditor(true)}
-                        title="Insert code"
-                      >
+                        title='Insert code'>
                         {`Code Editor`}
                       </button>
-                      <button className="custom-button" onClick={handleSendMessage}>
+                      <button className='custom-button' onClick={handleSendMessage}>
                         Send
                       </button>
                     </div>

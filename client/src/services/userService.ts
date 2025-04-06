@@ -172,6 +172,34 @@ const updateSpotifyTokens = async (
   }
 };
 
+/**
+ * Updates the user's online status.
+ * @param username - The unique username of the user
+ * @param status - One of: 'online' | 'away' | 'busy' | 'invisible'
+ * @param busySettings - Optional: muteScope ('friends-only' | 'everyone') for busy status
+ * @returns A promise resolving to the updated user
+ * @throws Error if the request fails
+ */
+const setUserStatus = async (
+  username: string,
+  status: 'online' | 'away' | 'busy' | 'invisible',
+  busySettings?: { muteScope: 'friends-only' | 'everyone' },
+): Promise<SafeDatabaseUser> => {
+  const res = await api.patch(`${USER_API_URL}/updateOnlineStatus`, {
+    username,
+    onlineStatus: {
+      status,
+      ...(status === 'busy' ? { busySettings } : {}),
+    },
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error when updating status');
+  }
+
+  return res.data;
+};
+
 export {
   getUsers,
   getUserByUsername,
@@ -182,4 +210,5 @@ export {
   updateBiography,
   getMutualFriends,
   updateSpotifyTokens,
+  setUserStatus,
 };

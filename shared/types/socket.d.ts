@@ -139,6 +139,8 @@ export interface ClientToServerEvents {
   leaveChat: (chatID: string | undefined) => void;
   joinFriendRequests: (username: string) => void;
   leaveFriendRequests: (username: string) => void;
+  connect_user: (username: string) => void;
+  logout_user: (username: string) => void;
 }
 
 /**
@@ -168,4 +170,13 @@ export interface ServerToClientEvents {
   chatUpdate: (chat: ChatUpdatePayload) => void;
   pollUpdate: (poll: PollUpdatePayload) => void;
   friendRequestUpdate: (friendRequest: FriendRequestUpdatePayload) => void;
+  userStatusUpdate: (payload: {
+    username: string;
+    onlineStatus: {
+      status: 'online' | 'away' | 'busy' | 'invisible';
+      busySettings?: {
+        muteScope: 'friends-only' | 'everyone';
+      };
+    };
+  }) => void;
 }
