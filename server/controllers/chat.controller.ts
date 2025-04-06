@@ -178,7 +178,7 @@ const chatController = (socket: FakeSOSocket) => {
 
       // Enrich the updated chat for the response
       const populatedChat = await populateDocument(updatedChat._id.toString(), 'chat');
-
+      // console.log(`[server] Emitting chatUpdate to room ${chatId}`);
       socket
         .to(chatId)
         .emit('chatUpdate', { chat: populatedChat as PopulatedDatabaseChat, type: 'newMessage' });
@@ -289,13 +289,16 @@ const chatController = (socket: FakeSOSocket) => {
   };
 
   socket.on('connection', conn => {
+    // console.log('[server] socket connected:', conn.id);
     conn.on('joinChat', (chatID: string) => {
-      conn.join(chatID);
+      // console.log(`[server] ${conn.id} joined room ${chatID}`);
+      conn.join(String(chatID));
     });
 
     conn.on('leaveChat', (chatID: string | undefined) => {
       if (chatID) {
-        conn.leave(chatID);
+        // console.log(`[server] ${conn.id} left room ${chatID}`);
+        conn.leave(String(chatID));
       }
     });
   });

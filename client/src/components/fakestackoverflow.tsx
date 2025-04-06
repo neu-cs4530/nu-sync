@@ -6,6 +6,7 @@ import {
   FakeSOSocket,
   SafeDatabaseUser,
   FriendRequestUpdatePayload,
+  ChatUpdatePayload,
 } from '../types/types';
 import LoginContext from '../contexts/LoginContext';
 import UserContext from '../contexts/UserContext';
@@ -27,6 +28,7 @@ import NotificationContext, {
   Notification,
 } from '../contexts/NotificationContext';
 import NotificationContainer from './main/notifications/NotificationContainer';
+import { getChatsByUser } from '../services/chatService';
 
 const ProtectedRoute = ({
   user,
@@ -151,6 +153,25 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
   }, [user?.username, socket]);
 
   useEffect(() => {
+    if (!user || !socket) return;
+
+    const joinAllUserChats = async () => {
+      try {
+        const chats = await getChatsByUser(user.username);
+
+        for (const chat of chats) {
+          socket.emit('joinChat', String(chat._id));
+        }
+      } catch (err) {
+        // console.error('Failed to join chat rooms:', err);
+      }
+    };
+
+    joinAllUserChats();
+  }, [user, socket]);
+
+
+  useEffect(() => {
     if (!socket || !user) return () => {};
 
     const handleFriendRequestUpdate = (payload: FriendRequestUpdatePayload) => {
@@ -178,6 +199,29 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
       }
     };
 
+    const handleChatUpdate = (payload: ChatUpdatePayload) => {
+      const { chat, type } = payload;
+
+      if (type === 'created') {
+        if (chat.participants.includes(user.username)) {
+          socket.emit('joinChat', String(chat._id));
+        }
+        return;
+      }
+
+      if (type === 'newMessage') {
+        const lastMessage = chat.messages[chat.messages.length - 1];
+        const fromUser = lastMessage.msgFrom;
+
+        if (fromUser !== user.username && shouldShowNotification(user, fromUser)) {
+          addNotification({
+            message: `New message from ${fromUser}`,
+            link: '/messaging/direct-message',
+          });
+        }
+      }
+    };
+
     const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
       if (payload.user.username === user.username) {
         // console.log('Updating user status from socket:', payload.user.onlineStatus);
@@ -186,10 +230,12 @@ const FakeStackOverflow = ({ socket }: { socket: FakeSOSocket | null }) => {
     };
 
     socket.on('friendRequestUpdate', handleFriendRequestUpdate);
+    socket.on('chatUpdate', handleChatUpdate);
     socket.on('userUpdate', handleUserUpdate);
-
+    
     return () => {
       socket.off('friendRequestUpdate', handleFriendRequestUpdate);
+      socket.off('chatUpdate', handleChatUpdate);
       socket.off('userUpdate', handleUserUpdate);
     };
   }, [socket, user, addNotification]);
