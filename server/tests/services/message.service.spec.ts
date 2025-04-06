@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import MessageModel from '../../models/messages.model';
 import UserModel from '../../models/users.model';
 import { getMessages, saveMessage, getMessageById } from '../../services/message.service';
-import { Message, DatabaseMessage } from '../../types/types';
+import { Message } from '../../types/types';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockingoose = require('mockingoose');
