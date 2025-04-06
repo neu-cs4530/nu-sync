@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { UserCredentials, SafeDatabaseUser } from '../types/types';
+import {
+  UserCredentials,
+  SafeDatabaseUser,
+  PrivacySettings,
+} from '../types/types';
 import api from './config';
 
 const USER_API_URL = `${process.env.REACT_APP_SERVER_URL}/user`;
@@ -172,6 +176,20 @@ const updateSpotifyTokens = async (
   }
 };
 
+const updatePrivacySettings = async (
+  username: string,
+  settings: PrivacySettings,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.patch(`${USER_API_URL}/updatePrivacySettings`, {
+    username,
+    privacySettings: settings,
+  });
+  if (res.status !== 200) {
+    throw new Error('Error when updating privacy settings');
+  }
+  return res.data;
+};
+
 /**
  * Updates the user's online status.
  * @param username - The unique username of the user
@@ -210,5 +228,6 @@ export {
   updateBiography,
   getMutualFriends,
   updateSpotifyTokens,
+  updatePrivacySettings,
   setUserStatus,
 };

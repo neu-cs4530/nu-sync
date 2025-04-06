@@ -6,6 +6,7 @@ import {
   UserCredentials,
   UserResponse,
   UsersResponse,
+  PrivacySettings,
 } from '../types/types';
 
 /**
@@ -160,5 +161,30 @@ export const updateUser = async (
     return updatedUser;
   } catch (error) {
     return { error: `Error occurred when updating user: ${error}` };
+  }
+};
+
+/**
+ * Updates a user's privacy settings.
+ *
+ * @param {string} username - The username of the user to update.
+ * @param {PrivacySettings} privacySettings - The new privacy settings to apply.
+ * @returns {Promise<UserResponse>} - Resolves with the updated user object (without the password) or an error message.
+ */
+export const updateUserPrivacySettings = async (
+  username: string,
+  privacySettings: PrivacySettings,
+): Promise<UserResponse> => {
+  try {
+    // Use the existing updateUser function to update the privacy settings
+    const updatedUser = await updateUser(username, { privacySettings });
+
+    if ('error' in updatedUser) {
+      throw Error(updatedUser.error);
+    }
+
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error occurred when updating privacy settings: ${error}` };
   }
 };
