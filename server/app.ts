@@ -21,6 +21,7 @@ import gameController from './controllers/game.controller';
 import friendRequestController from './controllers/friend.controller';
 import spotifyController from './controllers/spotify.controller';
 import UserModel from './models/users.model';
+import startQuietHoursCronJob from './services/quietHoursManager.service';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ function connectDatabase() {
 
 function startServer() {
   connectDatabase();
+  startQuietHoursCronJob();
   server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
