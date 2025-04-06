@@ -7,7 +7,6 @@ import {
   FakeSOSocket,
   UpdateBiographyRequest,
   UpdatePrivacySettingsRequest,
-  UpdateQuietHoursRequest,
   UpdateOnlineStatusRequest,
 } from '../types/types';
 import {
@@ -18,7 +17,6 @@ import {
   saveUser,
   updateUser,
   updateUserPrivacySettings,
-  updateUserQuietHours,
 } from '../services/user.service';
 
 const userController = (socket: FakeSOSocket) => {
@@ -372,52 +370,6 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
-  const isUpdateQuietHoursBodyValid = (req: UpdateQuietHoursRequest): boolean => {
-    const { username, quietHours } = req.body;
-
-    if (!username || typeof username !== 'string' || username.trim() === '') {
-      return false;
-    }
-
-    // Clearing quiet hours is allowed
-    if (!quietHours) return true;
-
-    const { start, end } = quietHours;
-    return (
-      typeof start === 'string' &&
-      typeof end === 'string' &&
-      /^\d{2}:\d{2}$/.test(start) &&
-      /^\d{2}:\d{2}$/.test(end)
-    );
-  };
-
-  const updateQuietHours = async (req: UpdateQuietHoursRequest, res: Response): Promise<void> => {
-    try {
-      if (!isUpdateQuietHoursBodyValid(req)) {
-        res.status(400).send('Invalid quiet hours update body');
-        return;
-      }
-
-      const { username, quietHours } = req.body;
-
-      const updatedUser = await updateUserQuietHours(username, quietHours);
-
-      if ('error' in updatedUser) {
-        throw new Error(updatedUser.error);
-      }
-
-      socket.emit('userUpdate', {
-        user: updatedUser,
-        type: 'updated',
-      });
-
-      res.status(200).json(updatedUser);
-    } catch (error) {
-      res.status(500).send(`Error when updating quiet hours: ${error}`);
-    }
-  };
-
-
 
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
@@ -429,7 +381,6 @@ const userController = (socket: FakeSOSocket) => {
   router.patch('/updateBiography', updateBiography);
   router.patch('/updatePrivacySettings', updatePrivacySettings);
   router.patch('/updateOnlineStatus', updateOnlineStatus);
-  router.patch('/updateQuietHours', updateQuietHours);
   return router;
 };
 

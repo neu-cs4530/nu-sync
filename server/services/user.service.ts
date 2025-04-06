@@ -180,27 +180,27 @@ export const updateUserPrivacySettings = async (
   }
 };
 
-export const setUserToQuietHours = async (user: DatabaseUser): Promise<void> => {
-  await UserModel.updateOne(
-    { _id: user._id },
-    {
-      $set: {
-        'oldStatus': user.onlineStatus,
-        'onlineStatus.status': 'busy',
-        'onlineStatus.busySettings.muteScope': 'everyone',
-      },
+export const setUserToQuietHours = async (username: string) => {
+  const user = await getUserByUsername(username);
+  if ('error' in user) return user;
+
+  return updateUser(username, {
+    oldStatus: user.onlineStatus ?? { status: 'online' },
+    onlineStatus: {
+      status: 'busy',
+      busySettings: { muteScope: 'everyone' },
     },
-  );
+  });
 };
 
-export const restoreUserFromQuietHours = async (user: DatabaseUser): Promise<void> => {
-  await UserModel.updateOne(
-    { _id: user._id },
-    {
-      $set: { onlineStatus: user.oldStatus },
-      $unset: { oldStatus: '' },
-    },
-  );
+export const restoreUserFromQuietHours = async (username: string) => {
+  const user = await getUserByUsername(username);
+  if ('error' in user) return user;
+
+  return updateUser(username, {
+    onlineStatus: user.oldStatus ?? { status: 'online' },
+    oldStatus: undefined,
+  });
 };
 
 export const updateUserQuietHours = async (
@@ -208,14 +208,24 @@ export const updateUserQuietHours = async (
   quietHours?: { start: string; end: string },
 ): Promise<UserResponse> => {
   try {
-    const updatePayload: Partial<User> = quietHours
-      ? { quietHours }
-      : { quietHours: undefined, oldStatus: undefined }; // Clear quiet hours
+    let updatedUser: SafeDatabaseUser | null;
 
-    const updatedUser = await updateUser(username, updatePayload);
+    if (quietHours) {
+      updatedUser = await UserModel.findOneAndUpdate(
+        { username },
+        { $set: { quietHours } },
+        { new: true },
+      ).select('-password');
+    } else {
+      updatedUser = await UserModel.findOneAndUpdate(
+        { username },
+        { $unset: { quietHours: '', oldStatus: '' } },
+        { new: true },
+      ).select('-password');
+    }
 
-    if ('error' in updatedUser) {
-      throw Error(updatedUser.error);
+    if (!updatedUser) {
+      throw Error('Error updating quiet hours');
     }
 
     return updatedUser;

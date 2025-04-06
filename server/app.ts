@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import moment from 'moment';
 import { Server } from 'socket.io';
 import * as http from 'http';
 
@@ -22,6 +23,7 @@ import friendRequestController from './controllers/friend.controller';
 import spotifyController from './controllers/spotify.controller';
 import UserModel from './models/users.model';
 import startQuietHoursCronJob from './services/quietHoursManager.service';
+import quietController from './controllers/quiet.controller';
 
 dotenv.config();
 
@@ -40,10 +42,22 @@ function connectDatabase() {
     .connect(MONGO_URL)
     .catch((err) => console.log('MongoDB connection error: ', err));
 }
+function isWithinQuietHours(start: string, end: string): boolean {
+  const now = moment.utc();
+  const nowMinutes = now.hours() * 60 + now.minutes();
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+
+  return startMinutes <= endMinutes
+    ? nowMinutes >= startMinutes && nowMinutes < endMinutes
+    : nowMinutes >= startMinutes || nowMinutes < endMinutes;
+}
 
 function startServer() {
   connectDatabase();
-  startQuietHoursCronJob();
+  startQuietHoursCronJob(socket);
   server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
@@ -58,6 +72,11 @@ socket.on('connection', socket => {
     socket.data.username = username;
 
     const user = await UserModel.findOne({ username });
+
+    if (user?.quietHours && isWithinQuietHours(user.quietHours.start, user.quietHours.end)) {
+      console.log(`User ${username} is in quiet hours — skipping status update.`);
+      return;
+    }
 
     // Only override to online if user was invisible (logged out)
     let newStatus =
@@ -143,6 +162,7 @@ app.use('/comment', commentController(socket));
 app.use('/messaging', messageController(socket));
 app.use('/user', userController(socket));
 app.use('/chat', chatController(socket));
+app.use('/quiet', quietController(socket));
 app.use('/games', gameController(socket));
 app.use('/friend', friendRequestController(socket));
 app.use('/spotify', spotifyController(socket))

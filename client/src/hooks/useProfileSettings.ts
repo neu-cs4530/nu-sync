@@ -12,6 +12,7 @@ import { SafeDatabaseUser, PrivacySettings, FriendConnection } from '../types/ty
 import useUserContext from './useUserContext';
 import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
 import { getFriends } from '../services/friendService';
+import updateQuietHours from '../services/quietService';
 
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
 
@@ -69,6 +70,11 @@ const useProfileSettings = () => {
   const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<string | null>(null);
   const [friendList, setFriendList] = useState<FriendConnection[]>([]);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
+
+  const [showQuietHoursModal, setShowQuietHoursModal] = useState(false);
+  const [quietHoursStart, setQuietHoursStart] = useState('');
+  const [quietHoursEnd, setQuietHoursEnd] = useState('');
+
 
   const canEditProfile =
     currentUser.username && userData?.username
@@ -342,6 +348,26 @@ const useProfileSettings = () => {
     setShowVisibilityModal(true);
   };
 
+  const handleUpdateQuietHours = async (quietHours?: { start: string; end: string }) => {
+    if (!username) return;
+
+    try {
+      const updatedUser = await updateQuietHours(username, quietHours);
+      setUserData(updatedUser);
+
+      if (quietHours) {
+        setSuccessMessage(`Quiet hours set from ${quietHours.start} to ${quietHours.end}`);
+      } else {
+        setSuccessMessage('Quiet hours cleared.');
+      }
+
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage('Failed to update quiet hours.');
+      setSuccessMessage(null);
+    }
+  };
+
   return {
     loggedInSpotify,
     setLoggedInSpotify,
@@ -385,9 +411,16 @@ const useProfileSettings = () => {
     pendingVisibility,
     setPendingVisibility,
     openVisibilityConfirmation,
-    friendList, 
+    friendList,
     showFriendsModal,
     setShowFriendsModal,
+    handleUpdateQuietHours,
+    showQuietHoursModal,
+    setShowQuietHoursModal,
+    quietHoursStart,
+    setQuietHoursStart,
+    quietHoursEnd,
+    setQuietHoursEnd,
   };
 };
 
