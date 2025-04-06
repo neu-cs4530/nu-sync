@@ -45,15 +45,56 @@ export const createFriendRequest = async (
         ],
       });
 
-    if (existingRequest) {
+    // If there's an existing active request (pending or accepted), don't create a new one
+    if (
+      existingRequest &&
+      ['pending', 'accepted'].includes(existingRequest.status)
+    ) {
       return { error: 'Friend request already exists between these users' };
+    }
+
+    // Determine initial status based on recipient's profile visibility
+    const initialStatus =
+      recipientUser.privacySettings?.profileVisibility === 'public'
+        ? 'accepted'
+        : 'pending';
+
+    // If there's a rejected request, update it instead of creating a new one
+    if (existingRequest && existingRequest.status === 'rejected') {
+      // Update the rejected request to the new status
+      const updatedRequest = await FriendRequestModel.findByIdAndUpdate(
+        existingRequest._id,
+        {
+          // If the original requester is trying again, keep the same direction
+          // Otherwise, flip the direction (recipient is now requesting)
+          requester:
+            String(existingRequest.requester._id) === String(requesterUser._id)
+              ? requesterUser._id
+              : requesterUser._id,
+          recipient:
+            String(existingRequest.requester._id) === String(requesterUser._id)
+              ? recipientUser._id
+              : recipientUser._id,
+          status: initialStatus,
+          updatedAt: new Date(),
+        },
+        { new: true },
+      )
+        .populate('requester', 'username')
+        .populate('recipient', 'username');
+
+      if (!updatedRequest) {
+        throw Error('Failed to update friend request');
+      }
+
+      return updatedRequest;
     }
 
     // Create new friend request
     const friendRequest = new FriendRequestModel({
       requester: requesterUser._id,
       recipient: recipientUser._id,
-      // status, requestedAt, and updatedAt will use default values from schema
+      status: initialStatus,
     });
 
     const result: DatabaseFriendRequest = await friendRequest.save();

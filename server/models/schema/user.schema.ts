@@ -70,11 +70,6 @@ const userSchema: Schema = new Schema(
         enum: ['public', 'private'],
         default: 'public',
       },
-      musicHistoryVisibility: {
-        type: String,
-        enum: ['public', 'private'],
-        default: 'public',
-      },
     },
     playlists: {
       type: [

@@ -132,9 +132,19 @@ const UserCardView = (props: UserProps) => {
     e.stopPropagation();
 
     try {
-      await sendFriendRequest(currentUser.username, user.username);
-      setFriendshipStatus('sent');
-      setStatusMessage('Friend request sent');
+      const result = await sendFriendRequest(
+        currentUser.username,
+        user.username,
+      );
+
+      // Check if the request was auto-accepted (meaning the user has a public profile)
+      if (result.status === 'accepted') {
+        setFriendshipStatus('friends');
+        setStatusMessage('Friend added successfully');
+      } else {
+        setFriendshipStatus('sent');
+        setStatusMessage('Friend request sent');
+      }
     } catch (error) {
       setStatusMessage('Failed to send request');
     }

@@ -6,8 +6,9 @@ import {
   resetPassword,
   updateBiography,
   getMutualFriends,
+  updatePrivacySettings,
 } from '../services/userService';
-import { FriendConnection, SafeDatabaseUser } from '../types/types';
+import { SafeDatabaseUser, PrivacySettings, FriendConnection } from '../types/types';
 import useUserContext from './useUserContext';
 import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
 import { getFriends } from '../services/friendService';
@@ -43,6 +44,14 @@ const useProfileSettings = () => {
   const [mutualFriends, setMutualFriends] = useState<string[]>([]);
   const [mutualFriendsLoading, setMutualFriendsLoading] = useState(false);
 
+  const [showVisibilityModal, setShowVisibilityModal] = useState(false);
+  const [pendingVisibility, setPendingVisibility] = useState<
+    'public' | 'private' | null
+  >(null);
+  const [profileVisibility, setProfileVisibility] = useState<
+    'public' | 'private'
+  >('private');
+
   // For delete-user confirmation modal
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -51,8 +60,10 @@ const useProfileSettings = () => {
 
   const [loggedInSpotify, setLoggedInSpotify] = useState(false);
 
-  const [currentPlayingSong, setCurrentPlayingSong] = useState<CurrentlyPlaying | null>(null);
-  const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] = useState<boolean>(false);
+  const [currentPlayingSong, setCurrentPlayingSong] =
+    useState<CurrentlyPlaying | null>(null);
+  const [isCurrentlyPlayingSong, setIsCurrentlyPlayingSong] =
+    useState<boolean>(false);
 
   const [showSpotifyConflictModal, setShowSpotifyConflictModal] = useState(false);
   const [conflictSpotifyUserId, setConflictSpotifyUserId] = useState<string | null>(null);
@@ -60,40 +71,29 @@ const useProfileSettings = () => {
   const [showFriendsModal, setShowFriendsModal] = useState(false);
 
   const canEditProfile =
-    currentUser.username && userData?.username ? currentUser.username === userData.username : false;
+    currentUser.username && userData?.username
+      ? currentUser.username === userData.username
+      : false;
 
-    useEffect(() => {
-      const fetchConflictStatus = async () => {
-        if (!username) return;
-
-        try {
-          const { conflict, spotifyUserId } = await getSpotifyConflictStatus(username);
-          if (conflict && spotifyUserId) {
-            setConflictSpotifyUserId(spotifyUserId);
-            setShowSpotifyConflictModal(true);
-          }
-        } catch (err) {
-          // console.error('Error checking Spotify conflict status:', err);
-        }
-      };
-
-      fetchConflictStatus();
-    }, [username]);
-
-
-    const handleUnlinkAllAndRetry = async () => {
-      if (!conflictSpotifyUserId) {
-        return;
-      }
+  useEffect(() => {
+    const fetchConflictStatus = async () => {
+      if (!username) return;
 
       try {
-        await disconnectAllSpotifyAccounts(conflictSpotifyUserId);
-        setShowSpotifyConflictModal(false);
+        const { conflict, spotifyUserId } =
+          await getSpotifyConflictStatus(username);
+        if (conflict && spotifyUserId) {
+          setConflictSpotifyUserId(spotifyUserId);
+          setShowSpotifyConflictModal(true);
+        }
       } catch (err) {
-        setErrorMessage('Failed to unlink Spotify accounts.');
+        // console.error('Error checking Spotify conflict status:', err);
       }
     };
-  
+
+    fetchConflictStatus();
+  }, [username]);
+
   useEffect(() => {
     if (!username) return undefined;
 
@@ -102,6 +102,12 @@ const useProfileSettings = () => {
         setLoading(true);
         const data = await getUserByUsername(username);
         setUserData(data);
+        if (data.privacySettings && data.privacySettings.profileVisibility) {
+          setProfileVisibility(data.privacySettings.profileVisibility);
+        } else {
+          // Default to private
+          setProfileVisibility('private');
+        }
       } catch (error) {
         setErrorMessage('Error fetching user profile');
         setUserData(null);
@@ -159,7 +165,7 @@ const useProfileSettings = () => {
         if ('error' in friendsList) {
           setErrorMessage("Couldn't fetch mutual friends.");
         }
-        setMutualFriends(friendsList.map(friend => friend.username));
+        setMutualFriends(friendsList.map((friend) => friend.username));
       } catch {
         setMutualFriends([]);
       } finally {
@@ -189,7 +195,7 @@ const useProfileSettings = () => {
    * Toggles the visibility of the password fields.
    */
   const togglePasswordVisibility = () => {
-    setShowPassword(prevState => !prevState);
+    setShowPassword((prevState) => !prevState);
   };
 
   /**
@@ -234,7 +240,7 @@ const useProfileSettings = () => {
       const updatedUser = await updateBiography(username, newBio);
 
       // Ensure state updates occur sequentially after the API call completes
-      await new Promise(resolve => {
+      await new Promise((resolve) => {
         setUserData(updatedUser); // Update the user data
         setEditBioMode(false); // Exit edit mode
         resolve(null); // Resolve the promise
@@ -244,6 +250,37 @@ const useProfileSettings = () => {
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage('Failed to update biography.');
+      setSuccessMessage(null);
+    }
+  };
+
+  /**
+   * Handler for updating the profile visibility setting
+   */
+  const handleUpdateProfileVisibility = async (
+    newVisibility: 'public' | 'private',
+  ) => {
+    if (!username) return;
+
+    try {
+      const updatedSettings: PrivacySettings = {
+        profileVisibility: newVisibility,
+      };
+
+      const updatedUser = await updatePrivacySettings(
+        username,
+        updatedSettings,
+      );
+
+      setProfileVisibility(newVisibility);
+      setUserData(updatedUser);
+      setShowVisibilityModal(false);
+      setPendingVisibility(null);
+
+      setSuccessMessage(`Profile is now ${newVisibility}`);
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage('Failed to update profile visibility.');
       setSuccessMessage(null);
     }
   };
@@ -287,6 +324,24 @@ const useProfileSettings = () => {
     }
   };
 
+  const handleUnlinkAllAndRetry = async () => {
+    if (!conflictSpotifyUserId) {
+      return;
+    }
+
+    try {
+      await disconnectAllSpotifyAccounts(conflictSpotifyUserId);
+      setShowSpotifyConflictModal(false);
+    } catch (err) {
+      setErrorMessage('Failed to unlink Spotify accounts.');
+    }
+  };
+
+  const openVisibilityConfirmation = (newVisibility: 'public' | 'private') => {
+    setPendingVisibility(newVisibility);
+    setShowVisibilityModal(true);
+  };
+
   return {
     loggedInSpotify,
     setLoggedInSpotify,
@@ -322,6 +377,14 @@ const useProfileSettings = () => {
     showSpotifyConflictModal,
     setShowSpotifyConflictModal,
     handleUnlinkAllAndRetry,
+    profileVisibility,
+    setProfileVisibility,
+    handleUpdateProfileVisibility,
+    showVisibilityModal,
+    setShowVisibilityModal,
+    pendingVisibility,
+    setPendingVisibility,
+    openVisibilityConfirmation,
     friendList, 
     showFriendsModal,
     setShowFriendsModal,
