@@ -31,6 +31,7 @@ const useDirectMessage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [userMap, setUserMap] = useState<Record<string, SafeDatabaseUser>>({});
+  const fetchedUsernamesRef = useRef<Set<string>>(new Set());
 
   const [highlightedMessageId, setHighlightedMessageId] = useState<ObjectId | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +78,9 @@ const useDirectMessage = () => {
         new Set(chats.flatMap(chat => chat.participants.filter(p => p !== user.username))),
       );
 
-      const missing = allUsernames.filter(username => !userMap[username]);
+      const missing = allUsernames.filter(
+        username => !userMap[username] && !fetchedUsernamesRef.current.has(username),
+      );
       if (missing.length === 0) return;
 
       const newMap = { ...userMap };
@@ -86,8 +89,10 @@ const useDirectMessage = () => {
           try {
             const fetched = await getUserByUsername(username);
             newMap[username] = fetched;
+            fetchedUsernamesRef.current.add(username);
           } catch (err) {
-            // console.warn(`Error fetching ${username}`, err);
+            // console.warn(`Failed to fetch user "${username}"`, err);
+            fetchedUsernamesRef.current.add(username);
           }
         }),
       );
@@ -260,7 +265,6 @@ const useDirectMessage = () => {
 
     return () => {
       socket.off('chatUpdate', handleChatUpdate);
-      socket.emit('leaveChat', String(selectedChat?._id));
     };
   }, [user.username, socket, selectedChat?._id]);
 
