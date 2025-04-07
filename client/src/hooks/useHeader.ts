@@ -1,7 +1,8 @@
 import { ChangeEvent, useState, KeyboardEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useLoginContext from './useLoginContext';
 import useUserContext from './useUserContext';
+
 
 /**
  * Custom hook to manage the state and logic for a header input field.
@@ -15,7 +16,9 @@ import useUserContext from './useUserContext';
  *   - handleKeyDown: Function to handle 'Enter' key press and trigger a search.
  *   - handleSignOut: Function to handle user sign-out and navigation to the landing page.
  */
-const useHeader = () => {
+const useHeader = (customSearchHandler?: (val: string) => void) => {
+  const location = useLocation();
+  const isOnDirectMessages = location.pathname.includes('/messaging/direct');
   const navigate = useNavigate();
   const { setUser } = useLoginContext();
   const { socket, user } = useUserContext();
@@ -41,10 +44,16 @@ const useHeader = () => {
     if (e.key === 'Enter') {
       e.preventDefault();
 
-      const searchParams = new URLSearchParams();
-      searchParams.set('search', e.currentTarget.value);
-
-      navigate(`/home?${searchParams.toString()}`);
+      if (customSearchHandler) {
+        customSearchHandler(val.trim());
+      } else if (isOnDirectMessages) {
+        localStorage.setItem('dm_search_term', val.trim());
+        window.dispatchEvent(new Event('dm-search'));
+      } else {
+        const searchParams = new URLSearchParams();
+        searchParams.set('search', val.trim());
+        navigate(`/home?${searchParams.toString()}`);
+      }
     }
   };
 

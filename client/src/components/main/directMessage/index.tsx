@@ -159,7 +159,7 @@ const DirectMessage = () => {
     <>
       <div className='create-panel'>
         <button className='custom-button' onClick={() => setShowCreatePanel(prev => !prev)}>
-          {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a Chat'}
+          {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a New Chat'}
         </button>
         {error && <div className='direct-message-error'>{error}</div>}
         {showCreatePanel && (
@@ -171,19 +171,7 @@ const DirectMessage = () => {
       </div>
 
       <div className='direct-message-container'>
-        <div className='chgiats-list'>
-          <form onSubmit={handleSearch} className='search-bar'>
-            <input
-              type='text'
-              placeholder='Search messages...'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className='custom-input'
-            />
-            <button type='submit' className='custom-button'>
-              Search
-            </button>
-          </form>
+        <div className='chats-list'>
 
           {searchError && <div className='error'>{searchError}</div>}
 

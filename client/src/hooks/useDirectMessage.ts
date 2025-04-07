@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ChatUpdatePayload,
   Message,
@@ -118,6 +118,41 @@ const useDirectMessage = () => {
     };
   }, [socket]);
 
+  const handleSearch = useCallback(
+    async (input?: string | React.FormEvent) => {
+      const term = typeof input === 'string' ? input : searchTerm.trim();
+
+      if (!term) return;
+
+      if (typeof input !== 'string') (input as React.FormEvent).preventDefault();
+
+      try {
+        const results = await searchMessages(user.username, term);
+        setSearchResults(results);
+        setSearchError('');
+      } catch (err) {
+        setSearchError((err as Error).message);
+        setSearchResults([]);
+      }
+    },
+    [searchTerm, user.username],
+  );
+  
+  useEffect(() => {
+    const doSearch = async () => {
+      const storedTerm = localStorage.getItem('dm_search_term');
+      if (!storedTerm) return;
+      setSearchTerm(storedTerm);
+      await handleSearch(storedTerm); // refactor `handleSearch` to accept a string
+    };
+
+    window.addEventListener('dm-search', doSearch);
+    return () => {
+      window.removeEventListener('dm-search', doSearch);
+    };
+  }, [handleSearch, setSearchTerm]);
+
+  
   const spotifySharing = useSpotifySharing(selectedChat?._id);
 
   const handleSendMessage = async () => {
@@ -190,19 +225,7 @@ const useDirectMessage = () => {
   };
 
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-
-    try {
-      const results = await searchMessages(user.username, searchTerm.trim());
-      setSearchResults(results);
-      setSearchError('');
-    } catch (err) {
-      setSearchError((err as Error).message);
-      setSearchResults([]);
-    }
-  };
+  
 
   const handleSearchResultClick = async (result: MessageSearchResult) => {
     await handleChatSelect(result.chatId);
