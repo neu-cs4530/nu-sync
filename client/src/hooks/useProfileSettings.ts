@@ -10,7 +10,7 @@ import {
 } from '../services/userService';
 import { SafeDatabaseUser, PrivacySettings, FriendConnection } from '../types/types';
 import useUserContext from './useUserContext';
-import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus } from '../services/spotifyService';
+import { checkSpotifyStatus, disconnectAllSpotifyAccounts, getCurrentlyPlaying, getSpotifyConflictStatus, getSpotifySimilarityScore } from '../services/spotifyService';
 import { getFriends } from '../services/friendService';
 import updateQuietHours from '../services/quietService';
 
@@ -75,6 +75,8 @@ const useProfileSettings = () => {
   const [quietHoursStart, setQuietHoursStart] = useState('');
   const [quietHoursEnd, setQuietHoursEnd] = useState('');
 
+  const [spotifyCompatibilityScore, setSpotifyCompatibilityScore] = useState<number>();
+
 
   const canEditProfile =
     currentUser.username && userData?.username
@@ -99,6 +101,24 @@ const useProfileSettings = () => {
 
     fetchConflictStatus();
   }, [username]);
+
+  useEffect(() => {
+    if (!username || !userData) return;
+
+    const isViewingOwnProfile = currentUser.username === userData.username;
+    if (isViewingOwnProfile) return;
+
+    const fetchSpotifyCompatibility = async () => {
+      try {
+        const score = await getSpotifySimilarityScore(username);
+        setSpotifyCompatibilityScore(score);
+      } catch (error) {
+        setErrorMessage('Error fetching Spotify compatibility score');
+      }
+    };
+
+    fetchSpotifyCompatibility();
+  }, [username, userData, currentUser.username]);
 
   useEffect(() => {
     if (!username) return undefined;
@@ -368,6 +388,8 @@ const useProfileSettings = () => {
     }
   };
 
+  
+
   return {
     loggedInSpotify,
     setLoggedInSpotify,
@@ -421,6 +443,8 @@ const useProfileSettings = () => {
     setQuietHoursStart,
     quietHoursEnd,
     setQuietHoursEnd,
+    spotifyCompatibilityScore,
+    setSpotifyCompatibilityScore,
   };
 };
 

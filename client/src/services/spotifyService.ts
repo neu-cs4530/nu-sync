@@ -1,6 +1,5 @@
 import { SearchedSong, SpotifyTrackItem } from '../types/spotify';
 import api from './config';
-import UserModel from "../../../server/models/users.model"
 
 const SPOTIFY_API_URL = `${process.env.REACT_APP_SERVER_URL}/spotify`;
 
@@ -175,10 +174,10 @@ const getSpotifyAccessToken = async (username:string, isCurrentUser: boolean) =>
     const accessToken = localStorage.getItem('spotify_access_token');
     return accessToken
   }
-  else {
+  
     const res = await api.get(`${SPOTIFY_API_URL}/getSpotifyAccessToken/${username}`);
     return res.data.accessToken;
-  }
+  
   
 };
 
@@ -192,21 +191,12 @@ const getTopArtists = async (username: string, isCurrentUser: boolean) => {
   // get access token of specific user
   const currAccessToken = await getSpotifyAccessToken(username, isCurrentUser)
 
-  try {
-    const res = await api.post(`${SPOTIFY_API_URL}/topArtists`, {
-      access_token: currAccessToken,
-    });
+  const res = await api.post(`${SPOTIFY_API_URL}/topArtists`, {
+    access_token: currAccessToken,
+  });
 
-    console.log("HELLO", res)
+  return res.data.items;
 
-    return res.data.items;
-  }
-
-  catch (e) {
-    console.error("ERROR getting top artists")
-  }
-  
-  
 };
 
 type TopArtist = {
@@ -271,12 +261,13 @@ const calculateCosineSimilarity = async (currentUserGenreMap: { [key: string]: n
 
 /**
  * Function to calculcate the similarity score between 2 users
+ * TODO: Could possibly display top artist data in graph fornat??
  *
  * @throws Error if there is an issue calculating the similarity score between 2 users
  */
 export const getSpotifySimilarityScore = async (username: string) => {
 
-  // get the current user's top artists
+  // get the current user's top artists, and create a genre map for this user from the artist data
   const topArtistsCurrentUser = await getTopArtists(username, true)
   const currentUserGenreMap = await generateGenreMap(topArtistsCurrentUser)
 

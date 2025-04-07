@@ -692,7 +692,6 @@ const spotifyController = (socket: FakeSOSocket) => {
         spotifyUserId: conflict ? user.spotifyConflictUserId : null,
       });
     } catch (err) {
-      // console.error('Error checking Spotify conflict status:', err);
       res.status(500).send({ error: 'Failed to fetch conflict status' });
     }
   };
@@ -718,8 +717,6 @@ const spotifyController = (socket: FakeSOSocket) => {
         },
       );
 
-      // console.log(searchResponse.data)
-
       res.status(200).json(searchResponse.data);
     } catch (error) {
       res.status(500).json({ error: 'Error getting top artists for current user' });
@@ -736,19 +733,14 @@ const spotifyController = (socket: FakeSOSocket) => {
   const getSpotifyAccessToken = async (req: Request, res: Response) => {
     try {
       const { username } = req.params;
-
-      console.log("YOYOOO", username)
-
       const user = await UserModel.findOne({ username });
 
       if (!user) {
-        console.log("HI")
         res.status(404).json({ error: 'User for given username not found' });
         return;
       }
 
       if (!user.spotifyAccessToken) {
-        console.log("HI2")
         res.status(404).json({ error: 'No valid spotify access token found for this user' });
         return;
       }
