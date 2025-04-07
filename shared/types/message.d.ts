@@ -7,6 +7,8 @@ import { Request } from 'express';
  * - 'code': The code snippet content.
  * - 'language': The programming language of the code snippet.
  * - 'executionResult': The result of executing the code snippet, if applicable.
+ * - 'stdin': Optional standard input for the code snippet.
+ * - 'args': Optional command line arguments for the code snippet.
  * - 'isEdited': Indicates if the code snippet has been edited.
  * - 'originalMessageId': The ID of the original message, if applicable.
  */
@@ -14,6 +16,8 @@ export interface CodeSnippet {
   code: string;
   language: string;
   executionResult?: CodeExecutionResult;
+  stdin?: string; // Optional standard input
+  args?: string[]; // Optional command line argument
   isEdited?: boolean;
   originalMessageId?: string;
 }
