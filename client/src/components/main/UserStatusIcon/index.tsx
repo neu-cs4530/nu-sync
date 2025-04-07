@@ -15,13 +15,8 @@ const UserStatusIcon: React.FC<Props> = ({ status }) => {
     case 'busy':
       return <BsDashCircleFill className='status-icon busy' title='Do Not Disturb' />;
     case 'invisible':
-      return (
-        <BsSlashCircleFill
-          className='status-icon invisible'
-          title='Invisible'
-          style={{ fontSize: 16 }}
-        />
-      );
+      return <BsSlashCircleFill className='status-icon invisible-icon' title='Invisible' />;
+
     default:
       return null; // don't render anything if invalid
   }

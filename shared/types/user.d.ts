@@ -23,6 +23,11 @@ export interface UserCredentials {
   password: string;
 }
 
+export interface QuietHours {
+  start: string; // "HH:mm"
+  end: string; // "HH:mm"
+}
+
 /**
  * Represents a user document, including user credentials and additional details.
  * - `username`: The unique username of the user.
@@ -45,6 +50,8 @@ export interface User extends UserCredentials {
   musicPreferences?: string[];
   privacySettings?: PrivacySettings;
   onlineStatus?: OnlineStatus;
+  quietHours?: QuietHours;
+  oldStatus?: OnlineStatus;
   playlists?: Playlist[];
   currentlyPlaying?: CurrentlyPlayingTrack;
   playlistHistory?: PlaylistHistory[];
@@ -213,6 +220,20 @@ export interface UpdateOnlineStatusRequest extends Request {
       busySettings?: {
         muteScope: 'friends-only' | 'everyone';
       };
+    };
+  };
+}
+
+
+/**
+ * Express request for updating a user's online status.
+ */
+export interface UpdateQuietHoursRequest extends Request {
+  body: {
+    username: string;
+    quietHours?: {
+      start: string; // "HH:mm"
+      end: string; // "HH:mm"
     };
   };
 }

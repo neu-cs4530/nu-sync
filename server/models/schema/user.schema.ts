@@ -125,6 +125,20 @@ const userSchema: Schema = new Schema(
         default: undefined,
       },
     },
+    quietHours: {
+      start: { type: String, required: true }, // "HH:mm"
+      end: { type: String, required: true },   // "HH:mm"
+    },
+    oldStatus: {
+      type: {
+        status: { type: String, enum: ['online', 'away', 'busy', 'invisible'] },
+        busySettings: {
+          type: {
+            muteScope: { type: String, enum: ['friends-only', 'everyone'] }
+          },
+        },
+      },
+    },
   },
   { collection: 'User' },
 );

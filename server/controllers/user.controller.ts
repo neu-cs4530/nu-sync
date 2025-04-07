@@ -370,6 +370,7 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
   router.post('/login', userLogin);

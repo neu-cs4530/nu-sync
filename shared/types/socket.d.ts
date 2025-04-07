@@ -156,6 +156,7 @@ export interface ClientToServerEvents {
  * - `gameError`: Server sends error message related to game operation.
  * - `chatUpdate`: Server sends updated chat.
  * - `friendRequestUpdate`: Server sends updated friend request status.
+ * - `userStatusUpdate`: Server sends user online status updates.
  */
 export interface ServerToClientEvents {
   questionUpdate: (question: PopulatedDatabaseQuestion) => void;

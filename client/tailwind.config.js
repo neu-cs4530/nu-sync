@@ -5,4 +5,11 @@ module.exports = {
     extend: {},
   },
   plugins: [],
+  safelist: [
+    'status-icon',
+    'status-icon-online',
+    'status-icon-away',
+    'status-icon-busy',
+    'status-icon-invisible',
+  ],
 };
