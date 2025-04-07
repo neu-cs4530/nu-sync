@@ -3,10 +3,13 @@ import supertest from 'supertest';
 import { app } from '../../app';
 import * as util from '../../services/message.service';
 import { DatabaseMessage, Message } from '../../types/types';
+import MessageModel from '../../models/messages.model';
 
 const saveMessageSpy = jest.spyOn(util, 'saveMessage');
 const getMessagesSpy = jest.spyOn(util, 'getMessages');
 const getMessageByIdSpy = jest.spyOn(util, 'getMessageById');
+(MessageModel.find as unknown as jest.Mock) = jest.fn();
+(MessageModel.findById as unknown as jest.Mock) = jest.fn();
 
 
 describe('Message Controller Routes', () => {
@@ -44,6 +47,36 @@ describe('Message Controller Routes', () => {
         msgDateTime: message.msgDateTime.toISOString(),
         type: 'global',
       });
+    });
+
+    const validMessage = {
+      msg: 'New version',
+      msgFrom: 'editorUser',
+      msgDateTime: new Date(),
+      isEditSuggestion: true,
+      originalMessageId: new mongoose.Types.ObjectId().toString(),
+    };
+
+    it('should return 404 if original message not found', async () => {
+      (MessageModel.findById as jest.Mock).mockResolvedValueOnce(null);
+
+      const response = await supertest(app)
+        .post('/messaging/addMessage')
+        .send({ messageToAdd: validMessage });
+
+      expect(response.status).toBe(404);
+      expect(response.text).toBe('Original message not found');
+    });
+
+    it('should return 400 if original message is not a code snippet', async () => {
+      (MessageModel.findById as jest.Mock).mockResolvedValueOnce({ isCodeSnippet: false });
+
+      const response = await supertest(app)
+        .post('/messaging/addMessage')
+        .send({ messageToAdd: validMessage });
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Can only suggest edits for code snippets');
     });
 
     it('should return bad request error if messageToAdd is missing', async () => {
@@ -216,7 +249,7 @@ describe('Message Controller Routes', () => {
         msgDateTime: new Date('2024-06-06'),
         type: 'global',
         isCodeSnippet: false,
-        isEditSuggestion: false
+        isEditSuggestion: false,
       };
 
       getMessageByIdSpy.mockResolvedValue(mockMessage);
@@ -231,9 +264,10 @@ describe('Message Controller Routes', () => {
         msgDateTime: mockMessage.msgDateTime.toISOString(),
         type: 'global',
         isCodeSnippet: false,
-        isEditSuggestion: false
+        isEditSuggestion: false,
       });
     });
+    
 
     it('should return 404 when message is not found', async () => {
       const messageId = new mongoose.Types.ObjectId();
@@ -255,6 +289,58 @@ describe('Message Controller Routes', () => {
       expect(response.text).toContain('Error fetching message');
     });
   });
-
   jest.mock('../../models/messages.model'); // Mock the Mongoose model
+  describe('GET /message/:messageId/suggestions', () => {
+    it('should return edit suggestions for a message', async () => {
+      const suggestion1 = {
+        _id: new mongoose.Types.ObjectId(),
+        msg: 'Edit 1',
+        msgFrom: 'userA',
+        msgDateTime: new Date(),
+        isEditSuggestion: true,
+        originalMessageId: 'id1',
+      };
+
+      const suggestion2 = {
+        _id: new mongoose.Types.ObjectId(),
+        msg: 'Edit 2',
+        msgFrom: 'userB',
+        msgDateTime: new Date(),
+        isEditSuggestion: true,
+        originalMessageId: 'id1',
+      };
+
+      const sortMock = jest.fn().mockReturnValueOnce([suggestion1, suggestion2]);
+      (MessageModel.find as jest.Mock).mockReturnValueOnce({ sort: sortMock });
+
+      const response = await supertest(app).get('/messaging/message/id1/suggestions');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([
+        {
+          ...suggestion1,
+          _id: suggestion1._id.toString(),
+          msgDateTime: suggestion1.msgDateTime.toISOString(),
+        },
+        {
+          ...suggestion2,
+          _id: suggestion2._id.toString(),
+          msgDateTime: suggestion2.msgDateTime.toISOString(),
+        },
+      ]);
+
+    });
+
+    it('should return 500 if edit suggestion fetch fails', async () => {
+      const sortMock = jest.fn().mockImplementationOnce(() => {
+        throw new Error('DB fail');
+      });
+      (MessageModel.find as jest.Mock).mockReturnValueOnce({ sort: sortMock });
+
+      const response = await supertest(app).get('/messaging/message/id1/suggestions');
+
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error fetching edit suggestions');
+    });
+  });
 });

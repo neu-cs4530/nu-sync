@@ -421,4 +421,87 @@ describe('Test userController', () => {
       );
     });
   });
+
+
+  describe('PATCH /updatePrivacySettings', () => {
+    const mockReqBody = {
+      username: mockUser.username,
+      privacySettings: {
+        profileVisibility: 'private' as 'private' | 'public',
+      },
+    };
+
+    it('should successfully update privacy settings with valid input', async () => {
+      updatedUserSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        privacySettings: mockReqBody.privacySettings,
+      });
+      const response = await supertest(app).patch('/user/updatePrivacySettings').send(mockReqBody);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        ...mockUserJSONResponse,
+        privacySettings: mockReqBody.privacySettings,
+      });
+      expect(updatedUserSpy).toHaveBeenCalledWith(mockUser.username, {
+        privacySettings: mockReqBody.privacySettings,
+      });
+    });
+
+    it('should return 400 if body is invalid', async () => {
+      const response = await supertest(app)
+        .patch('/user/updatePrivacySettings')
+        .send({ username: '', privacySettings: {} });
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid privacy settings body');
+    });
+
+    it('should return 500 if updateUserPrivacySettings returns error', async () => {
+      updatedUserSpy.mockResolvedValueOnce({ error: 'Failed to update privacy settings' });
+      const response = await supertest(app).patch('/user/updatePrivacySettings').send(mockReqBody);
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error when updating privacy settings');
+    });
+  });
+
+  describe('PATCH /updateOnlineStatus', () => {
+    const validStatus = {
+      username: mockUser.username,
+      onlineStatus: {
+        status: 'busy',
+        busySettings: { muteScope: 'friends-only' },
+      },
+    };
+
+    it('should successfully update online status with valid input', async () => {
+      updatedUserSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        onlineStatus: validStatus.onlineStatus,
+      });
+      const response = await supertest(app).patch('/user/updateOnlineStatus').send(validStatus);
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        ...mockUserJSONResponse,
+        onlineStatus: validStatus.onlineStatus,
+      });
+      expect(updatedUserSpy).toHaveBeenCalledWith(validStatus.username, {
+        onlineStatus: validStatus.onlineStatus,
+      });
+    });
+
+    it('should return 400 for invalid body', async () => {
+      const response = await supertest(app)
+        .patch('/user/updateOnlineStatus')
+        .send({ username: '', onlineStatus: {} });
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid status update body');
+    });
+
+    it('should return 500 if updateUser returns error', async () => {
+      updatedUserSpy.mockResolvedValueOnce({ error: 'Failed to update status' });
+      const response = await supertest(app).patch('/user/updateOnlineStatus').send(validStatus);
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error when updating online status');
+    });
+  });
+
 });

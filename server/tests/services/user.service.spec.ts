@@ -5,10 +5,14 @@ import {
   getUserByUsername,
   getUsersList,
   loginUser,
+  restoreUserFromQuietHours,
   saveUser,
+  setUserToQuietHours,
   updateUser,
+  updateUserPrivacySettings,
+  updateUserQuietHours,
 } from '../../services/user.service';
-import { SafeDatabaseUser, User, UserCredentials } from '../../types/types';
+import { PrivacySettings, SafeDatabaseUser, User, UserCredentials } from '../../types/types';
 import { user, safeUser } from '../mockData.models';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -260,5 +264,139 @@ describe('updateUser', () => {
     const updatedError = await updateUser(user.username, biographyUpdates);
 
     expect('error' in updatedError).toBe(true);
+  });
+
+  describe('setUserToQuietHours', () => {
+    it('should update user status to busy with muteScope: everyone', async () => {
+      mockingoose(UserModel).toReturn(safeUser, 'findOne');
+      const updatedUser1 = {
+        ...safeUser,
+        onlineStatus: {
+          status: 'busy',
+          busySettings: { muteScope: 'everyone' },
+        },
+        oldStatus: { status: 'online' },
+      };
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await setUserToQuietHours(user.username);
+      expect(result).toHaveProperty('onlineStatus');
+      if (!('error' in result)) {
+        expect(result.onlineStatus?.status).toBe('busy');
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+
+    it('should return error if user not found', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+      const result = await setUserToQuietHours(user.username);
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('restoreUserFromQuietHours', () => {
+    it('should restore old status and unset quiet hours', async () => {
+      const userWithOldStatus = {
+        ...safeUser,
+        oldStatus: { status: 'away' },
+      };
+      const updatedUser1 = {
+        ...safeUser,
+        onlineStatus: { status: 'away' },
+        oldStatus: undefined,
+      };
+      mockingoose(UserModel).toReturn(userWithOldStatus, 'findOne');
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await restoreUserFromQuietHours(user.username);
+      expect(result).toHaveProperty('onlineStatus');
+      if (!('error' in result)) {
+        expect(result.onlineStatus?.status).toBe('away');
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+    it('should return error if user not found', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+      const result = await restoreUserFromQuietHours(user.username);
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('updateUserQuietHours', () => {
+    it('should update quiet hours when value is provided', async () => {
+      const updated = { ...safeUser, quietHours: { start: '01:00', end: '23:00' } };
+      mockingoose(UserModel).toReturn(updated, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username, updated.quietHours);
+      expect(result).toHaveProperty('quietHours');
+    });
+
+    it('should clear quiet hours when called without value', async () => {
+      const updatedUser1 = { ...safeUser, quietHours: undefined, oldStatus: undefined };
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username);
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result.quietHours).toBeUndefined();
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+
+
+    it('should return error if update fails', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username, { start: '00:00', end: '01:00' });
+      expect('error' in result).toBe(true);
+    });
+
+    it('should return error if update throws', async () => {
+      mockingoose(UserModel).toReturn(new Error('update error'), 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username, { start: '00:00', end: '01:00' });
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('updateUserPrivacySettings', () => {
+    const mockUsername = 'privacyTestUser';
+    const mockPrivacySettings: PrivacySettings = {
+      profileVisibility: 'private',
+    };
+
+    const mockUser: SafeDatabaseUser = {
+      _id: new mongoose.Types.ObjectId(),
+      username: mockUsername,
+      dateJoined: new Date(),
+      friends: [],
+      privacySettings: mockPrivacySettings,
+    };
+
+    beforeEach(() => {
+      mockingoose.resetAll();
+    });
+
+    it('should return updated user if update is successful', async () => {
+      mockingoose(UserModel).toReturn(mockUser, 'findOneAndUpdate');
+      const result = await updateUserPrivacySettings(mockUsername, mockPrivacySettings);
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result).toHaveProperty('username', mockUsername);
+        expect(result).toHaveProperty('privacySettings');
+        expect(result.privacySettings?.profileVisibility).toBe('private');
+      } else {
+        throw new Error("Expected a user object, but got an error object.");
+      }
+    });
+
+    it('should return error if updateUser returns null (user not found)', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+      const result = await updateUserPrivacySettings(mockUsername, mockPrivacySettings);
+      expect('error' in result).toBe(true);
+    });
+
+    it('should return error if updateUser throws an exception', async () => {
+      mockingoose(UserModel).toReturn(new Error('Update failed'), 'findOneAndUpdate');
+      const result = await updateUserPrivacySettings(mockUsername, mockPrivacySettings);
+      expect('error' in result).toBe(true);
+    });
   });
 });
