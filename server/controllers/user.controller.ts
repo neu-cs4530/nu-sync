@@ -88,6 +88,7 @@ const userController = (socket: FakeSOSocket) => {
       ...requestUser,
       dateJoined: new Date(),
       biography: requestUser.biography ?? '',
+      quietHours: undefined,
     };
 
     try {

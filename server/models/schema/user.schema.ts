@@ -126,15 +126,19 @@ const userSchema: Schema = new Schema(
       },
     },
     quietHours: {
-      start: { type: String, required: true }, // "HH:mm"
-      end: { type: String, required: true },   // "HH:mm"
+      type: {
+        start: { type: String, required: true },
+        end: { type: String, required: true },
+      },
+      required: false,
+      default: undefined,
     },
     oldStatus: {
       type: {
         status: { type: String, enum: ['online', 'away', 'busy', 'invisible'] },
         busySettings: {
           type: {
-            muteScope: { type: String, enum: ['friends-only', 'everyone'] }
+            muteScope: { type: String, enum: ['friends-only', 'everyone'] },
           },
         },
       },
