@@ -239,8 +239,9 @@ const UserCardView = (props: UserProps) => {
             <span className='join-date'>Joined {formatDate(user.dateJoined)}</span>
           </div>
         </div>
-
         <div className='user-actions'>{renderActionButton()}</div>
+
+       
       </div>
 
       {statusMessage && <div className='status-message'>{statusMessage}</div>}

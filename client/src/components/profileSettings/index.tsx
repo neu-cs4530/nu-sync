@@ -50,9 +50,44 @@ const ProfileSettings: React.FC = () => {
     setQuietHoursStart,
     quietHoursEnd,
     setQuietHoursEnd,
+    spotifyCompatibilityScore
   } = useProfileSettings();
 
   const { isSpotifyConnected, spotifyUserId, disconnect } = useSpotifyAuth();
+
+
+  // function to determine what emoji to show for the spotify compatibility calculator
+  const getEmojiSvg = (score: number | undefined) => {
+    if (score === undefined) return null;
+
+    const percent = Math.round(score * 100);
+
+    if (percent >= 70) {
+      return (
+        <svg className='w-12 h-12 text-green-500' fill='currentColor' viewBox='0 0 24 24'>
+          <path d='M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 17c-2.21 0-4-1.79-4-4h8c0 2.21-1.79 4-4 4zm-3-7a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z' />
+        </svg>
+      );
+    } if (percent >= 40) {
+      return (
+        <svg className="w-12 h-12 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="9" cy="10" r="1.5" fill="#fff" />
+          <circle cx="15" cy="10" r="1.5" fill="#fff" />
+          <rect x="8" y="15" width="8" height="1.5" rx="0.75" fill="#fff" />
+        </svg>
+
+      );
+    } 
+      return (
+        <svg className='w-12 h-12 text-red-500' fill='currentColor' viewBox='0 0 24 24'>
+          <path d='M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.656 17.657a.75.75 0 01-1.06 0c-2.954-2.954-7.738-2.954-10.692 0a.75.75 0 11-1.06-1.06c3.515-3.515 9.298-3.515 12.812 0a.75.75 0 010 1.06zM16 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm-5.5 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z' />
+        </svg>
+      );
+    
+  };
+
+
 
   useEffect(() => {}, [isSpotifyConnected, spotifyUserId]);
 
@@ -489,6 +524,39 @@ const ProfileSettings: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+
+              {/* Spotify Compatibility Score */}
+              {!canEditProfile && (
+                <div className='mb-8'>
+                  <h3 className='text-lg leading-6 font-medium text-gray-900 mb-4'>
+                    Spotify Compatibility
+                  </h3>
+                  <div className='bg-gray-50 p-4 rounded-md flex items-center justify-between'>
+                    <div>
+                      {spotifyCompatibilityScore !== undefined ? (
+                        <>
+                          <p className='text-sm font-medium text-gray-700'>
+                            Your music taste compatibility with <span className='font-semibold'>{userData?.username}</span> is:
+                          </p>
+                          <p className='mt-1 text-3xl font-bold text-indigo-600'>
+                            {Math.round(spotifyCompatibilityScore * 100)}%
+                          </p>
+                        </>
+                      ) : (
+                        <p className='text-sm text-gray-500 italic'>
+                          Compatibility unavailable. Either you or {userData?.username} hasn&rsquo;t connected to Spotify.
+                        </p>
+                      )}
+                    </div>
+                    <div className='flex-shrink-0'>
+                      {getEmojiSvg(spotifyCompatibilityScore)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
               {/* Password Reset (Only for profile owner) */}
               {canEditProfile && (
                 <div className='mb-8'>

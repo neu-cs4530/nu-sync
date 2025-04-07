@@ -164,6 +164,127 @@ export const getSongsFromSpotifyPlaylist = async (playlistId: string) => {
 
 
 /**
+ * Function to check for a given user's access token
+ *
+ * @throws Error if there is an issue getting the user's access token
+ */
+const getSpotifyAccessToken = async (username:string, isCurrentUser: boolean) => {
+
+  if (isCurrentUser) {
+    const accessToken = localStorage.getItem('spotify_access_token');
+    return accessToken
+  }
+  
+    const res = await api.get(`${SPOTIFY_API_URL}/getSpotifyAccessToken/${username}`);
+    return res.data.accessToken;
+  
+  
+};
+
+/**
+ * Function to get the current user's top artists
+ *
+ * @throws Error if there is an issue getting the user's top artists
+ */
+const getTopArtists = async (username: string, isCurrentUser: boolean) => {
+
+  // get access token of specific user
+  const currAccessToken = await getSpotifyAccessToken(username, isCurrentUser)
+
+  const res = await api.post(`${SPOTIFY_API_URL}/topArtists`, {
+    access_token: currAccessToken,
+  });
+
+  return res.data.items;
+
+};
+
+type TopArtist = {
+  genres: string[];
+}; 
+
+/**
+ * Function to generate a genre map for a given user
+ */
+const generateGenreMap = async (userTopArtists: TopArtist[]) => {
+
+  const genreMap: { [key: string]: number } = {}
+
+  for (let i = 0; i < userTopArtists.length; i++) {
+    const { genres } = userTopArtists[i];
+
+    // now create our genre map
+    for (let j = 0; j < genres.length; j++) {
+      genreMap[genres[j]] = (genreMap[genres[j]] || 0) + 1;
+    }
+  }
+
+  return genreMap
+
+};
+
+/**
+ * Function to calculcate cosine similarity for two genre maps
+ */
+const calculateCosineSimilarity = async (currentUserGenreMap: { [key: string]: number }, otherUserGenreMap: { [key: string]: number }) => {
+  // make a union of all genres
+  const allGenres = new Set([
+    ...Object.keys(currentUserGenreMap),
+    ...Object.keys(otherUserGenreMap),
+  ]);
+
+  // initialize our vectors
+  const vec1: number[] = [];
+  const vec2: number[] = [];
+
+  for (const genre of allGenres) {
+    vec1.push(currentUserGenreMap[genre] || 0);
+    vec2.push(otherUserGenreMap[genre] || 0);
+  }
+
+  // calculate dot product and magnitudes
+  let dotProduct = 0;
+  let mag1 = 0;
+  let mag2 = 0;
+
+  for (let i = 0; i < vec1.length; i++) {
+    dotProduct += vec1[i] * vec2[i];
+    mag1 += vec1[i] * vec1[i];
+    mag2 += vec2[i] * vec2[i];
+  }
+
+  const similarity = mag1 === 0 || mag2 === 0 ? 0 : dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2));
+
+  return similarity
+};
+
+
+/**
+ * Function to calculcate the similarity score between 2 users
+ * TODO: Could possibly display top artist data in graph fornat??
+ *
+ * @throws Error if there is an issue calculating the similarity score between 2 users
+ */
+export const getSpotifySimilarityScore = async (username: string) => {
+
+  // get the current user's top artists, and create a genre map for this user from the artist data
+  const topArtistsCurrentUser = await getTopArtists(username, true)
+  const currentUserGenreMap = await generateGenreMap(topArtistsCurrentUser)
+
+  // do the same for the other user
+  const topArtistsOtherUser = await getTopArtists(username, false)
+  const otherUserGenreMap = await generateGenreMap(topArtistsOtherUser)
+
+  // calculate the cosine similarity
+  const similarity = await calculateCosineSimilarity(currentUserGenreMap, otherUserGenreMap)
+
+  return similarity;
+};
+
+
+
+
+/**
  * Helper function to check if a song in a playlist is the song we are searching for
  * @param searchedSong - The song object user is finding recommendations for
  * @param item - The current song in the playlist
