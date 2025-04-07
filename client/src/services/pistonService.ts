@@ -1,5 +1,4 @@
 import axios from 'axios';
-// Don't import from your main api config since we need different settings
 // Create a dedicated axios instance for Piston API without credentials
 
 const pistonApi = axios.create({
@@ -7,7 +6,7 @@ const pistonApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Important: Don't send credentials with these requests
+  // Don't send credentials with these requests
   withCredentials: false
 });
 
@@ -61,7 +60,6 @@ export const getRuntimes = async (): Promise<PistonRuntime[]> => {
     const response = await pistonApi.get<PistonRuntime[]>(`/runtimes`);
     return response.data;
   } catch (apiError) {
-    console.error('Error fetching runtimes:', apiError);
     return [];
   }
 };
@@ -109,7 +107,7 @@ export const executeCode = async (
     'java': 'java',
     'go': 'go',
     'rust': 'rust',
-    // Add more mappings as needed
+    // Add more mappings if needed
   };
 
   // Get latest supported version if not specified
@@ -122,7 +120,6 @@ export const executeCode = async (
       );
       resolvedVersion = runtime ? runtime.version : ''; // Use latest version
     } catch (error) {
-      console.error('Failed to get runtimes, using empty version:', error);
       // Continue with empty version if runtime fetch fails
     }
   }
@@ -144,7 +141,6 @@ export const executeCode = async (
     const response = await pistonApi.post<PistonExecuteResponse>(`/execute`, payload);
     return response.data;
   } catch (apiError: unknown) {
-    console.error('Error executing code:', apiError);
 
     // Type guard for error with response property
     if (apiError && typeof apiError === 'object' && 'response' in apiError) {
