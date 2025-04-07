@@ -1,8 +1,7 @@
 import './index.css';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { ObjectId } from 'mongodb';
 import CodeEditor from '@uiw/react-textarea-code-editor';
 import useDirectMessage from '../../../hooks/useDirectMessage';
 import ChatsListCard from './chatsListCard';
@@ -57,11 +56,7 @@ const DirectMessage = () => {
   // New state variables for code execution
   const [isExecutingCode, setIsExecutingCode] = useState<boolean>(false);
   const [codeExecutionResult, setCodeExecutionResult] = useState<CodeExecutionResult | null>(null);
-  const [availableVersions, setAvailableVersions] = useState<Record<string, string[]>>({});
-  const [selectedVersion, setSelectedVersion] = useState<string>('');
-  const [stdin, setStdin] = useState<string>('');
-  const [args, setArgs] = useState<string>('');
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
+  // Removed state for versions and stdin
 
   useEffect(() => {
     const userToChat = localStorage.getItem('openChatWith');
@@ -71,28 +66,7 @@ const DirectMessage = () => {
     }
   }, [handleDirectChatWithFriend]);
 
-  // Fetch available runtimes on component mount
-  useEffect(() => {
-    const fetchRuntimes = async () => {
-      try {
-        const runtimes = await getRuntimes();
-        const versions: Record<string, string[]> = {};
-
-        runtimes.forEach(runtime => {
-          if (!versions[runtime.language]) {
-            versions[runtime.language] = [];
-          }
-          versions[runtime.language].push(runtime.version);
-        });
-
-        setAvailableVersions(versions);
-      } catch (runtimeError) {
-        console.error('Failed to fetch runtimes:', runtimeError);
-      }
-    };
-
-    fetchRuntimes();
-  }, []);
+  // Removed runtime fetching effect
 
   // Check if the new message is a code snippet
   useEffect(() => {
@@ -118,8 +92,7 @@ const DirectMessage = () => {
 
     setIsExecutingCode(true);
     try {
-      const argsArray = args ? args.split(' ').filter(Boolean) : [];
-      const result = await executeCode(code, language, selectedVersion || null, stdin, argsArray);
+      const result = await executeCode(code, language, null, '', []);
 
       setCodeExecutionResult({
         stdout: result.run.stdout,
@@ -145,7 +118,7 @@ const DirectMessage = () => {
         code: 1,
         signal: null,
         language,
-        version: selectedVersion,
+        version: '',
         executedAt: new Date()
       });
     } finally {
@@ -179,9 +152,7 @@ const DirectMessage = () => {
       const codeSnippet: CodeSnippet = {
         code,
         language,
-        executionResult: codeExecutionResult,
-        stdin: stdin || undefined,
-        args: args ? args.split(' ').filter(Boolean) : undefined
+        executionResult: codeExecutionResult
       };
 
       // Set the newMessage with code snippet and execution result
@@ -191,8 +162,6 @@ const DirectMessage = () => {
       }));
 
       setCode('');
-      setStdin('');
-      setArgs('');
       setCodeExecutionResult(null);
       setShowCodeEditor(false);
     }
@@ -442,7 +411,6 @@ const DirectMessage = () => {
                         value={language}
                         onChange={e => {
                           setLanguage(e.target.value);
-                          setSelectedVersion(''); // Reset version when language changes
                         }}
                         className='language-select'>
                         {SUPPORTED_LANGUAGES.map(lang => (
@@ -452,59 +420,10 @@ const DirectMessage = () => {
                         ))}
                       </select>
 
-                      <button
-                        className='custom-button'
-                        onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}>
-                        {showAdvancedOptions ? 'Hide Options' : 'Show Options'}
-                      </button>
-
                       <button className='custom-button' onClick={() => setShowCodeEditor(false)}>
                         Cancel
                       </button>
                     </div>
-
-                    {showAdvancedOptions && (
-                      <div className='advanced-options'>
-                        <div className='version-select-container'>
-                          <label htmlFor='version-select'>Version:</label>
-                          <select
-                            id='version-select'
-                            value={selectedVersion}
-                            onChange={e => setSelectedVersion(e.target.value)}
-                            className='version-select'>
-                            <option value=''>Latest</option>
-                            {availableVersions[language] && availableVersions[language].map(version => (
-                              <option key={version} value={version}>
-                                {version}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className='stdin-container'>
-                          <label htmlFor='stdin-input'>Standard Input:</label>
-                          <textarea
-                            id='stdin-input'
-                            value={stdin}
-                            onChange={e => setStdin(e.target.value)}
-                            placeholder='Enter input data here...'
-                            className='stdin-input'
-                          />
-                        </div>
-
-                        <div className='args-container'>
-                          <label htmlFor='args-input'>Command Line Arguments:</label>
-                          <input
-                            id='args-input'
-                            type='text'
-                            value={args}
-                            onChange={e => setArgs(e.target.value)}
-                            placeholder='arg1 arg2 arg3'
-                            className='args-input'
-                          />
-                        </div>
-                      </div>
-                    )}
 
                     <CodeEditor
                       value={code}
