@@ -24,7 +24,7 @@ const spotifyController = (socket: FakeSOSocket) => {
     const { username } = req.query;
     const state = `TEST:${username}`;
     const scope =
-      'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
+      'user-top-read user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 
     const spotifyAuthParams = {
       response_type: 'code',
@@ -697,6 +697,68 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+
+  /**
+   * Gets a user's top tracks
+   *
+   * @param req The HTTP request object
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * * */
+  const getSpotifyTopArtists = async (req: Request, res: Response) => {
+    try {
+      const { access_token: accessToken } = req.body;
+
+      const searchResponse = await axios.get(
+        `https://api.spotify.com/v1/me/top/artists`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      // console.log(searchResponse.data)
+
+      res.status(200).json(searchResponse.data);
+    } catch (error) {
+      res.status(500).json({ error: 'Error getting top artists for current user' });
+    }
+  };
+
+  /**
+  * Gets a specific user's spotify access token
+  *
+  * @param req The HTTP request object
+  * @param res The HTTP response object used to send the status of the function
+  *
+  * * */
+  const getSpotifyAccessToken = async (req: Request, res: Response) => {
+    try {
+      const { username } = req.params;
+
+      console.log("YOYOOO", username)
+
+      const user = await UserModel.findOne({ username });
+
+      if (!user) {
+        console.log("HI")
+        res.status(404).json({ error: 'User for given username not found' });
+        return;
+      }
+
+      if (!user.spotifyAccessToken) {
+        console.log("HI2")
+        res.status(404).json({ error: 'No valid spotify access token found for this user' });
+        return;
+      }
+
+      res.status(200).json({ accessToken: user.spotifyAccessToken });
+    } catch (error) {
+      res.status(500).json({ error: 'Error getting top artists for current user' });
+    }
+  };
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
@@ -711,6 +773,8 @@ const spotifyController = (socket: FakeSOSocket) => {
   router.post('/disconnectFromAllAccounts', disconnectSpotifyFromAllAccounts);
   router.get('/conflict-status/:username', getSpotifyConflictStatus);
   router.get('/conflict-user-id/:username', getSpotifyConflictUserId);
+  router.post('/topArtists', getSpotifyTopArtists);
+  router.get('/getSpotifyAccessToken/:username', getSpotifyAccessToken)
   return router;
 };
 

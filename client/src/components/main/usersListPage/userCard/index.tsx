@@ -10,6 +10,7 @@ import {
 } from '../../../../services/friendService';
 import useUserContext from '../../../../hooks/useUserContext';
 import UserStatusIcon from '../../UserStatusIcon';
+import { getSpotifySimilarityScore } from '../../../../services/spotifyService';
 
 /**
  * Interface representing the props for the User component.
@@ -175,6 +176,12 @@ const UserCardView = (props: UserProps) => {
     navigate('/messaging/direct-message');
   };
 
+  // handles calculating music taste compatibility
+  const handleCalculateMusicCompatibility = async (username:string) => {
+    const response = await getSpotifySimilarityScore(username)
+    console.log("Music Similarity score is: ", response.toFixed(3))
+  }
+
   // Don't show action buttons for yourself
   const isCurrentUser = currentUser.username === user.username;
 
@@ -240,7 +247,13 @@ const UserCardView = (props: UserProps) => {
           </div>
         </div>
 
+        <button onClick={() => handleCalculateMusicCompatibility(user.username)}>
+          Calculcate Music Compatibility
+        </button>
+
         <div className='user-actions'>{renderActionButton()}</div>
+
+       
       </div>
 
       {statusMessage && <div className='status-message'>{statusMessage}</div>}
