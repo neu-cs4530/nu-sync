@@ -1,3 +1,4 @@
+// pistonService.ts
 import api from './config';
 
 const PISTON_API_URL = 'https://emkc.org/api/v2/piston';
@@ -40,6 +41,40 @@ interface PistonExecuteResponse {
 // Define language map and extensions with proper types
 type LanguageMap = {
   [key: string]: string;
+};
+
+/**
+ * Gets all available runtimes from Piston API
+ * 
+ * @returns List of available runtimes
+ */
+export const getRuntimes = async (): Promise<PistonRuntime[]> => {
+  try {
+    const response = await api.get<PistonRuntime[]>(`${PISTON_API_URL}/runtimes`);
+    return response.data;
+  } catch (apiError) {
+    console.error('Error fetching runtimes:', apiError);
+    return [];
+  }
+};
+
+/**
+ * Get file extension for language
+ * 
+ * @param language - Programming language
+ * @returns File extension
+ */
+const getFileExtension = (language: string): string => {
+  const extensions: LanguageMap = {
+    'python': 'py',
+    'csharp': 'cs',
+    'java': 'java',
+    'go': 'go',
+    'rust': 'rs',
+    // Add more mappings as needed
+  };
+
+  return extensions[language] || language;
 };
 
 /**
@@ -95,49 +130,15 @@ export const executeCode = async (
   try {
     const response = await api.post<PistonExecuteResponse>(`${PISTON_API_URL}/execute`, payload);
     return response.data;
-  } catch (error: unknown) {
-    console.error('Error executing code:', error);
+  } catch (apiError: unknown) {
+    console.error('Error executing code:', apiError);
 
     // Type guard for error with response property
-    if (error && typeof error === 'object' && 'response' in error) {
-      const apiError = error as { response?: { data?: { message?: string } } };
-      throw new Error(apiError.response?.data?.message || 'Failed to execute code');
+    if (apiError && typeof apiError === 'object' && 'response' in apiError) {
+      const typedError = apiError as { response?: { data?: { message?: string } } };
+      throw new Error(typedError.response?.data?.message || 'Failed to execute code');
     }
 
     throw new Error('Failed to execute code');
   }
-};
-
-/**
- * Gets all available runtimes from Piston API
- * 
- * @returns List of available runtimes
- */
-export const getRuntimes = async (): Promise<PistonRuntime[]> => {
-  try {
-    const response = await api.get<PistonRuntime[]>(`${PISTON_API_URL}/runtimes`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching runtimes:', error);
-    return [];
-  }
-};
-
-/**
- * Get file extension for language
- * 
- * @param language - Programming language
- * @returns File extension
- */
-const getFileExtension = (language: string): string => {
-  const extensions: LanguageMap = {
-    'python': 'py',
-    'csharp': 'cs',
-    'java': 'java',
-    'go': 'go',
-    'rust': 'rs',
-    // Add more mappings as needed
-  };
-
-  return extensions[language] || language;
 };

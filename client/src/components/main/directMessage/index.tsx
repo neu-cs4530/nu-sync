@@ -43,7 +43,7 @@ const DirectMessage = () => {
     handleSearchResultClick,
     highlightedMessageId,
     messageRefs,
-    error,
+    error: chatError,
     spotifySharing,
     userMap,
   } = useDirectMessage();
@@ -86,8 +86,8 @@ const DirectMessage = () => {
         });
 
         setAvailableVersions(versions);
-      } catch (error) {
-        console.error('Failed to fetch runtimes:', error);
+      } catch (runtimeError) {
+        console.error('Failed to fetch runtimes:', runtimeError);
       }
     };
 
@@ -131,11 +131,11 @@ const DirectMessage = () => {
         version: result.version,
         executedAt: new Date()
       });
-    } catch (error) {
+    } catch (executeError) {
       // TypeScript requires a type guard for error
       let errorMessage = 'Execution failed';
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      if (executeError instanceof Error) {
+        errorMessage = executeError.message;
       }
 
       setCodeExecutionResult({
@@ -213,6 +213,8 @@ const DirectMessage = () => {
 
     // Check if the message has a code snippet with direct properties
     if (message.isCodeSnippet && message.codeSnippet) {
+      const hasExecutionResult = 'executionResult' in message.codeSnippet && message.codeSnippet.executionResult;
+
       return (
         <div className='message'>
           {messageHeader}
@@ -222,7 +224,7 @@ const DirectMessage = () => {
                 {SUPPORTED_LANGUAGES.find(lang => lang.value === message.codeSnippet?.language)?.label ||
                   message.codeSnippet?.language}
               </span>
-              {message.codeSnippet.executionResult && (
+              {hasExecutionResult && message.codeSnippet.executionResult && (
                 <span className="execution-info">
                   Executed with {message.codeSnippet.executionResult.language} {message.codeSnippet.executionResult.version}
                 </span>
@@ -239,7 +241,7 @@ const DirectMessage = () => {
               {message.codeSnippet.code}
             </SyntaxHighlighter>
 
-            {message.codeSnippet.executionResult && (
+            {hasExecutionResult && message.codeSnippet.executionResult && (
               <div className="code-execution-result">
                 <div className="execution-result-header">
                   <span>Execution Result</span>
@@ -262,7 +264,7 @@ const DirectMessage = () => {
                   </div>
                 )}
 
-                {message.codeSnippet.stdin && (
+                {'stdin' in message.codeSnippet && message.codeSnippet.stdin && (
                   <div className="stdin">
                     <div className="result-label">Input:</div>
                     <pre>{message.codeSnippet.stdin}</pre>
@@ -280,7 +282,7 @@ const DirectMessage = () => {
       const parsedContent = JSON.parse(message.msg);
       if (parsedContent.isCodeSnippet && parsedContent.codeSnippet) {
         const { codeSnippet } = parsedContent;
-        const hasExecutionResult = codeSnippet.executionResult;
+        const hasExecutionResult = 'executionResult' in codeSnippet && codeSnippet.executionResult;
 
         return (
           <div className='message'>
@@ -290,7 +292,7 @@ const DirectMessage = () => {
                 <span>
                   {SUPPORTED_LANGUAGES.find(lang => lang.value === codeSnippet.language)?.label || codeSnippet.language}
                 </span>
-                {hasExecutionResult && (
+                {hasExecutionResult && codeSnippet.executionResult && (
                   <span className="execution-info">
                     Executed with {codeSnippet.executionResult.language} {codeSnippet.executionResult.version}
                   </span>
@@ -307,7 +309,7 @@ const DirectMessage = () => {
                 {codeSnippet.code}
               </SyntaxHighlighter>
 
-              {hasExecutionResult && (
+              {hasExecutionResult && codeSnippet.executionResult && (
                 <div className="code-execution-result">
                   <div className="execution-result-header">
                     <span>Execution Result</span>
@@ -330,7 +332,7 @@ const DirectMessage = () => {
                     </div>
                   )}
 
-                  {codeSnippet.stdin && (
+                  {'stdin' in codeSnippet && codeSnippet.stdin && (
                     <div className="stdin">
                       <div className="result-label">Input:</div>
                       <pre>{codeSnippet.stdin}</pre>
@@ -342,7 +344,7 @@ const DirectMessage = () => {
           </div>
         );
       }
-    } catch (e) {
+    } catch (parseError) {
       // Not a JSON message, render normally
     }
 
@@ -356,7 +358,7 @@ const DirectMessage = () => {
         <button className='custom-button' onClick={() => setShowCreatePanel(prev => !prev)}>
           {showCreatePanel ? 'Hide Create Chat Panel' : 'Start a Chat'}
         </button>
-        {error && <div className='direct-message-error'>{error}</div>}
+        {chatError && <div className='direct-message-error'>{chatError}</div>}
         {showCreatePanel && (
           <>
             <p>Chat with your friends</p>
