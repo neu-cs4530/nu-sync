@@ -1,7 +1,15 @@
-// pistonService.ts
-import api from './config';
+import axios from 'axios';
+// Don't import from your main api config since we need different settings
+// Create a dedicated axios instance for Piston API without credentials
 
-const PISTON_API_URL = 'https://emkc.org/api/v2/piston';
+const pistonApi = axios.create({
+  baseURL: 'https://emkc.org/api/v2/piston',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  // Important: Don't send credentials with these requests
+  withCredentials: false
+});
 
 // Define TypeScript interfaces for Piston API
 interface PistonRuntime {
@@ -50,7 +58,7 @@ type LanguageMap = {
  */
 export const getRuntimes = async (): Promise<PistonRuntime[]> => {
   try {
-    const response = await api.get<PistonRuntime[]>(`${PISTON_API_URL}/runtimes`);
+    const response = await pistonApi.get<PistonRuntime[]>(`/runtimes`);
     return response.data;
   } catch (apiError) {
     console.error('Error fetching runtimes:', apiError);
@@ -107,11 +115,16 @@ export const executeCode = async (
   // Get latest supported version if not specified
   let resolvedVersion = version || '';
   if (!version) {
-    const runtimes = await getRuntimes();
-    const runtime = runtimes.find(r =>
-      r.language === languageMap[language] || r.language === language
-    );
-    resolvedVersion = runtime ? runtime.version : ''; // Use latest version
+    try {
+      const runtimes = await getRuntimes();
+      const runtime = runtimes.find(r =>
+        r.language === languageMap[language] || r.language === language
+      );
+      resolvedVersion = runtime ? runtime.version : ''; // Use latest version
+    } catch (error) {
+      console.error('Failed to get runtimes, using empty version:', error);
+      // Continue with empty version if runtime fetch fails
+    }
   }
 
   const payload: PistonExecuteRequest = {
@@ -128,7 +141,7 @@ export const executeCode = async (
   };
 
   try {
-    const response = await api.post<PistonExecuteResponse>(`${PISTON_API_URL}/execute`, payload);
+    const response = await pistonApi.post<PistonExecuteResponse>(`/execute`, payload);
     return response.data;
   } catch (apiError: unknown) {
     console.error('Error executing code:', apiError);
