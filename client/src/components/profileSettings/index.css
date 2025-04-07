@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 /* A top-level container that spans the full page width and height, 
    using padding instead of forced vertical centering */
 .page-container {

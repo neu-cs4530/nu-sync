@@ -43,6 +43,8 @@ function connectDatabase() {
     .catch((err) => console.log('MongoDB connection error: ', err));
 }
 function isWithinQuietHours(start: string, end: string): boolean {
+  if (!start || !end) return false;
+  
   const now = moment.utc();
   const nowMinutes = now.hours() * 60 + now.minutes();
   const [startH, startM] = start.split(':').map(Number);
