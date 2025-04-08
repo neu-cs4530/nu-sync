@@ -106,11 +106,11 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
   return (
     <div className="message">
       <div className="message-header">
-        <div className="message-sender">
+        <div className="message-sender flex items-center gap-2">
+          <span>{message.msgFrom}</span>
           {sender?.onlineStatus && (
             <UserStatusIcon status={sender.onlineStatus.status} />
           )}
-          {message.msgFrom}
         </div>
         <div className="message-time">
           {getMetaData(new Date(message.msgDateTime))}
