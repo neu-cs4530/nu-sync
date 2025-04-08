@@ -1,15 +1,9 @@
 import React from 'react';
-import './index.css';
 import QuestionHeader from './header';
 import QuestionView from './question';
 import useQuestionPage from '../../../hooks/useQuestionPage';
 import useSpotifyAuth from '../../../hooks/useSpotifyAuth';
 
-/**
- * QuestionPage component renders a page displaying a list of questions
- * based on filters such as order and search terms.
- * It includes a header with order buttons and a button to ask a new question.
- */
 const QuestionPage = () => {
   const { titleText, qlist, setQuestionOrder } = useQuestionPage();
 
@@ -17,21 +11,30 @@ const QuestionPage = () => {
   useSpotifyAuth();
 
   return (
-    <>
+    <div className="p-6 max-w-6xl mx-auto">
       <QuestionHeader
         titleText={titleText}
         qcnt={qlist.length}
         setQuestionOrder={setQuestionOrder}
       />
-      <div id='question_list' className='question_list'>
-        {qlist.map(q => (
+
+      <div className="space-y-4">
+        {qlist.map((q) => (
           <QuestionView question={q} key={String(q._id)} />
         ))}
       </div>
+
       {titleText === 'Search Results' && !qlist.length && (
-        <div className='bold_title right_padding'>No Questions Found</div>
+        <div className="py-8 text-center">
+          <p className="text-xl font-medium text-gray-500">
+            No questions found matching your search.
+          </p>
+          <p className="mt-2 text-gray-400">
+            Try using different keywords or browse all questions.
+          </p>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 
