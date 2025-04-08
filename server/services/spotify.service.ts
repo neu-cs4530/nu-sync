@@ -1,6 +1,6 @@
 import UserModel from "../models/users.model";
 
-export const isSpotifyLinkedToAnotherUser = async (
+const isSpotifyLinkedToAnotherUser = async (
     spotifyId: string,
     currentUsername: string,
 ): Promise<boolean> => {
@@ -11,3 +11,5 @@ export const isSpotifyLinkedToAnotherUser = async (
 
     return !!existingUser;
 };
+
+export default isSpotifyLinkedToAnotherUser;

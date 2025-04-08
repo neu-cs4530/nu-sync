@@ -1,17 +1,17 @@
 import supertest from 'supertest';
 import mongoose from 'mongoose';
 import axios from 'axios';
+import express from 'express';
 import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
-import express from 'express';
+
+import { app } from '../../app';
 
 
 jest.mock('../../models/users.model');
 const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-import { app } from '../../app';
 
 
 describe('Spotify Controller Tests', () => {
@@ -665,7 +665,7 @@ describe('Spotify Controller Tests', () => {
         spotifyAccessToken: 'access',
         spotifyRefreshToken: 'refresh',
         spotifyId: 'spotify-user-id',
-        toObject: function () {
+        toObject () {
           return this;
         },
       };
@@ -694,7 +694,7 @@ describe('Spotify Controller Tests', () => {
         spotifyAccessToken: 'access',
         spotifyRefreshToken: 'refresh',
         spotifyId: 'spotify-user-id',
-        toObject: function () {
+        toObject () {
           return this;
         },
       };
@@ -1098,7 +1098,7 @@ describe('Spotify Controller Tests', () => {
         save: jest.fn().mockResolvedValueOnce(undefined),
       };
 
-      MockedUserModel.findOne.mockResolvedValueOnce(mockUser as any);
+      MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
 
       const response = await supertest(app).get('/spotify/conflict-status/testuser');
 
@@ -1118,7 +1118,7 @@ describe('Spotify Controller Tests', () => {
         save: jest.fn(),
       };
 
-      MockedUserModel.findOne.mockResolvedValueOnce(mockUser as any);
+      MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
 
       const response = await supertest(app).get('/spotify/conflict-status/testuser');
 

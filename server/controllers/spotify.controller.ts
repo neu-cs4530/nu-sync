@@ -4,7 +4,7 @@ import axios, { AxiosError } from 'axios';
 import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
-import {isSpotifyLinkedToAnotherUser} from "../services/spotify.service"
+import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -40,10 +40,10 @@ const spotifyController = (socket: FakeSOSocket) => {
       // redirects user to spotify login page
       const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
       res.redirect(redirectUrl);
-      return;
+      
     } catch (error) {
       res.status(500).send("Error logging into Spotify")
-      return;
+      
     }
   };
 
