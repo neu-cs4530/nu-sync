@@ -295,8 +295,8 @@ const spotifyController = (socket: FakeSOSocket) => {
       await UserModel.findOneAndUpdate(
         { username },
         {
-          $set: {
-            spotifyId: null,
+          $unset: {
+            spotifyId: '',
             spotifyAccessToken: '',
             spotifyRefreshToken: '',
           },
@@ -316,9 +316,6 @@ const spotifyController = (socket: FakeSOSocket) => {
       return;
     }
 
-    res.clearCookie('spotifyAccessToken');
-    res.clearCookie('spotifyRefreshToken');
-    res.clearCookie('spotifyId');
     res.clearCookie('spotifyAccessToken');
     res.clearCookie('spotifyRefreshToken');
     res.clearCookie('spotifyId');
