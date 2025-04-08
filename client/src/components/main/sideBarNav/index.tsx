@@ -102,7 +102,7 @@ const SideBarNav = () => {
 
         <div
           className={`
-        flex items-center px-3 py-2 rounded text-sm font-medium
+        flex items-center px-3 py-2 mb-2 ounded text-sm font-medium
         ${
           isMessagingParentActive || isDirectMessageActive
             ? 'bg-[#4361ee] text-white shadow-sm'
@@ -115,7 +115,7 @@ const SideBarNav = () => {
         </div>
 
         {showOptions && (
-          <div className="ml-4 mt-1 flex flex-col space-y-1">
+          <div className="ml-4 mt-1 flex flex-col space-y-1 mb-2">
             <NavLink
               to="/messaging"
               className={`
@@ -204,7 +204,7 @@ const SideBarNav = () => {
       </div>
 
       {/* User status section at bottom */}
-      <div className="p-3 border-t border-gray-200" ref={statusRef}>
+      <div className="p-3 border-t border-gray-300" ref={statusRef}>
         <div
           className="flex items-center px-3 py-2 rounded text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           onClick={() => setShowStatusPopup(!showStatusPopup)}
