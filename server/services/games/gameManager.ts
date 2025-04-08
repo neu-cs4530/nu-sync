@@ -11,6 +11,7 @@ import Game from './game';
 import NimGame from './nim';
 import SpotifyModel from '../../models/spotify.model';
 import SpotifyGame from './spotify';
+import axios from 'axios';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -44,12 +45,17 @@ class GameManager {
 
         return newGame;
       }
-
       case 'Spotify': {
         if (!username || !accessToken) throw new Error('Missing Spotify credentials');
 
-        const newGame = new SpotifyGame(username, accessToken);
-        await SpotifyModel.create(newGame.toModel()); // save to db
+        const response = await axios.post(`${process.env.SERVER_URL}/spotify/generateRandomTrackAndHint`, {
+          accessToken,
+        });
+
+        const { songName, artistName, hint } = response.data;
+
+        const newGame = new SpotifyGame(username, accessToken, hint, songName, artistName);
+        await SpotifyModel.create(newGame.toModel());
 
         return newGame;
       }

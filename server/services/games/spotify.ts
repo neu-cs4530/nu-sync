@@ -12,21 +12,24 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
      * @param username - The player's username.
      * @param accessToken - The player's Spotify access token.
      */
-    public constructor(username: string, accessToken: string) {
-        const mockSong = SpotifyGame._getMockSong();
+    public constructor(username: string, accessToken: string, hint: string, songName: string, artistName: string) {
+        // const mockSong = SpotifyGame._getMockSong();
 
         const initialState: SpotifyGameState = {
             player: username,
             won: false,
             status: 'WAITING_TO_START',
             remainingGuesses: 3,
-            hint: SpotifyGame._generateMockHint(mockSong.songName, mockSong.artistName),
-            songName: mockSong.songName,
-            artistName: mockSong.artistName,
+            // hint: SpotifyGame._generateMockHint(mockSong.songName, mockSong.artistName),
+            // songName: mockSong.songName,
+            // artistName: mockSong.artistName,
+            hint: hint,
+            songName: songName,
+            artistName: artistName,
         };
 
         super(initialState, 'Spotify');
-        this._answer = mockSong;
+        this._answer = { songName, artistName };
     }
 
     /**
@@ -88,22 +91,22 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
         };
     }
 
-    /**
-     * Mock song generator for now. TODO: Replace this with real Spotify API logic later.
-     */
-    private static _getMockSong(): { songName: string; artistName: string } {
-        return {
-            songName: 'Blinding Lights',
-            artistName: 'The Weeknd',
-        };
-    }
+    // /**
+    //  * Mock song generator for now. TODO: Replace this with real Spotify API logic later.
+    //  */
+    // private static _getMockSong(): { songName: string; artistName: string } {
+    //     return {
+    //         songName: 'Blinding Lights',
+    //         artistName: 'The Weeknd',
+    //     };
+    // }
 
-    /**
-     * Mock hint generator. TODO: Replace with Gemini API integration later.
-     */
-    private static _generateMockHint(song: string, artist: string): string {
-        return `This hit by ${artist} dominated the charts and has a retro 80s vibe.`;
-    }
+    // /**
+    //  * Mock hint generator. TODO: Replace with Gemini API integration later.
+    //  */
+    // private static _generateMockHint(song: string, artist: string): string {
+    //     return `This hit by ${artist} dominated the charts and has a retro 80s vibe.`;
+    // }
 }
 
 export default SpotifyGame;

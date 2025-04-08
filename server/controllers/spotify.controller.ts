@@ -5,6 +5,7 @@ import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
 import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
+import generateHint from '../services/gemini.service';
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -735,6 +736,52 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Generates a random track and hint for the Spotify music guessing game
+   *
+   * @param req The HTTP request object containing the access token in the request body
+   * @param res The HTTP response object used to send the status of the function
+   *
+   * * */
+  const generateRandomTrackAndHint = async (req: Request, res: Response) => {
+    try {
+      const { accessToken } = req.body;
+
+      const topTracksResponse = await axios.get('https://api.spotify.com/v1/me/top/tracks?limit=20', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const tracks = topTracksResponse.data.items;
+
+      if (!tracks || tracks.length === 0) {
+        return res.status(404).json({ error: 'No top tracks found for this user.' });
+      }
+
+      // get random track from top tracks
+      const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+      const songName = randomTrack.name;
+      const artistName = randomTrack.artists[0]?.name || 'Unknown Artist';
+
+      // generate hint for the track using Gemini API
+      const hint = await generateHint(songName, artistName);
+
+      res.status(200).json({
+        songName,
+        artistName,
+        hint,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Failed to generate track and hint' });
+    }
+  };
+
+
+
+
+
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
@@ -751,6 +798,7 @@ const spotifyController = (socket: FakeSOSocket) => {
   router.get('/conflict-user-id/:username', getSpotifyConflictUserId);
   router.post('/topArtists', getSpotifyTopArtists);
   router.get('/getSpotifyAccessToken/:username', getSpotifyAccessToken)
+  router.post('/generateRandomTrackAndHint', generateRandomTrackAndHint)
   return router;
 };
 
