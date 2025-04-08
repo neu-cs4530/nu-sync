@@ -133,11 +133,6 @@ const friendRequestController = (socket: FakeSOSocket) => {
   ): Promise<void> => {
     const { username } = req.params;
 
-    if (!username) {
-      res.status(400).send('Username is required');
-      return;
-    }
-
     try {
       const requests = await getFriendRequestsByUsername(username);
 
@@ -165,11 +160,6 @@ const friendRequestController = (socket: FakeSOSocket) => {
   ): Promise<void> => {
     const { username } = req.params;
 
-    if (!username) {
-      res.status(400).send('Username is required');
-      return;
-    }
-
     try {
       const pendingRequests = await getPendingFriendRequests(username);
 
@@ -193,11 +183,6 @@ const friendRequestController = (socket: FakeSOSocket) => {
    */
   const getFriends = async (req: Request, res: Response): Promise<void> => {
     const { username } = req.params;
-
-    if (!username) {
-      res.status(400).send('Username is required');
-      return;
-    }
 
     try {
       const friends = await getFriendsByUsername(username);
@@ -258,11 +243,6 @@ const friendRequestController = (socket: FakeSOSocket) => {
     res: Response,
   ): Promise<void> => {
     const { username1, username2 } = req.params;
-
-    if (!username1 || !username2) {
-      res.status(400).send('Both usernames are required');
-      return;
-    }
 
     try {
       const mutualFriends = await getMutualFriends(username1, username2);

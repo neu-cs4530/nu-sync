@@ -9,7 +9,13 @@ const startQuietHoursCronJob = (socket: FakeSOSocket) => {
     const now = moment.utc();
     const nowMinutes = now.hours() * 60 + now.minutes();
 
-    const users = await UserModel.find({ 'quietHours.start': { $exists: true } });
+    let users: SafeDatabaseUser[] = [];
+
+    try {
+      users = await UserModel.find({ 'quietHours.start': { $exists: true } });
+    } catch (error) {
+      return;
+    }
 
     const emitUserUpdate = (user: SafeDatabaseUser) => {
       socket.emit('userUpdate', { user, type: 'updated' });

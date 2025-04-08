@@ -12,8 +12,12 @@ const SideBarNav = () => {
   const [showStatusPopup, setShowStatusPopup] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
   const { user } = useUserContext();
-  const { updateStatus, statusLabel, statusIcon } = useUserStatus();
+  const { updateStatus } = useUserStatus();
   const location = useLocation();
+
+  const isMessagingParentActive = location.pathname === '/messaging';
+  const isDirectMessageActive =
+    location.pathname === '/messaging/direct-message';
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);
@@ -96,54 +100,51 @@ const SideBarNav = () => {
           Tags
         </NavLink>
 
-        <div className="mb-2">
-          <NavLink
-            to="/messaging"
-            className={({ isActive }) => `
-              flex items-center px-3 py-2 rounded text-sm font-medium
-              ${
-                isActive
-                  ? 'bg-[#4361ee] text-white shadow-sm'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }
-            `}
-            onClick={toggleOptions}
-          >
-            Messaging
-          </NavLink>
-
-          {showOptions && (
-            <div className="ml-3 mt-1 border-l-2 border-gray-300 pl-2">
-              <NavLink
-                to="/messaging"
-                className={({ isActive }) => `
-                  flex items-center px-2 py-1.5 rounded text-sm
-                  ${
-                    isActive
-                      ? 'bg-[#4361ee] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }
-                `}
-              >
-                Global Messages
-              </NavLink>
-
-              <NavLink
-                to="/messaging/direct-message"
-                className={({ isActive }) => `
-                  flex items-center px-2 py-1.5 rounded text-sm
-                  ${
-                    isActive
-                      ? 'bg-[#4361ee] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }
-                `}
-              >
-                Direct Messages
-              </NavLink>
-            </div>
-          )}
+        <div
+          className={`
+        flex items-center px-3 py-2 rounded text-sm font-medium
+        ${
+          isMessagingParentActive || isDirectMessageActive
+            ? 'bg-[#4361ee] text-white shadow-sm'
+            : 'text-gray-700 hover:bg-gray-100'
+        }
+      `}
+          onClick={toggleOptions}
+        >
+          Messaging
         </div>
+
+        {showOptions && (
+          <div className="ml-4 mt-1 flex flex-col space-y-1">
+            <NavLink
+              to="/messaging"
+              className={`
+            flex items-center px-2 py-1.5 rounded text-sm
+            ${
+              isMessagingParentActive && !isDirectMessageActive
+                ? 'bg-[#4361ee] text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }
+          `}
+            >
+              Global Messages
+            </NavLink>
+
+            <NavLink
+              to="/messaging/direct-message"
+              className={`
+            flex items-center px-2 py-1.5 rounded text-sm
+            ${
+              isDirectMessageActive
+                ? 'bg-[#4361ee] text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }
+          `}
+            >
+              Direct Messages
+            </NavLink>
+          </div>
+        )}
 
         <NavLink
           to="/users"
