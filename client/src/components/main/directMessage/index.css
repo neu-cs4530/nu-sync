@@ -456,3 +456,91 @@
 .code-snippet-preview pre::-webkit-scrollbar-thumb:hover {
   background: #aaa;
 }
+
+.message-input-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.message-input-content {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.message-input-buttons {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+}
+
+/* Updated code snippet container styles */
+.code-snippet-container {
+  background-color: #f8f9fa;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.code-snippet-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f1f3f5;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.language-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.code-execution-result {
+  padding: 10px;
+  border-top: 1px solid var(--border-color);
+  background-color: #fff;
+}
+
+.execution-result-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.status-indicator {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.status-indicator.success {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--success-color);
+}
+
+.status-indicator.error {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: var(--error-color);
+}
+
+.stdout {
+  background-color: #f8f9fa;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.stdout pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Remove the result label for cleaner output */
+.stdout .result-label {
+  display: none;
+}
