@@ -8,7 +8,7 @@ const generateHint = async (song: string, artist: string): Promise<string> => {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `
-    Generate a short hint for a music guessing game.
+    Generate a hint for a music guessing game.
     Don't include the name of the song, but do include the name of the artist.
     Remove any special characters from the hint.
     Don't make it very hard to guess the song.

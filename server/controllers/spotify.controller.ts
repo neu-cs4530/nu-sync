@@ -779,9 +779,6 @@ const spotifyController = (socket: FakeSOSocket) => {
   };
 
 
-
-
-
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);

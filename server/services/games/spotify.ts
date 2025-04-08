@@ -1,5 +1,6 @@
 import { GameMove, SpotifyMove, SpotifyGameState } from '../../types/types';
 import Game from './game';
+import Fuse from 'fuse.js';
 
 /**
  * Represents a Spotify guessing game, extending the generic Game class.
@@ -13,16 +14,12 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
      * @param accessToken - The player's Spotify access token.
      */
     public constructor(username: string, accessToken: string, hint: string, songName: string, artistName: string) {
-        // const mockSong = SpotifyGame._getMockSong();
 
         const initialState: SpotifyGameState = {
             player: username,
             won: false,
             status: 'WAITING_TO_START',
             remainingGuesses: 3,
-            // hint: SpotifyGame._generateMockHint(mockSong.songName, mockSong.artistName),
-            // songName: mockSong.songName,
-            // artistName: mockSong.artistName,
             hint: hint,
             songName: songName,
             artistName: artistName,
@@ -41,11 +38,20 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
             throw new Error('Game is not in progress');
         }
 
-        const guess = move.move.guess.toLowerCase();
-        const correctAnswer = this._answer.songName.toLowerCase();
+        const normalize = (str: string): string =>
+            str.trim().toLowerCase().replace(/[^\w\s]/gi, '');
 
+        const guess = normalize(move.move.guess);
+        const correctAnswer = normalize(this._answer.songName);
+
+        const fuse = new Fuse([correctAnswer], {
+            includeScore: true,
+            threshold: 0.3, 
+        });
+
+        const result = fuse.search(guess);
+        const won = result.length > 0 && typeof result[0].score === 'number' && result[0].score <= 0.3;
         const remaining = this.state.remainingGuesses - 1;
-        const won = guess === correctAnswer;
 
         this.state = {
             ...this.state,
@@ -90,23 +96,6 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
             state: this.state,
         };
     }
-
-    // /**
-    //  * Mock song generator for now. TODO: Replace this with real Spotify API logic later.
-    //  */
-    // private static _getMockSong(): { songName: string; artistName: string } {
-    //     return {
-    //         songName: 'Blinding Lights',
-    //         artistName: 'The Weeknd',
-    //     };
-    // }
-
-    // /**
-    //  * Mock hint generator. TODO: Replace with Gemini API integration later.
-    //  */
-    // private static _generateMockHint(song: string, artist: string): string {
-    //     return `This hit by ${artist} dominated the charts and has a retro 80s vibe.`;
-    // }
 }
 
 export default SpotifyGame;
