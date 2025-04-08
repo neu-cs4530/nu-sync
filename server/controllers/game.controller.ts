@@ -47,9 +47,21 @@ const gameController = (socket: FakeSOSocket) => {
         return;
       }
 
-      const { gameType } = req.body;
+      const { gameType, username, accessToken } = req.body;
 
-      const newGame = await GameManager.getInstance().addGame(gameType);
+      // for the spotify games we need the username and access token
+      if (gameType === 'Spotify' && (!username || !accessToken)) {
+        res.status(400).send('Username and access token are required for Spotify games');
+        return;
+      }
+
+      let newGame;
+      
+      if (gameType === 'Spotify') {
+        newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);
+      } else {
+        newGame = await GameManager.getInstance().addGame(gameType);
+      }
 
       if (typeof newGame !== 'string') {
         throw new Error(newGame.error);

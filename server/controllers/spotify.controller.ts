@@ -5,6 +5,7 @@ import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
 import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
+import GameManager from "../services/games/gameManager"
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -687,16 +688,16 @@ const spotifyController = (socket: FakeSOSocket) => {
   /**
    * Gets a user's top tracks
    *
-   * @param req The HTTP request object
+   * @param req The HTTP request object containing the access token and time range
    * @param res The HTTP response object used to send the status of the function
-   *
-   * * */
-  const getSpotifyTopArtists = async (req: Request, res: Response) => {
+   * @returns A Promise that resolves to void.
+   */
+  const getSpotifyTopTracks = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { access_token: accessToken } = req.body;
+      const { access_token: accessToken, time_range = 'medium_term', limit = 50 } = req.body;
 
       const searchResponse = await axios.get(
-        `https://api.spotify.com/v1/me/top/artists`,
+        `https://api.spotify.com/v1/me/top/tracks?time_range=${time_range}&limit=${limit}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -706,7 +707,165 @@ const spotifyController = (socket: FakeSOSocket) => {
 
       res.status(200).json(searchResponse.data);
     } catch (error) {
-      res.status(500).json({ error: 'Error getting top artists for current user' });
+      res.status(500).json({ error: 'Error getting top tracks for current user' });
+    }
+  };
+
+  /**
+   * Generates a hint for a song using GPT
+   *
+   * @param req The HTTP request object containing the song details
+   * @param res The HTTP response object used to send the status of the function
+   * @returns A Promise that resolves to void.
+   */
+  const generateSongHint = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { songName, artistName } = req.body;
+      
+      // Here you would integrate with GPT API
+      // For now, we'll use a placeholder implementation
+      // In a real implementation, you would call OpenAI or another AI service
+      
+      // Example implementation with OpenAI (commented out)
+      /*
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      
+      const completion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are a music trivia game assistant. Generate a creative hint about a song without mentioning the song name or artist directly. The hint should be challenging but solvable."
+          },
+          {
+            role: "user",
+            content: `Generate a hint for the song "${songName}" by ${artistName}.`
+          }
+        ],
+        model: "gpt-3.5-turbo",
+      });
+      
+      const hint = completion.choices[0].message.content;
+      */
+      
+      // Placeholder implementation
+      const hint = `This song by ${artistName} is known for its distinctive melody and has been featured in several movies.`;
+      
+      res.status(200).json({ hint });
+    } catch (error) {
+      res.status(500).json({ error: 'Error generating hint for song' });
+    }
+  };
+
+  /**
+   * Starts a new Spotify game for the user.
+   *
+   * @param req The HTTP request object containing the username
+   * @param res The HTTP response object used to send the status of the function
+   * @returns A Promise that resolves to void.
+   */
+  const startSpotifyGame = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { username } = req.body;
+      
+      if (!username) {
+        res.status(400).json({ error: 'Username is required' });
+        return;
+      }
+      
+      // get user from database
+      const user = await UserModel.findOne({ username });
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+      
+      // check if user has Spotify connected
+      if (!user.spotifyAccessToken) {
+        res.status(400).json({ error: 'User has not connected Spotify' });
+        return;
+      }
+      
+      // create a new Spotify game
+      const gameId = await GameManager.getInstance().addGame(
+        'Spotify',
+        username,
+        user.spotifyAccessToken
+      );
+      
+      if (typeof gameId !== 'string') {
+        throw new Error(gameId.error);
+      }
+      
+      // get the game instance
+      const game = GameManager.getInstance().getGame(gameId);
+      
+      if (!game) {
+        throw new Error('Game not found');
+      }
+      
+      // join the game
+      const playerId = username; 
+      game.join(playerId);
+      
+      // Get the game state
+      const gameState = game.toModel();
+      
+      res.status(200).json({
+        gameId,
+        hint: (game as any).hint,
+        maxGuesses: 3,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Error starting Spotify game' });
+    }
+  };
+
+  /**
+   * Checks a user's guess for a song.
+   *
+   * @param req The HTTP request object containing the game ID and guess
+   * @param res The HTTP response object used to send the status of the function
+   * @returns A Promise that resolves to void.
+   */
+  const checkSpotifyGuess = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { gameId, guess, username } = req.body;
+      
+      if (!gameId || !guess || !username) {
+        res.status(400).json({ error: 'Game ID, guess, and username are required' });
+        return;
+      }
+      
+      const game = GameManager.getInstance().getGame(gameId);
+      
+      if (!game) {
+        res.status(404).json({ error: 'Game not found' });
+        return;
+      }
+      
+
+      game.applyMove({
+        playerID: username,
+        gameID: gameId,
+        move: { guess }
+      });
+      
+      // Get the game state
+      const gameState = game.toModel();
+      
+      // Check if the guess was correct
+      const isCorrect = (game as any).state.correct;
+      
+      res.status(200).json({
+        correct: isCorrect,
+        message: isCorrect ? 'Correct guess!' : 'Incorrect guess. Try again!',
+        attemptsLeft: 3 - (game as any).state.guesses.length,
+        gameOver: (game as any).state.status === 'OVER'
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Error checking guess' });
     }
   };
 
@@ -738,6 +897,7 @@ const spotifyController = (socket: FakeSOSocket) => {
     }
   };
 
+  // Register routes
   router.get('/auth/spotify', initiateLogin);
   router.get('/auth/callback', callbackFunc);
   router.patch('/disconnect', disconnectSpotify);
@@ -752,8 +912,15 @@ const spotifyController = (socket: FakeSOSocket) => {
   router.post('/disconnectFromAllAccounts', disconnectSpotifyFromAllAccounts);
   router.get('/conflict-status/:username', getSpotifyConflictStatus);
   router.get('/conflict-user-id/:username', getSpotifyConflictUserId);
-  router.post('/topArtists', getSpotifyTopArtists);
-  router.get('/getSpotifyAccessToken/:username', getSpotifyAccessToken)
+  router.post('/topArtists', getSpotifyTopTracks);
+  router.get('/getSpotifyAccessToken/:username', getSpotifyAccessToken);
+  
+  // new routes for music guessing game
+  router.post('/topTracks', getSpotifyTopTracks);
+  router.post('/generateHint', generateSongHint);
+  router.post('/game/start', startSpotifyGame);
+  router.post('/game/guess', checkSpotifyGuess);
+
   return router;
 };
 

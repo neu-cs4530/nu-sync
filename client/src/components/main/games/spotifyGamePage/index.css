@@ -1,0 +1,185 @@
+.spotify-game-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.spotify-game-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.game-id {
+    font-family: monospace;
+    background-color: #333;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.hint-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    border-left: 4px solid #1db954;
+}
+
+.hint-label {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: #1db954;
+}
+
+.hint {
+    font-style: italic;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: #a1e3a1;
+    line-height: 1.4;
+}
+
+.guess-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.guess-input {
+    padding: 0.5rem 1rem;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 6px;
+    border: none;
+    font-size: 1rem;
+    background-color: #333;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.guess-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #1db954;
+}
+
+.guess-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.guess-btn {
+    padding: 0.5rem 1.2rem;
+    background-color: #1db954;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.guess-btn:hover:not(:disabled) {
+    background-color: #17a344;
+    transform: translateY(-1px);
+}
+
+.guess-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.attempts-left {
+    font-size: 0.95rem;
+    color: #ccc;
+}
+
+.result {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.result p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.result.win {
+    color: #4caf50;
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.result.lose {
+    color: #f44336;
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.restart-btn {
+    padding: 0.5rem 1rem;
+    background-color: #333;
+    border: 1px solid #777;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.restart-btn:hover {
+    background-color: #555;
+    transform: translateY(-1px);
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #aaa;
+    font-style: italic;
+}
+
+.error-message {
+    text-align: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #f44336;
+    background-color: rgba(244, 67, 54, 0.1);
+    border-radius: 6px;
+}
+
+.spotify-connect-btn {
+    display: block;
+    margin: 1.5rem auto;
+    padding: 0.8rem 1.5rem;
+    background-color: #1db954;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.spotify-connect-btn:hover {
+    background-color: #17a344;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}

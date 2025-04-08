@@ -4,7 +4,7 @@ import { Request } from 'express';
  * Type representing the possible game types as a literal.
  * This is derived from the GAME_TYPES constant.
  */
-export type GameType = 'Nim';
+export type GameType = 'Nim' | 'Spotify';
 
 /**
  * Type representing the unique identifier for a game instance.
@@ -88,13 +88,27 @@ export interface NimGameState extends WinnableGameState {
   remainingObjects: number;
 }
 
+
+export interface SpotifyGameState extends GameState {
+  selectedSong?: string;
+  hint?: string;
+  guesses: string[];
+  correct: boolean;
+  roundsPlayed: number;
+}
+
+
 /**
  * Interface extending the request body when creating a game, which contains:
  * - `gameType`: The type of game to be created (e.g., 'Nim').
+ * - `username`: The username of the player (required for Spotify games).
+ * - `accessToken`: The Spotify access token (required for Spotify games).
  */
 export interface CreateGameRequest extends Request {
   body: {
     gameType: GameType;
+    username?: string;
+    accessToken?: string;
   };
 }
 
