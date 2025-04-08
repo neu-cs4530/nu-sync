@@ -18,6 +18,8 @@ const SpotifyGameStateSchema = new Schema({
     status: { type: String, enum: ['IN_PROGRESS', 'WAITING_TO_START', 'OVER'], required: true },
     remainingGuesses: { type: Number },
     hint: { type: String },
+    songName: { type: String },         
+    artistName: { type: String },
 });
 
 const SpotifySchema = new Schema({

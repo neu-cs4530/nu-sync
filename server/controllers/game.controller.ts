@@ -58,8 +58,7 @@ const gameController = (socket: FakeSOSocket) => {
       let newGame;
       
       if (gameType === 'Spotify') {
-        newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);    // create new spotify game in database, returns gameID
-        console.log("NEW GAME", newGame)
+        newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);    // create new spotify game in memory (in a map), returns gameID
       } else {
         newGame = await GameManager.getInstance().addGame(gameType);
       }
@@ -68,6 +67,7 @@ const gameController = (socket: FakeSOSocket) => {
         throw new Error(newGame.error);
       }
 
+      // newGame is the gameID
       res.status(200).json(newGame);
     } catch (error) {
       res.status(500).send(`Error when creating game: ${(error as Error).message}`);
@@ -138,7 +138,7 @@ const gameController = (socket: FakeSOSocket) => {
       const { gameType, status } = req.query;
 
       const games = await findGames(gameType, status);
-      console.log("GAMES AFTER FETCHING", games)
+      // console.log("GAMES AFTER FETCHING", games)
 
       res.status(200).json(games);
     } catch (error) {
@@ -177,6 +177,21 @@ const gameController = (socket: FakeSOSocket) => {
     }
   };
 
+  const getGame = async (req: GetGamesRequest, res: Response) => {
+    const { gameID } = req.params;
+
+    try {
+      const game = GameManager.getInstance().getGame(gameID);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      return res.status(200).json(game.toModel());
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to fetch game' });
+    }
+  };
+
   socket.on('connection', conn => {
     conn.on('joinGame', (gameID: string) => {
       conn.join(gameID);
@@ -194,6 +209,7 @@ const gameController = (socket: FakeSOSocket) => {
   router.post('/join', joinGame);
   router.post('/leave', leaveGame);
   router.get('/games', getGames);
+  router.get('/game/:gameID', getGame);
 
   return router;
 };

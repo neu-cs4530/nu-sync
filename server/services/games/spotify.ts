@@ -11,6 +11,7 @@ import {
 } from '../../types/types';
 import Game from './game';
 import GameModel from '../../models/games.model';
+import SpotifyModel from '../../models/spotify-model';
 
 /**
  * Interface representing a move in a Spotify game.
@@ -167,6 +168,23 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
         correct: false,
         roundsPlayed: this.state.roundsPlayed + 1
       };
+
+      // await SpotifyModel.create({
+      //   gameID: this.id,
+      //   players: [this._username],
+      //   gameType: 'Spotify',
+      //   state: {
+      //     player: this._username,
+      //     won: false,
+      //     status: 'IN_PROGRESS',
+      //     remainingGuesses: 3,
+      //     hint: this._hint,
+      //     songName: this._selectedSong.name,
+      //     artistName: this._selectedSong.artist,
+      //   },
+      // });
+
+
     } catch (error) {
       console.error('Error starting Spotify game:', error);
       throw new Error('Failed to start game');

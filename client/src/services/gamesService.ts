@@ -2,6 +2,7 @@ import { GameInstance, GameState, GameStatus, GameType } from '../types/types';
 import api from './config';
 
 const GAMES_API_URL = `${process.env.REACT_APP_SERVER_URL}/games`;
+const SPOTIFY_SERVER_URL = `${process.env.REACT_APP_SERVER_URL}/spotify`;
 
 /**
  * Function to create a new game of the specified type. This puts the game in the database.
@@ -10,6 +11,8 @@ const GAMES_API_URL = `${process.env.REACT_APP_SERVER_URL}/games`;
  * @throws Error if there is an issue while creating the game.
  */
 const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> => {
+
+  console.log("I AM HERE in createGame")
 
   if (gameType === 'Spotify') {
      
@@ -42,7 +45,32 @@ const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> 
       throw new Error('Error while creating a new Spotify game');
     }
 
-    console.log("RES",res.data)
+    const gameId = res.data;
+
+    console.log("gameId in createGame", gameId)
+
+    // Step 2: Fetch full game info
+    const gameDetailsRes = await api.get(`${GAMES_API_URL}/game/${gameId}`);
+    const game = gameDetailsRes.data;
+
+    console.log("game in createGame", game)
+
+    // Step 3: Generate the hint
+    try {
+      const hintRes = await api.post(`${SPOTIFY_SERVER_URL}/generateHint`, {
+        songName: game?.state?.songName || 'Unknown Song',
+        artistName: game?.state?.artistName || 'Unknown Artist',
+        gameId,
+      });
+
+      if (hintRes.status === 200) {
+        game.state.hint = hintRes.data.hint;
+      } else {
+        console.warn('Hint generation failed');
+      }
+    } catch (error) {
+      console.error('Error generating hint:', error);
+    }
 
     return res.data;
     
@@ -57,6 +85,9 @@ const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> 
   if (res.status !== 200) {
     throw new Error('Error while creating a new game');
   }
+
+
+  console.log("res.data in createGame", res.data)
 
   return res.data;
 };

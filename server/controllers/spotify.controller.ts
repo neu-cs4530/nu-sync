@@ -6,6 +6,7 @@ import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
 import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
 import GameManager from "../services/games/gameManager"
+import SpotifyModel from '../models/spotify-model';
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -720,40 +721,51 @@ const spotifyController = (socket: FakeSOSocket) => {
    */
   const generateSongHint = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { songName, artistName } = req.body;
-      
-      // Here you would integrate with GPT API
-      // For now, we'll use a placeholder implementation
-      // In a real implementation, you would call OpenAI or another AI service
-      
-      // Example implementation with OpenAI (commented out)
-      /*
-      const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-      
-      const completion = await openai.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: "You are a music trivia game assistant. Generate a creative hint about a song without mentioning the song name or artist directly. The hint should be challenging but solvable."
+      const { songName, artistName, gameId } = req.body;
+
+      if (!songName || !artistName || !gameId) {
+        res.status(400).json({ error: 'Missing song or artist name or gameId' });
+        return;
+      }
+
+      const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+      const prompt = `Generate a fun and mysterious hint that describes the song "${songName}" by ${artistName} without saying the actual title. The hint should be no longer than two sentences and make someone curious to guess the song.`;
+
+      const response = await axios.post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+        {
+          contents: [{ parts: [{ text: prompt }] }],
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': GEMINI_API_KEY,
           },
-          {
-            role: "user",
-            content: `Generate a hint for the song "${songName}" by ${artistName}.`
-          }
-        ],
-        model: "gpt-3.5-turbo",
-      });
-      
-      const hint = completion.choices[0].message.content;
-      */
-      
-      // Placeholder implementation
-      const hint = `This song by ${artistName} is known for its distinctive melody and has been featured in several movies.`;
-      
+        }
+      );
+
+      const hint = response.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (!hint) {
+        throw new Error('No hint returned from Gemini');
+      }
+
+      // update hint in DB
+      const updated = await SpotifyModel.findOneAndUpdate(
+        { gameID: gameId },
+        { $set: { 'state.hint': hint } },
+        { new: true }
+      );
+
+      if (!updated) {
+        res.status(404).json({ error: 'Game not found for updating hint' });
+        return;
+      }
+
       res.status(200).json({ hint });
     } catch (error) {
+      console.error('[generateSongHint] Error:', error);
       res.status(500).json({ error: 'Error generating hint for song' });
     }
   };
@@ -767,9 +779,6 @@ const spotifyController = (socket: FakeSOSocket) => {
    */
   const startSpotifyGame = async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log(`[startSpotifyGame] Received request to start game`);
-      console.log(`[startSpotifyGame] Body:`, req.body);
-
       const { username } = req.body;
 
       if (!username) {
@@ -777,19 +786,15 @@ const spotifyController = (socket: FakeSOSocket) => {
         return
       }
 
-      console.log('[startSpotifyGame] Request received for username:', username);
-
       // Fetch user from DB
       const user = await UserModel.findOne({ username });
       if (!user) {
-        console.error('[startSpotifyGame] No user found for username:', username);
         res.status(404).json({ error: 'User not found' });
         return
       }
 
       // Check for Spotify token
       if (!user.spotifyAccessToken) {
-        console.error('[startSpotifyGame] User has no Spotify access token');
         res.status(400).json({ error: 'User has not connected Spotify' });
         return
       }
@@ -801,24 +806,18 @@ const spotifyController = (socket: FakeSOSocket) => {
         user.spotifyAccessToken
       );
 
-      console.log(`[startSpotifyGame] Created game with ID: ${gameId}`);
-
       if (!gameId || typeof gameId !== 'string') {
         const errMsg = typeof gameId === 'object' && 'error' in gameId
           ? gameId.error
           : 'Unknown error during game creation';
-        console.error('[startSpotifyGame] Invalid game ID:', errMsg);
         throw new Error(errMsg);
       }
 
       const game = GameManager.getInstance().getGame(gameId);
 
       if (!game) {
-        console.error('[startSpotifyGame] No game instance found for ID:', gameId);
         throw new Error('Game not found');
       }
-
-      console.log('[startSpotifyGame] Game instance found. Joining game...');
       game.join(username);
 
       const gameState = game.toModel();

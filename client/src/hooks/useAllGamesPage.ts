@@ -31,6 +31,7 @@ const useAllGamesPage = () => {
 
   const handleCreateGame = async (gameType: GameType) => {
     try {
+      console.log("I AM HERE in handleCreateGame")
       await createGame(gameType);
       await fetchGames(); 
     } catch (createGameError) {
