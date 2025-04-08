@@ -19,6 +19,7 @@ const useAllGamesPage = () => {
   const [availableGames, setAvailableGames] = useState<GameInstance<GameState>[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const fetchGames = async () => {
     try {
@@ -30,8 +31,8 @@ const useAllGamesPage = () => {
   };
 
   const handleCreateGame = async (gameType: GameType) => {
+    setIsCreating(true);
     try {
-
       if (gameType === 'Spotify') {
         const userRaw = localStorage.getItem('user');
         const accessToken = localStorage.getItem('spotify_access_token');
@@ -43,7 +44,7 @@ const useAllGamesPage = () => {
 
         // extract username from user object
         const user = await JSON.parse(userRaw); 
-        const username = user.username;  
+        const {username} = user;  
 
         if (!username) {
           setError('Username is required for Spotify games');
@@ -60,6 +61,9 @@ const useAllGamesPage = () => {
     } catch (createGameError) {
       setError('Error creating game');
     }
+    finally {
+      setIsCreating(false); 
+    }
   };
 
   const handleJoin = (gameID: string) => {
@@ -74,8 +78,8 @@ const useAllGamesPage = () => {
     setIsModalOpen(prevState => !prevState);
   };
 
-  const handleSelectGameType = (gameType: GameType) => {
-    handleCreateGame(gameType);
+  const handleSelectGameType = async (gameType: GameType) => {
+    await handleCreateGame(gameType);
     handleToggleModal();
   };
 
@@ -87,6 +91,7 @@ const useAllGamesPage = () => {
     handleToggleModal,
     handleSelectGameType,
     error,
+    isCreating
   };
 };
 

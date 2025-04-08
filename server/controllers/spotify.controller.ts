@@ -5,7 +5,8 @@ import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
 import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
-import generateHint from '../services/gemini.service';
+// import generateHintGemini from '../services/gemini.service';
+import generateHintPerplexity from '../services/perplexity.service';
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -747,7 +748,7 @@ const spotifyController = (socket: FakeSOSocket) => {
     try {
       const { accessToken } = req.body;
 
-      const topTracksResponse = await axios.get('https://api.spotify.com/v1/me/top/tracks?limit=20', {
+      const topTracksResponse = await axios.get('https://api.spotify.com/v1/me/top/tracks?limit=50', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -764,8 +765,8 @@ const spotifyController = (socket: FakeSOSocket) => {
       const songName = randomTrack.name;
       const artistName = randomTrack.artists[0]?.name || 'Unknown Artist';
 
-      // generate hint for the track using Gemini API
-      const hint = await generateHint(songName, artistName);
+      // generate hint for the track using the Perplexity API
+      const hint = await generateHintPerplexity(songName, artistName);
 
       res.status(200).json({
         songName,

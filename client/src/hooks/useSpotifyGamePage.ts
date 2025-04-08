@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useUserContext from './useUserContext';
 import { GameInstance, GameMove, SpotifyGameState, SpotifyMove } from '../types/types';
 
@@ -16,6 +17,8 @@ import { GameInstance, GameMove, SpotifyGameState, SpotifyMove } from '../types/
 const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
     const { user, socket } = useUserContext();
     const [guess, setGuess] = useState('');
+    const [isRestarting, setIsRestarting] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmitGuess = () => {
         const move: GameMove<SpotifyMove> = {
@@ -36,11 +39,43 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
         setGuess(e.target.value);
     };
 
+    const handleRestartGame = async () => {
+        setIsRestarting(true);
+        try {
+            const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/games/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameType: 'Spotify',
+                    username: user.username,
+                    accessToken: user.spotifyAccessToken,
+                }),
+            });
+
+            const newGameId = await response.json();
+            if (typeof newGameId === 'string') {
+                navigate(`/games/${newGameId}`);
+            } 
+            else {
+                console.error('Failed to restart game:', newGameId);
+            }
+        } catch (err) {
+            console.error('Error restarting game:', err);
+        }
+        finally {
+            setIsRestarting(false);
+        }
+    };
+
     return {
         user,
         guess,
         handleGuessChange,
         handleSubmitGuess,
+        handleRestartGame,
+        isRestarting
     };
 };
 

@@ -7,7 +7,7 @@ import useSpotifyGamePage from '../../../../hooks/useSpotifyGamePage';
  * Displays the UI for the Spotify guessing game.
  */
 const SpotifyGamePage = ({ gameInstance }: { gameInstance: GameInstance<SpotifyGameState> }) => {
-    const { user, guess, handleGuessChange, handleSubmitGuess } = useSpotifyGamePage(gameInstance);
+    const { user, guess, handleGuessChange, handleSubmitGuess, handleRestartGame, isRestarting } = useSpotifyGamePage(gameInstance);
 
     const isPlayer = user.username === gameInstance.state.player;
     const isGameOver = gameInstance.state.status === 'OVER';
@@ -69,7 +69,12 @@ const SpotifyGamePage = ({ gameInstance }: { gameInstance: GameInstance<SpotifyG
                             </p>
                         </>
                     )}
+                    <button className="btn-restart" onClick={handleRestartGame} disabled={isRestarting}>
+                        Play Again
+                        {isRestarting && <span className="spinner" />}
+                    </button>
                 </div>
+                
             )}
         </div>
     );

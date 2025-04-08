@@ -1,3 +1,4 @@
+import GameModel from '../../models/games.model';
 import { GameMove, SpotifyMove, SpotifyGameState } from '../../types/types';
 import Game from './game';
 import Fuse from 'fuse.js';
@@ -33,7 +34,7 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
      * Applies a move (i.e., a guess) to the game.
      * @param move - The game move.
      */
-    public applyMove(move: GameMove<SpotifyMove>): void {
+    public async applyMove(move: GameMove<SpotifyMove>): Promise<void> {
         if (this.state.status !== 'IN_PROGRESS') {
             throw new Error('Game is not in progress');
         }
@@ -52,6 +53,7 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
         const result = fuse.search(guess);
         const won = result.length > 0 && typeof result[0].score === 'number' && result[0].score <= 0.3;
         const remaining = this.state.remainingGuesses - 1;
+        const newStatus = won || remaining === 0 ? 'OVER' : 'IN_PROGRESS';
 
         this.state = {
             ...this.state,
@@ -59,6 +61,15 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
             remainingGuesses: remaining,
             status: won || remaining === 0 ? 'OVER' : 'IN_PROGRESS',
         };
+
+        // delete game from db if over
+        if (newStatus === 'OVER') {
+            try {
+                await GameModel.deleteOne({ gameID: this.id, gameType: 'Spotify' });
+            } catch (err) {
+                // handle error
+            }
+        }
     }
 
     /**
@@ -77,9 +88,15 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
      * Handles when a player leaves the game.
      * @param playerID - The ID of the leaving player.
      */
-    protected _leave(playerID: string): void {
+    protected async _leave(playerID: string): Promise<void> {  
         if (playerID === this.state.player) {
             this.state = { ...this.state, status: 'OVER' };
+
+            try {
+                await GameModel.deleteOne({ gameID: this.id, gameType: 'Spotify' });
+            } catch (err) {
+                // handle error
+            }
         } else {
             throw new Error('Cannot leave game: player not in game');
         }
