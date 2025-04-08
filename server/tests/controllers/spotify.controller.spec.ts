@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
+import express from 'express';
 
 
 jest.mock('../../models/users.model');
@@ -25,6 +26,32 @@ describe('Spotify Controller Tests', () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('https://accounts.spotify.com/authorize');
     });
+
+    it('should handle missing username in query and still redirect (with undefined in state)', async () => {
+      const response = await supertest(app).get('/spotify/auth/spotify');
+
+      expect(response.status).toBe(302);
+
+      expect(response.headers.location).toContain('state=TEST%3Aundefined');
+    });
+
+    it('should catch redirect error and return 500', async () => {
+      const redirectSpy = jest
+        .spyOn(express.response, 'redirect')
+        .mockImplementation(() => {
+          throw new Error('Redirect failed');
+        });
+
+      const response = await supertest(app).get('/spotify/auth/spotify?username=testuser');
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error logging into Spotify');
+
+      redirectSpy.mockRestore();
+    });
+
+    
+
   });
 
   describe('GET /spotify/auth/callback', () => {
@@ -223,6 +250,76 @@ describe('Spotify Controller Tests', () => {
       expect(response.status).toBe(500);
       expect(response.body.message).toContain('Failed to fetch playlist tracks');
     });
+
+    it('should append market to queryParams when market is provided', async () => {
+      const playlistId = '123';
+      const accessToken = 'valid-token';
+      const market = 'US';
+
+      // Mock axios.get response
+      jest.spyOn(axios, 'get').mockResolvedValueOnce({
+        data: {
+          items: [{ name: 'Test Track' }],
+        },
+      });
+
+      const response = await supertest(app)
+        .get('/spotify/getPlaylistTracks')
+        .query({
+          playlistId,
+          access_token: accessToken,
+          market,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracks).toEqual([{ name: 'Test Track' }]);
+
+      // Ensure the correct URL is being called
+      const expectedQuery = new URLSearchParams({
+        limit: '20',
+        offset: '0',
+        market: 'US',
+      }).toString();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining(expectedQuery),
+        expect.any(Object),
+      );
+    });
+
+    it('should append market to queryParams when market is provided', async () => {
+      const playlistId = '123';
+      const accessToken = 'valid-token';
+      const market = 'US';
+
+      jest.spyOn(axios, 'get').mockResolvedValueOnce({
+        data: {
+          items: [{ name: 'Test Track' }],
+        },
+      });
+
+      const response = await supertest(app)
+        .get('/spotify/getPlaylistTracks')
+        .query({
+          playlistId,
+          access_token: accessToken,
+          market,
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.tracks).toEqual([{ name: 'Test Track' }]);
+
+      const expectedQuery = new URLSearchParams({
+        limit: '20',
+        offset: '0',
+        market: 'US',
+      }).toString();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining(expectedQuery),
+        expect.any(Object),
+      );
+    });
   });
 
   describe('GET /spotify/current-track', () => {
@@ -395,6 +492,34 @@ describe('Spotify Controller Tests', () => {
         .send({ username: 'testuser' });
       expect(response.status).toBe(500);
     });
+
+    it('should fallback to existing refresh token if Spotify does not return a new one', async () => {
+      const username = 'testuser';
+      const existingRefreshToken = 'old-refresh-token';
+      const newAccessToken = 'new-access-token';
+
+      MockedUserModel.findOne.mockResolvedValueOnce({
+        username,
+        spotifyRefreshToken: existingRefreshToken,
+      });
+
+      jest.spyOn(axios, 'post').mockResolvedValueOnce({
+        data: {
+          access_token: newAccessToken,
+        },
+      });
+
+      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({});
+
+      const response = await supertest(app)
+        .post('/spotify/auth/refresh')
+        .send({ username });
+
+      expect(response.status).toBe(200);
+      expect(response.body.access_token).toEqual(newAccessToken);
+      expect(response.body.refresh_token).toEqual(existingRefreshToken); 
+      expect(response.body.message).toBe('Spotify access token refreshed successfully');
+    });
   });
 
   describe('POST /spotify/getPlaylists', () => {
@@ -532,6 +657,64 @@ describe('Spotify Controller Tests', () => {
       } as unknown as DatabaseUser);
       const response = await supertest(app).get('/spotify/isConnected?username=testuser');
       expect(response.body.isConnected).toBe(false);
+    });
+
+    it('should return isConnected true and currentlyPlaying true if Spotify says so', async () => {
+      const testUser = {
+        username: 'testuser',
+        spotifyAccessToken: 'access',
+        spotifyRefreshToken: 'refresh',
+        spotifyId: 'spotify-user-id',
+        toObject: function () {
+          return this;
+        },
+      };
+
+      MockedUserModel.findOne.mockResolvedValueOnce(testUser);
+
+      jest.spyOn(axios, 'get').mockResolvedValueOnce({
+        status: 200,
+        data: { is_playing: true },
+      });
+
+      const response = await supertest(app)
+        .get('/spotify/isConnected')
+        .query({ username: 'testuser' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        isConnected: true,
+        currentlyPlaying: true,
+      });
+    });
+
+    it('should return isConnected true and currentlyPlaying true if Spotify says so (fallback case if no data)', async () => {
+      const testUser = {
+        username: 'testuser',
+        spotifyAccessToken: 'access',
+        spotifyRefreshToken: 'refresh',
+        spotifyId: 'spotify-user-id',
+        toObject: function () {
+          return this;
+        },
+      };
+
+      MockedUserModel.findOne.mockResolvedValueOnce(testUser);
+
+      jest.spyOn(axios, 'get').mockResolvedValueOnce({
+        status: 200,
+        data: {},
+      });
+
+      const response = await supertest(app)
+        .get('/spotify/isConnected')
+        .query({ username: 'testuser' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        isConnected: true,
+        currentlyPlaying: false,
+      });
     });
   });
 
@@ -777,6 +960,24 @@ describe('Spotify Controller Tests', () => {
       expect(response.status).toBe(500);
       expect(response.body.error).toBe("Failed to disconnect Spotify from all accounts: Cannot read properties of undefined (reading 'modifiedCount')");
     });
+
+    it('should handle non-Error thrown values gracefully', async () => {
+      const testSpotifyUserId = 'some-id';
+
+      MockedUserModel.updateMany.mockImplementationOnce(() => {
+        throw 'Something went wrong'; 
+      });
+
+      const response = await supertest(app)
+        .post('/spotify/disconnectFromAllAccounts')
+        .send({ spotifyUserId: testSpotifyUserId });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Failed to disconnect Spotify from all accounts: Unknown error',
+      });
+    });
+
 
   })
 

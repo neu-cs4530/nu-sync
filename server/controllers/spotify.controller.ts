@@ -4,6 +4,7 @@ import axios, { AxiosError } from 'axios';
 import { DatabaseUser, FakeSOSocket } from '../types/types';
 import UserModel from '../models/users.model';
 import { SpotifyTokenResponse } from '../types/spotify';
+import {isSpotifyLinkedToAnotherUser} from "../services/spotify.service"
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -39,26 +40,13 @@ const spotifyController = (socket: FakeSOSocket) => {
       // redirects user to spotify login page
       const redirectUrl = `https://accounts.spotify.com/authorize?${querystring.stringify(spotifyAuthParams)}`;
       res.redirect(redirectUrl);
+      return;
     } catch (error) {
-      // const axiosError = error as AxiosError;
-      // console.error('Spotify API error:', axiosError.response?.status, axiosError.response?.data);
-      // res.status(axiosError.response?.status || 500).json({
-      //   error: axiosError.response?.data || 'Unknown Spotify error',
-      // });
+      res.status(500).send("Error logging into Spotify")
+      return;
     }
   };
 
-  const isSpotifyLinkedToAnotherUser = async (
-    spotifyId: string,
-    currentUsername: string,
-  ): Promise<boolean> => {
-    const existingUser = await UserModel.findOne({
-      spotifyId,
-      username: { $ne: currentUsername },
-    });
-
-    return !!existingUser;
-  };
 
   /**
    * Handles callback from Spotify after user authorization
@@ -521,7 +509,6 @@ const spotifyController = (socket: FakeSOSocket) => {
       }
 
       try {
-        // Try to fetch currently playing song
         const response = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
           headers: {
             Authorization: `Bearer ${user.spotifyAccessToken}`,
