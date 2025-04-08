@@ -31,7 +31,31 @@ const useAllGamesPage = () => {
 
   const handleCreateGame = async (gameType: GameType) => {
     try {
-      await createGame(gameType);
+
+      if (gameType === 'Spotify') {
+        const userRaw = localStorage.getItem('user');
+        const accessToken = localStorage.getItem('spotify_access_token');
+
+        if (!userRaw || !accessToken) {
+          setError('User and access token are required for Spotify games');
+          return;
+        }
+
+        // extract username from user object
+        const user = await JSON.parse(userRaw); 
+        const username = user.username;  
+
+        if (!username) {
+          setError('Username is required for Spotify games');
+          return;
+        }
+
+        await createGame(gameType, username, accessToken);
+      }
+      else {
+        await createGame(gameType);
+      }
+      
       await fetchGames(); // Refresh the list after creating a game
     } catch (createGameError) {
       setError('Error creating game');

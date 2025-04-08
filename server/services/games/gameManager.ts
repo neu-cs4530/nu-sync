@@ -9,6 +9,8 @@ import {
 } from '../../types/types';
 import Game from './game';
 import NimGame from './nim';
+import SpotifyModel from '../../models/spotify.model';
+import SpotifyGame from './spotify';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -34,11 +36,20 @@ class GameManager {
    * @returns A promise resolving to the created game instance.
    * @throws an error for an unsupported game type
    */
-  private async _gameFactory(gameType: GameType): Promise<Game<GameState, BaseMove>> {
+  private async _gameFactory(gameType: GameType, username?: string, accessToken?: string): Promise<Game<GameState, BaseMove>> {
     switch (gameType) {
       case 'Nim': {
         const newGame = new NimGame();
         await NimModel.create(newGame.toModel());
+
+        return newGame;
+      }
+
+      case 'Spotify': {
+        if (!username || !accessToken) throw new Error('Missing Spotify credentials');
+
+        const newGame = new SpotifyGame(username, accessToken);
+        await SpotifyModel.create(newGame.toModel()); // save to db
 
         return newGame;
       }
@@ -65,9 +76,9 @@ class GameManager {
    * @param gameType The type of the game to add.
    * @returns The game ID or an error message.
    */
-  public async addGame(gameType: GameType): Promise<GameInstanceID | { error: string }> {
+  public async addGame(gameType: GameType, username?: string, accessToken?: string): Promise<GameInstanceID | { error: string }> {
     try {
-      const newGame = await this._gameFactory(gameType);
+      const newGame = await this._gameFactory(gameType, username, accessToken);
       this._games.set(newGame.id, newGame);
 
       return newGame.id;
