@@ -189,15 +189,10 @@ const DirectMessage = () => {
           {messageHeader}
           <div className="code-snippet-container">
             <div className="code-snippet-header">
-              <span>
+              <span className="language-name">
                 {SUPPORTED_LANGUAGES.find(lang => lang.value === message.codeSnippet?.language)?.label ||
                   message.codeSnippet?.language}
               </span>
-              {hasExecutionResult && message.codeSnippet.executionResult && (
-                <span className="execution-info">
-                  Executed with {message.codeSnippet.executionResult.language} {message.codeSnippet.executionResult.version}
-                </span>
-              )}
             </div>
 
             <SyntaxHighlighter
@@ -213,7 +208,6 @@ const DirectMessage = () => {
             {hasExecutionResult && message.codeSnippet.executionResult && (
               <div className="code-execution-result">
                 <div className="execution-result-header">
-                  <span>Execution Result</span>
                   <span className={`status-indicator ${message.codeSnippet.executionResult.code === 0 ? 'success' : 'error'}`}>
                     {message.codeSnippet.executionResult.code === 0 ? 'Success' : 'Error'}
                   </span>
@@ -221,7 +215,6 @@ const DirectMessage = () => {
 
                 {message.codeSnippet.executionResult.stdout && (
                   <div className="stdout">
-                    <div className="result-label">Output:</div>
                     <pre>{message.codeSnippet.executionResult.stdout}</pre>
                   </div>
                 )}
@@ -230,13 +223,6 @@ const DirectMessage = () => {
                   <div className="stderr">
                     <div className="result-label">Error:</div>
                     <pre>{message.codeSnippet.executionResult.stderr}</pre>
-                  </div>
-                )}
-
-                {'stdin' in message.codeSnippet && message.codeSnippet.stdin && (
-                  <div className="stdin">
-                    <div className="result-label">Input:</div>
-                    <pre>{message.codeSnippet.stdin}</pre>
                   </div>
                 )}
               </div>
@@ -258,14 +244,9 @@ const DirectMessage = () => {
             {messageHeader}
             <div className="code-snippet-container">
               <div className="code-snippet-header">
-                <span>
+                <span className="language-name">
                   {SUPPORTED_LANGUAGES.find(lang => lang.value === codeSnippet.language)?.label || codeSnippet.language}
                 </span>
-                {hasExecutionResult && codeSnippet.executionResult && (
-                  <span className="execution-info">
-                    Executed with {codeSnippet.executionResult.language} {codeSnippet.executionResult.version}
-                  </span>
-                )}
               </div>
 
               <SyntaxHighlighter
@@ -281,7 +262,6 @@ const DirectMessage = () => {
               {hasExecutionResult && codeSnippet.executionResult && (
                 <div className="code-execution-result">
                   <div className="execution-result-header">
-                    <span>Execution Result</span>
                     <span className={`status-indicator ${codeSnippet.executionResult.code === 0 ? 'success' : 'error'}`}>
                       {codeSnippet.executionResult.code === 0 ? 'Success' : 'Error'}
                     </span>
@@ -289,7 +269,6 @@ const DirectMessage = () => {
 
                   {codeSnippet.executionResult.stdout && (
                     <div className="stdout">
-                      <div className="result-label">Output:</div>
                       <pre>{codeSnippet.executionResult.stdout}</pre>
                     </div>
                   )}
@@ -298,13 +277,6 @@ const DirectMessage = () => {
                     <div className="stderr">
                       <div className="result-label">Error:</div>
                       <pre>{codeSnippet.executionResult.stderr}</pre>
-                    </div>
-                  )}
-
-                  {'stdin' in codeSnippet && codeSnippet.stdin && (
-                    <div className="stdin">
-                      <div className="result-label">Input:</div>
-                      <pre>{codeSnippet.stdin}</pre>
                     </div>
                   )}
                 </div>
@@ -484,61 +456,65 @@ const DirectMessage = () => {
                   </div>
                 ) : (
                   <>
-                    <div className='message-input-row'>
-                      {isCodeSnippetPreview && codeSnippetPreview ? (
-                        <div className='code-snippet-preview'>
-                          <div className='code-preview-header'>
-                            <div className='preview-language'>
-                              <div className='language-indicator'></div>
-                              <span>
-                                {SUPPORTED_LANGUAGES.find(
-                                  lang => lang.value === codeSnippetPreview.language,
-                                )?.label || codeSnippetPreview.language}{' '}
-                                Code
-                              </span>
+                    <div className='message-input-container'>
+                      <div className='message-input-content'>
+                        {isCodeSnippetPreview && codeSnippetPreview ? (
+                          <div className='code-snippet-preview'>
+                            <div className='code-preview-header'>
+                              <div className='preview-language'>
+                                <div className='language-indicator'></div>
+                                <span>
+                                  {SUPPORTED_LANGUAGES.find(
+                                    lang => lang.value === codeSnippetPreview.language,
+                                  )?.label || codeSnippetPreview.language}{' '}
+                                  Code
+                                </span>
+                              </div>
+                              <button
+                                className='custom-button secondary clear-button'
+                                onClick={() => {
+                                  setNewMessage('');
+                                  setIsCodeSnippetPreview(false);
+                                  setCodeSnippetPreview(null);
+                                }}>
+                                Clear
+                              </button>
                             </div>
-                            <button
-                              className='custom-button secondary clear-button'
-                              onClick={() => {
-                                setNewMessage('');
-                                setIsCodeSnippetPreview(false);
-                                setCodeSnippetPreview(null);
+                            <SyntaxHighlighter
+                              language={codeSnippetPreview.language}
+                              style={tomorrow}
+                              customStyle={{
+                                borderRadius: 'var(--radius-sm)',
+                                margin: '0',
+                                maxHeight: '120px',
+                                overflow: 'auto',
+                                boxShadow: 'var(--shadow-sm)',
+                                border: '1px solid var(--border-color)',
                               }}>
-                              Clear
-                            </button>
+                              {codeSnippetPreview.code}
+                            </SyntaxHighlighter>
                           </div>
-                          <SyntaxHighlighter
-                            language={codeSnippetPreview.language}
-                            style={tomorrow}
-                            customStyle={{
-                              borderRadius: 'var(--radius-sm)',
-                              margin: '0',
-                              maxHeight: '120px',
-                              overflow: 'auto',
-                              boxShadow: 'var(--shadow-sm)',
-                              border: '1px solid var(--border-color)',
-                            }}>
-                            {codeSnippetPreview.code}
-                          </SyntaxHighlighter>
-                        </div>
-                      ) : (
-                        <input
-                          className='custom-input'
-                          type='text'
-                          value={newMessage}
-                          onChange={e => setNewMessage(e.target.value)}
-                          placeholder='Type a message...'
-                        />
-                      )}
-                      <button
-                        className='custom-button'
-                        onClick={() => setShowCodeEditor(true)}
-                        title='Insert code'>
-                        Code Editor
-                      </button>
-                      <button className='custom-button' onClick={handleSendMessage}>
-                        Send
-                      </button>
+                        ) : (
+                          <input
+                            className='custom-input'
+                            type='text'
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                            placeholder='Type a message...'
+                          />
+                        )}
+                      </div>
+                      <div className='message-input-buttons'>
+                        <button
+                          className='custom-button'
+                          onClick={() => setShowCodeEditor(true)}
+                          title='Insert code'>
+                          Code Editor
+                        </button>
+                        <button className='custom-button' onClick={handleSendMessage}>
+                          Send
+                        </button>
+                      </div>
                     </div>
                     <div className='spotify-panel-wrapper'>
                       <SpotifySharingComponent {...spotifySharing} />
