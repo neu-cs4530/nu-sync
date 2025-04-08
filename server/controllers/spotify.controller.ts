@@ -747,7 +747,6 @@ const spotifyController = (socket: FakeSOSocket) => {
 
       res.status(200).json({ accessToken: user.spotifyAccessToken });
     } catch (error) {
-      console.error('[getSpotifyAccessToken] Caught error:', error);
       res.status(500).json({ error: 'Error getting top artists for current user' });
     }
   };

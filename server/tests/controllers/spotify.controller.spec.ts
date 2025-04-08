@@ -1,7 +1,6 @@
 import supertest from 'supertest';
 import mongoose from 'mongoose';
 import axios from 'axios';
-import { app } from '../../app';
 import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
 
@@ -11,8 +10,13 @@ const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+import { app } from '../../app';
+
 
 describe('Spotify Controller Tests', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
   afterEach(() => jest.clearAllMocks());
 
   describe('GET /spotify/auth/spotify', () => {
@@ -123,18 +127,14 @@ describe('Spotify Controller Tests', () => {
         },
       });
 
-      // Mock Spotify profile fetch
       mockedAxios.get.mockResolvedValueOnce({
         data: {
           id: spotifyId,
         },
       });
 
-      // Mock isSpotifyLinkedToAnotherUser logic
-      // by mocking UserModel.findOne to simulate that user exists with the same spotifyId
       MockedUserModel.findOne.mockResolvedValueOnce({ username: 'otheruser' });
 
-      // Mock conflict update
       MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({ username: 'testuser' } as DatabaseUser);
 
       const response = await supertest(app).get(`/spotify/auth/callback?code=${code}&state=${state}`);
@@ -823,7 +823,7 @@ describe('Spotify Controller Tests', () => {
 
       const response = await supertest(app)
         .post('/spotify/topArtists')
-        .send({}); // No token
+        .send({}); 
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Error getting top artists for current user');
@@ -833,18 +833,120 @@ describe('Spotify Controller Tests', () => {
 
   describe('GET /spotify/getSpotifyAccessToken/:username', () => {
     it('should return 200 and the user\'s Spotify access token if user exists and token is present', async () => {
-      const mockUser = {
-        spotifyAccessToken: 'mock-token',
-      };
+      const testToken = 'test-token'
 
-      MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
+      MockedUserModel.findOne.mockResolvedValueOnce({
+        username: 'testuser',
+        spotifyAccessToken: 'test-token'
+      });
 
       const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
 
-      // expect(response.status).toBe(200);
-      expect(response.body).toEqual({ accessToken: 'mock-token' });
+      expect(response.status).toBe(200);
+      expect(response.body.accessToken).toEqual(testToken);
     });
 
+    it('should return 404 if user is not found', async () => {
+      MockedUserModel.findOne.mockResolvedValueOnce(null);
+
+      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/unknownuser');
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        error: 'User for given username not found',
+      });
+    });
+
+    it('should return 404 if spotifyAccessToken is not present', async () => {
+      MockedUserModel.findOne.mockResolvedValueOnce({
+        username: 'testuser',
+        spotifyAccessToken: undefined,
+      });
+
+      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({
+        error: 'No valid spotify access token found for this user',
+      });
+    });
+
+    it('should return 500 if there is a database error', async () => {
+      MockedUserModel.findOne.mockRejectedValueOnce(new Error('Error getting top artists for current user'));
+
+      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Error getting top artists for current user',
+      });
+    });
+
+
+  });
+
+
+
+  describe('GET /spotify/conflict-status/:username', () => {
+    beforeEach(() => jest.resetAllMocks());
+
+    it('should return conflict=true and spotifyUserId if conflict exists', async () => {
+      const mockUser = {
+        spotifyConflictTemp: true,
+        spotifyConflictUserId: 'spotify-user-123',
+        save: jest.fn().mockResolvedValueOnce(undefined),
+      };
+
+      MockedUserModel.findOne.mockResolvedValueOnce(mockUser as any);
+
+      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        conflict: true,
+        spotifyUserId: 'spotify-user-123',
+      });
+
+      expect(mockUser.save).toHaveBeenCalled();
+    });
+
+    it('should return conflict=false and null if no conflict', async () => {
+      const mockUser = {
+        spotifyConflictTemp: false,
+        spotifyConflictUserId: null,
+        save: jest.fn(),
+      };
+
+      MockedUserModel.findOne.mockResolvedValueOnce(mockUser as any);
+
+      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        conflict: false,
+        spotifyUserId: null,
+      });
+
+      expect(mockUser.save).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 if user not found', async () => {
+      MockedUserModel.findOne.mockResolvedValueOnce(null);
+
+      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('User not found');
+    });
+
+    it('should return 500 if database throws error', async () => {
+      MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB error'));
+
+      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to fetch conflict status');
+    });
   });
 
 
