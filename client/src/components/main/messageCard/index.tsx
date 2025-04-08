@@ -11,44 +11,112 @@ interface Props {
 
 /**
  * MessageCard component displays a single message with its sender and timestamp.
- * If the message contains a Spotify playlist link, it will be rendered as a clickable link.
+ * If the message contains a Spotify playlist or song link, it will be rendered as a clickable link.
  *
  * @param message: The message object to display.
  */
 const MessageCard: React.FC<Props> = ({ message, sender }) => {
-  // converts URLs in a message to clickable links
-  const renderMessageWithLinks = (text: string) => {
-    // regular expression to match Spotify URLs
+  // Renders message content with support for Spotify links and JSON-formatted content
+  const renderMessageContent = (currentMessage: DatabaseMessage) => {
+    try {
+      const parsedContent = JSON.parse(currentMessage.msg);
+      if (
+        parsedContent.type === 'spotify-song' ||
+        parsedContent.type === 'spotify-playlist'
+      ) {
+        return (
+          <a
+            href={parsedContent.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
+          >
+            {parsedContent.displayText}
+          </a>
+        );
+      }
+    } catch (e) {
+      // Not a JSON message, continue with regular link parsing
+    }
     const playlistRegex =
       /Check out this playlist: (.+) \(link: (https:\/\/open\.spotify\.com\/playlist\/[a-zA-Z0-9]+)\)/;
+    const match = currentMessage.msg.match(playlistRegex);
 
-    // check if the message contains a Spotify playlist link
-    const match = text.match(playlistRegex);
     if (match) {
       const [, name, url] = match;
       return (
         <>
           Check out this playlist:{' '}
-          <a href={url} target='_blank' rel='noopener noreferrer' className='spotify-link'>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
+          >
             {name}
           </a>
         </>
       );
     }
 
-    return text; // fallback if no match
+    // Check for direct Spotify URLs (as a fallback)
+    const urlRegex =
+      /(https?:\/\/open\.spotify\.com\/(track|playlist|album)\/[a-zA-Z0-9]+)/g;
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+
+    // Find all Spotify URL matches
+    const matches = currentMessage.msg.matchAll(urlRegex);
+
+    for (const urlMatch of matches) {
+      // Add text before the URL
+      if (urlMatch.index !== undefined && urlMatch.index > lastIndex) {
+        parts.push(currentMessage.msg.substring(lastIndex, urlMatch.index));
+      }
+
+      // Add the URL as a link
+      if (urlMatch[0]) {
+        parts.push(
+          <a
+            key={urlMatch.index}
+            href={urlMatch[0]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
+          >
+            {urlMatch[0]}
+          </a>,
+        );
+      }
+
+      // Update last index
+      if (urlMatch.index !== undefined) {
+        lastIndex = urlMatch.index + urlMatch[0].length;
+      }
+    }
+
+    // Add any remaining text
+    if (lastIndex < currentMessage.msg.length) {
+      parts.push(currentMessage.msg.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : currentMessage.msg;
   };
 
   return (
-    <div className='message'>
-      <div className='message-header'>
-        <div className='message-sender'>
-          {sender?.onlineStatus && <UserStatusIcon status={sender.onlineStatus.status} />}
+    <div className="message">
+      <div className="message-header">
+        <div className="message-sender">
+          {sender?.onlineStatus && (
+            <UserStatusIcon status={sender.onlineStatus.status} />
+          )}
           {message.msgFrom}
         </div>
-        <div className='message-time'>{getMetaData(new Date(message.msgDateTime))}</div>
+        <div className="message-time">
+          {getMetaData(new Date(message.msgDateTime))}
+        </div>
       </div>
-      <div className='message-body'>{renderMessageWithLinks(message.msg)}</div>
+      <div className="message-body">{renderMessageContent(message)}</div>
     </div>
   );
 };

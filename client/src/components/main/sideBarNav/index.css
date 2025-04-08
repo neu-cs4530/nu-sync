@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .sideBarNav {
   display: flex;
   flex-direction: column;
@@ -24,7 +28,6 @@
   display: flex;
   justify-content: center;
 }
-
 
 .status-row {
   width: 80%;

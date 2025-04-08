@@ -1,6 +1,11 @@
-import { useState } from 'react';
-import './index.css';
-import { SpotifyTrackItem, RecommendedSong, SpotifyPlaylist } from '../../../../types/spotify';
+import React, { useEffect, useState, useCallback } from 'react';
+import { BsChevronLeft, BsChevronRight, BsSpotify } from 'react-icons/bs';
+import { FaMusic, FaListUl, FaPlayCircle } from 'react-icons/fa';
+import {
+  SpotifyTrackItem,
+  RecommendedSong,
+  SpotifyPlaylist,
+} from '../../../../types/spotify';
 
 interface SpotifySharingProps {
   isConnected: boolean;
@@ -21,9 +26,11 @@ interface SpotifySharingProps {
   setShowDisplayRecommendedSongs: (value: boolean) => void;
   showRecommendationInputDialog: boolean;
   setShowRecommendationInputDialog: (value: boolean) => void;
+  panelOpen: boolean;
+  setPanelOpen: (value: boolean) => void;
 }
 
-type PanelView = 'main' | 'playlists' | 'songs' | 'tracks';
+type PanelView = 'main' | 'playlists' | 'songs' | 'tracks' | 'recommendations';
 
 const SpotifySharingComponent = ({
   isConnected,
@@ -41,209 +48,354 @@ const SpotifySharingComponent = ({
   setSongForRecommendation,
   showDisplayRecommendedSongs,
   setShowDisplayRecommendedSongs,
+  panelOpen,
+  setPanelOpen,
 }: SpotifySharingProps) => {
-  const [panelOpen, setPanelOpen] = useState(false);
   const [view, setView] = useState<PanelView>('main');
-  const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] =
+    useState<SpotifyPlaylist | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    null,
+  );
   const [hasFetchedPlaylists, setHasFetchedPlaylists] = useState(false);
 
+  // Prevent propagation for keyboard events
+  const preventPropagation = useCallback((e: React.KeyboardEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  // Initialize panel when opened
+  useEffect(() => {
+    const initializePanel = async () => {
+      if (panelOpen && !hasFetchedPlaylists) {
+        await fetchPlaylists();
+        setHasFetchedPlaylists(true);
+      }
+    };
+
+    if (panelOpen) {
+      initializePanel();
+    }
+  }, [panelOpen, hasFetchedPlaylists, fetchPlaylists]);
+
+  // Handle sending a playlist
   const handleSendSelectedPlaylist = () => {
-    if (selectedPlaylist) sendPlaylist(selectedPlaylist);
+    if (selectedPlaylist) {
+      sendPlaylist(selectedPlaylist);
+      setPanelOpen(false);
+    }
   };
 
-  const handleBrowseTracks = async () => {
+  // Handle browsing tracks in a playlist - CRUCIAL FIX: This needs to work
+  const handleBrowseTracks = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (selectedPlaylistId) {
-      await fetchTracks(selectedPlaylistId);
-      setView('tracks');
+      try {
+        await fetchTracks(selectedPlaylistId);
+        setView('tracks');
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching tracks:', err);
+      }
     }
+  };
+
+  // Handle getting recommendations
+  const handleGetRecommendations = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setView('recommendations');
+  };
+
+  // Handle recommendation search
+  const handleRecommendationSearch = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleRecommendSongs();
   };
 
   if (!isConnected) return null;
 
   return (
-    <div className={`spotify-container ${panelOpen ? 'open' : ''}`}>
-      {!panelOpen && (
-        <button
-          className='spotify-toggle-button'
-          onClick={async () => {
-            setPanelOpen(true);
-            setView('main');
-            setSelectedPlaylist(null);
-            setSelectedPlaylistId(null);
-
-            if (!hasFetchedPlaylists) {
-              await fetchPlaylists();
-              setHasFetchedPlaylists(true);
-            }
-          }}>
-          Spotify
-        </button>
-      )}
-
-      <div className={`spotify-panel ${panelOpen ? 'slide-in' : 'slide-out'}`}>
-        {(view !== 'main' || panelOpen) && (
-          <div className='spotify-action-row'>
+    <div className="relative w-full z-10">
+      {panelOpen && (
+        <div
+          className="fixed bottom-20 w-80 bg-gray-800 rounded-md shadow-lg overflow-hidden z-20 border border-gray-700 animate-fade-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with back button */}
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <BsSpotify className="text-[#1db954] text-xl" />
+              <span className="font-medium text-white text-base">Spotify</span>
+            </div>
             {view !== 'main' && (
-              <button className='spotify-action-button half-width' onClick={() => setView('main')}>
-                ← Back
+              <button
+                className="text-gray-400 hover:text-white p-1.5 rounded-full hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setView('main');
+                }}
+              >
+                <BsChevronLeft size={18} />
               </button>
             )}
             <button
-              className={`spotify-action-button ${view !== 'main' ? 'half-width' : ''}`}
-              onClick={() => {
+              className="text-gray-400 hover:text-white p-1.5 rounded-full hover:bg-gray-700"
+              onClick={(e) => {
+                e.stopPropagation();
                 setPanelOpen(false);
-                setView('main');
-              }}>
-              Hide Spotify
+              }}
+            >
+              ✕
             </button>
           </div>
-        )}
 
-        {view === 'main' && (
-          <>
-            <div className='spotify-section'>
-              <button className='spotify-button' onClick={() => setView('playlists')}>
-                Share a Playlist
+          {/* Main menu */}
+          {view === 'main' && (
+            <div className="py-2">
+              <button
+                className="w-full px-4 py-3 flex items-center gap-2 text-gray-200 hover:bg-gray-700 text-left text-base"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setView('playlists');
+                }}
+              >
+                <FaListUl className="text-[#1db954] text-lg" />
+                <span>Share a Playlist</span>
+                <BsChevronRight className="ml-auto text-gray-400" />
+              </button>
+
+              <button
+                className="w-full px-4 py-3 flex items-center gap-2 text-gray-200 hover:bg-gray-700 text-left text-base"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setView('songs');
+                }}
+              >
+                <FaMusic className="text-[#1db954] text-lg" />
+                <span>Share a Song</span>
+                <BsChevronRight className="ml-auto text-gray-400" />
+              </button>
+
+              {currentlyPlayingAvailable && (
+                <button
+                  className="w-full px-4 py-3 flex items-center gap-2 text-gray-200 hover:bg-gray-700 text-left text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sendCurrentTrack();
+                    setPanelOpen(false);
+                  }}
+                >
+                  <FaPlayCircle className="text-[#1db954] text-lg" />
+                  <span>Share Current Song</span>
+                </button>
+              )}
+
+              <button
+                className="w-full px-4 py-3 flex items-center gap-2 text-gray-200 hover:bg-gray-700 text-left text-base"
+                onClick={handleGetRecommendations}
+              >
+                <span className="text-[#1db954] text-lg">🎵</span>
+                <span>Get Song Recommendations</span>
+                <BsChevronRight className="ml-auto text-gray-400" />
               </button>
             </div>
+          )}
 
-            <div className='spotify-section'>
-              <button className='spotify-button' onClick={() => setView('songs')}>
-                Share a Song
-              </button>
-            </div>
+          {/* Playlists submenu */}
+          {view === 'playlists' && (
+            <div className="p-4">
+              <h4 className="text-[#1db954] font-medium mb-3 text-center text-base">
+                Select a Playlist
+              </h4>
 
-            {currentlyPlayingAvailable && (
-              <div className='spotify-section'>
-                <button className='spotify-button' onClick={sendCurrentTrack}>
-                  Share What I’m Listening To
+              <select
+                className="w-full mb-4 bg-gray-700 text-white border border-gray-600 rounded p-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#1db954] focus:border-[#1db954]"
+                value={selectedPlaylist?.id || ''}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  const selected = playlists.find(
+                    (p) => p.id === e.target.value,
+                  );
+                  setSelectedPlaylist(selected || null);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={preventPropagation}
+              >
+                <option value="" disabled>
+                  Choose a playlist
+                </option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-center">
+                <button
+                  className="py-2.5 px-6 bg-[#1db954] hover:bg-[#18a549] text-white rounded text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSendSelectedPlaylist();
+                  }}
+                  disabled={!selectedPlaylist}
+                >
+                  Share Playlist
                 </button>
               </div>
-            )}
-          </>
-        )}
-
-        {view === 'playlists' && (
-          <div className='spotify-section'>
-            <h4>Select a Playlist to Share</h4>
-            <div className='playlist-dropdown'>
-              <select
-                value={selectedPlaylist?.id || ''}
-                onChange={e => {
-                  const selected = playlists.find(p => p.id === e.target.value);
-                  setSelectedPlaylist(selected || null);
-                }}>
-                <option value='' disabled>
-                  Select a playlist
-                </option>
-                {playlists.map(playlist => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name}
-                  </option>
-                ))}
-              </select>
             </div>
-            <button
-              className='spotify-button'
-              onClick={handleSendSelectedPlaylist}
-              disabled={!selectedPlaylist}>
-              Send Playlist
-            </button>
-          </div>
-        )}
-        {/* Spotify Recommendation Input dialog */}
-        <div className='recommendation-input-dialog'>
-          <input
-            type='text'
-            value={songForRecommendation}
-            onChange={e => {
-              setSongForRecommendation(e.target.value);
-              setShowDisplayRecommendedSongs(false);
-            }}
-            className='recommendation-input'
-            placeholder='Like a song you heard? Enter the name here to get recommendations based on it.'
-          />
-        </div>
-        <button
-          className='custom-button'
-          onClick={() => {
-            setSongForRecommendation('');
-            handleRecommendSongs();
-          }}>
-          Get Song Recommendations
-        </button>
+          )}
 
-        {showDisplayRecommendedSongs && recommendedSongs.length > 0 && (
-          <div className='recommended-songs'>
-            {recommendedSongs.map((song: RecommendedSong) => (
-              <p key={song.url}>
-                <span className='white-text'>{song.name} - {song.artist}. </span>
-                <a href={song.url} target='_blank' rel='noopener noreferrer'>
-                  Listen on Spotify
-                </a>
-              </p>
-            ))}
-          </div>
-        )}
+          {/* Songs submenu */}
+          {view === 'songs' && (
+            <div className="p-4">
+              <h4 className="text-[#1db954] font-medium mb-3 text-center text-base">
+                Select a Playlist
+              </h4>
 
-        {view === 'songs' && (
-          <div className='spotify-section'>
-            <h4>Pick a Playlist to Browse Songs</h4>
-            <div className='playlist-dropdown'>
               <select
+                className="w-full mb-4 bg-gray-700 text-white border border-gray-600 rounded p-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#1db954] focus:border-[#1db954]"
                 value={selectedPlaylistId || ''}
-                onChange={e => setSelectedPlaylistId(e.target.value)}>
-                <option value='' disabled>
-                  Select a playlist
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setSelectedPlaylistId(e.target.value);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={preventPropagation}
+              >
+                <option value="" disabled>
+                  Choose a playlist
                 </option>
-                {playlists.map(playlist => (
+                {playlists.map((playlist) => (
                   <option key={playlist.id} value={playlist.id}>
                     {playlist.name}
                   </option>
                 ))}
               </select>
-            </div>
-            <button
-              className='spotify-button'
-              onClick={handleBrowseTracks}
-              disabled={!selectedPlaylistId}>
-              View Songs
-            </button>
-          </div>
-        )}
 
-        {view === 'tracks' && (
-          <div className='spotify-section'>
-            <h4>Songs in Playlist</h4>
-            <div className='playlist-dropdown'>
-              <select
-                size={8}
-                onChange={e => {
-                  const selectedIndex = parseInt(e.target.value, 10);
-                  const selectedTrack = playlistTracks[selectedIndex];
-                  if (selectedTrack) {
-                    sendSong(selectedTrack);
-                  }
-                }}>
-                <option value='' disabled selected>
-                  Select a song to share
-                </option>
-                {playlistTracks.map((trackItem, index) => {
-                  const artistNames = trackItem.track.artists?.map(a => a.name).join(', ');
-                  const trackName = trackItem.track.name;
-
-                  return (
-                    <option key={index} value={index}>
-                      {trackName} — {artistNames}
-                    </option>
-                  );
-                })}
-              </select>
+              <div className="flex justify-center">
+                <button
+                  className="py-2.5 px-6 bg-[#1db954] hover:bg-[#18a549] text-white rounded text-base font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleBrowseTracks}
+                  disabled={!selectedPlaylistId}
+                >
+                  Browse Songs
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* Tracks submenu */}
+          {view === 'tracks' && (
+            <div className="p-4">
+              <h4 className="text-[#1db954] font-medium mb-3 text-center text-base">
+                Select a Song to Share
+              </h4>
+
+              <div className="max-h-64 overflow-y-auto mb-2 bg-gray-700 border border-gray-600 rounded">
+                {playlistTracks.length > 0 ? (
+                  playlistTracks.map((trackItem, index) => {
+                    const artistNames = trackItem.track.artists
+                      ?.map((a) => a.name)
+                      .join(', ');
+                    const trackName = trackItem.track.name;
+
+                    return (
+                      <button
+                        key={index}
+                        className="w-full text-left px-4 py-3 text-gray-200 hover:bg-gray-600 border-b border-gray-600 last:border-b-0 text-base"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sendSong(trackItem);
+                          setPanelOpen(false);
+                        }}
+                      >
+                        <div className="font-medium truncate">{trackName}</div>
+                        <div className="text-gray-400 text-sm truncate">
+                          {artistNames}
+                        </div>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-gray-400 text-base italic text-center">
+                    No tracks found in playlist
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations submenu */}
+          {view === 'recommendations' && (
+            <div className="p-4">
+              <h4 className="text-[#1db954] font-medium mb-3 text-center text-base">
+                Get Song Recommendations
+              </h4>
+
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={songForRecommendation}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setSongForRecommendation(e.target.value);
+                    setShowDisplayRecommendedSongs(false);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={preventPropagation}
+                  placeholder="Enter a song name..."
+                  className="w-full mb-3 bg-gray-700 text-white border border-gray-600 rounded p-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#1db954] focus:border-[#1db954]"
+                />
+
+                <div className="flex justify-center">
+                  <button
+                    className="py-2.5 px-6 mb-3 bg-[#1db954] hover:bg-[#18a549] text-white rounded text-base font-medium transition-colors"
+                    onClick={handleRecommendationSearch}
+                  >
+                    Get Recommendations
+                  </button>
+                </div>
+              </div>
+
+              {showDisplayRecommendedSongs && recommendedSongs.length > 0 ? (
+                <div className="max-h-64 overflow-y-auto bg-gray-700 border border-gray-600 rounded">
+                  {recommendedSongs.map((song: RecommendedSong) => (
+                    <div
+                      key={song.url}
+                      className="p-3 border-b border-gray-600 last:border-b-0"
+                    >
+                      <div className="text-white text-base font-medium">
+                        {song.name}
+                      </div>
+                      <div className="text-gray-400 text-sm">{song.artist}</div>
+                      <a
+                        href={song.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#1db954] text-sm hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Listen on Spotify
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                showDisplayRecommendedSongs && (
+                  <div className="p-3 text-gray-400 text-base italic text-center">
+                    No recommendations found
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
