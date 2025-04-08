@@ -12,7 +12,7 @@ import SpotifySharingComponent from './spotifySharing';
 import { DatabaseMessage, CodeSnippet, MessageSearchResult, SafeDatabaseUser, CodeExecutionResult } from '../../../types/types';
 import { getMetaData } from '../../../tool';
 import UserStatusIcon from '../UserStatusIcon';
-import { executeCode, getRuntimes } from '../../../services/pistonService';
+import { executeCode } from '../../../services/pistonService';
 
 const SUPPORTED_LANGUAGES = [
   { value: 'python', label: 'Python' },
