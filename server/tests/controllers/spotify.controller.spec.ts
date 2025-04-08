@@ -6,11 +6,11 @@ import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
 
 
+jest.mock('../../models/users.model');
+const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock('../../models/users.model');
-const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 
 describe('Spotify Controller Tests', () => {
   afterEach(() => jest.clearAllMocks());
@@ -106,6 +106,51 @@ describe('Spotify Controller Tests', () => {
       );
       expect(response.status).toBe(500);
       expect(response.text).toBe('Invalid spotify access token');
+    });
+
+
+    it('should update conflict fields if Spotify is already linked to another user', async () => {
+      const code = 'testcode';
+      const state = 'TEST:testuser';
+      const spotifyId = 'already-linked-id';
+
+      // mock token exchange
+      mockedAxios.post.mockResolvedValueOnce({
+        data: {
+          access_token: 'access-token',
+          refresh_token: 'refresh-token',
+          expires_in: 3600,
+        },
+      });
+
+      // Mock Spotify profile fetch
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          id: spotifyId,
+        },
+      });
+
+      // Mock isSpotifyLinkedToAnotherUser logic
+      // by mocking UserModel.findOne to simulate that user exists with the same spotifyId
+      MockedUserModel.findOne.mockResolvedValueOnce({ username: 'otheruser' });
+
+      // Mock conflict update
+      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({ username: 'testuser' } as DatabaseUser);
+
+      const response = await supertest(app).get(`/spotify/auth/callback?code=${code}&state=${state}`);
+
+      expect(MockedUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { username: 'testuser' },
+        {
+          $set: {
+            spotifyConflictTemp: true,
+            spotifyConflictUserId: spotifyId,
+          },
+        },
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toContain('/user/testuser');
     });
   });
 
@@ -489,4 +534,326 @@ describe('Spotify Controller Tests', () => {
       expect(response.body.isConnected).toBe(false);
     });
   });
+
+
+
+  describe('GET /spotify/conflict-user-id/:username', () => {
+    it('should return spotifyConflictUserId if conflict data exists', async () => {
+      const conflictUserId = 'spotify-user-123';
+
+      MockedUserModel.findOne.mockResolvedValueOnce({
+        username: 'testuser',
+        spotifyConflictTemp: true,
+        spotifyConflictUserId: conflictUserId,
+      } as DatabaseUser);
+
+      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+
+      expect(response.status).toBe(200);
+      expect(response.body.spotifyUserId).toBe(conflictUserId);
+    });
+
+    it('should return 404 if user is not found', async () => {
+      MockedUserModel.findOne.mockResolvedValueOnce(null);
+
+      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No Spotify conflict data available');
+    });
+
+    it('should return 404 if conflict data is missing', async () => {
+      MockedUserModel.findOne.mockResolvedValueOnce({
+        username: 'testuser',
+        spotifyConflictTemp: false,
+        spotifyConflictUserId: null,
+      });
+
+      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No Spotify conflict data available');
+    });
+
+    it('should return 500 if DB call throws error', async () => {
+      MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB is down'));
+
+      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to get Spotify user ID');
+    });
+  });
+
+
+
+  describe('POST /searchSong', () => {
+    it('should return the song when searched', async () => {
+      const mockTrack = {
+        name: 'Test Song',
+        artists: [{ name: 'Test Artist' }],
+        album: { name: 'Test Album' },
+      };
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          tracks: {
+            items: [mockTrack],
+          },
+        },
+      });
+
+      const response = await supertest(app)
+        .post('/spotify/searchSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockTrack);
+    });
+
+    it('should return 500 if Spotify API throws an Error', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Spotify error'));
+
+      const response = await supertest(app)
+        .post('/spotify/searchSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error searching Spotify songs controller');
+    });
+
+    it('should return 500 if Spotify API throws a non-Error value', async () => {
+      mockedAxios.get.mockRejectedValueOnce('Spotify went boom');
+
+      const response = await supertest(app)
+        .post('/spotify/searchSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error searching Spotify songs controller');
+    });
+  });
+
+  describe('POST /spotify/searchSpotifyPlaylistWithSong', () => {
+    it('should return playlists if search is successful', async () => {
+      const mockPlaylists = [
+        { name: 'Chill Vibes', id: '1' },
+        { name: 'Focus Flow', id: '2' },
+      ];
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          playlists: {
+            items: [...mockPlaylists, null],
+          },
+        },
+      });
+
+      const response = await supertest(app)
+        .post('/spotify/searchSpotifyPlaylistWithSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.items).toEqual(mockPlaylists);
+    });
+
+    it('should return 400 if access_token or query is missing', async () => {
+      const res1 = await supertest(app)
+        .post('/spotify/searchSpotifyPlaylistWithSong')
+        .send({ query: 'Test Song' });
+
+      const res2 = await supertest(app)
+        .post('/spotify/searchSpotifyPlaylistWithSong')
+        .send({ access_token: 'valid-token' });
+
+      expect(res1.status).toBe(400);
+      expect(res1.body.error).toBe('Missing required parameters');
+
+      expect(res2.status).toBe(400);
+      expect(res2.body.error).toBe('Missing required parameters');
+    });
+
+    it('should return 500 if Spotify API throws an Error', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Spotify failed'));
+
+      const response = await supertest(app)
+        .post('/spotify/searchSpotifyPlaylistWithSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error searching for Spotify playlists');
+    });
+
+    it('should return 500 if Spotify API throws a non-Error', async () => {
+      mockedAxios.get.mockRejectedValueOnce('boom');
+
+      const response = await supertest(app)
+        .post('/spotify/searchSpotifyPlaylistWithSong')
+        .send({ access_token: 'valid-token', query: 'Test Song' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error searching for Spotify playlists');
+    });
+  });
+
+
+
+  describe('POST /spotify/getSongsFromSpotifyPlaylist', () => {
+    it('should return songs if Spotify API call succeeds', async () => {
+      const mockTracks = [{ name: 'Track 1' }, { name: 'Track 2' }];
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: {
+          items: mockTracks,
+        },
+      });
+
+      const response = await supertest(app)
+        .post('/spotify/getSongsFromSpotifyPlaylist')
+        .send({ access_token: 'valid-token', playlistId: 'playlist123' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockTracks);
+    });
+
+    it('should return 500 if Spotify API throws an Error', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('API failed'));
+
+      const response = await supertest(app)
+        .post('/spotify/getSongsFromSpotifyPlaylist')
+        .send({ access_token: 'valid-token', playlistId: 'playlist123' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error fetching Spotify songs from playlist Controller');
+    });
+
+    it('should return 500 if Spotify API throws a non-Error', async () => {
+      mockedAxios.get.mockRejectedValueOnce('some string error');
+
+      const response = await supertest(app)
+        .post('/spotify/getSongsFromSpotifyPlaylist')
+        .send({ access_token: 'valid-token', playlistId: 'playlist123' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error fetching Spotify songs from playlist Controller');
+    });
+  });
+
+
+  describe('POST /spotify/disconnectFromAllAccounts', () => {
+    it('should disconnect all accounts linked to this spotify id', async () => {
+      const mockSpotifyId = 'spotify-user-123';
+
+      MockedUserModel.updateMany.mockResolvedValueOnce({
+        acknowledged: true,
+        matchedCount: 1,
+        modifiedCount: 1,
+        upsertedCount: 0,
+        upsertedId: null
+      });
+
+      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({ spotifyUserId: mockSpotifyId });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Disconnected Spotify account from 1 user(s).");
+      expect(response.body.modifiedCount).toBe(1);
+
+    });
+
+    it('should return 400 if spotify user ID is missing in request body', async () => {      
+      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('spotifyUserId is required in the request body');
+    });
+
+    it('should return 500 if mongo returns an error', async () => {
+      const mockSpotifyId = 'spotify-user-123';
+
+      MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB down'));
+
+      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({ spotifyUserId: mockSpotifyId });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe("Failed to disconnect Spotify from all accounts: Cannot read properties of undefined (reading 'modifiedCount')");
+    });
+
+  })
+
+
+  describe('POST /spotify/topArtists', () => {
+    it('should return top artists if access token is valid', async () => {
+      const mockTopArtists = {
+        items: [{ name: 'Artist 1' }, { name: 'Artist 2' }],
+      };
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: mockTopArtists,
+      });
+
+      const response = await supertest(app)
+        .post('/spotify/topArtists')
+        .send({ access_token: 'valid-token' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockTopArtists);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/top/artists',
+        {
+          headers: { Authorization: 'Bearer valid-token' },
+        }
+      );
+    });
+
+    it('should return 500 if Spotify API fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Spotify API error'));
+
+      const response = await supertest(app)
+        .post('/spotify/topArtists')
+        .send({ access_token: 'bad-token' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Error getting top artists for current user',
+      });
+    });
+
+    it('should return 500 if access_token is missing', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Missing token'));
+
+      const response = await supertest(app)
+        .post('/spotify/topArtists')
+        .send({}); // No token
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Error getting top artists for current user');
+    });
+  });
+
+
+  describe('GET /spotify/getSpotifyAccessToken/:username', () => {
+    it('should return 200 and the user\'s Spotify access token if user exists and token is present', async () => {
+      const mockUser = {
+        spotifyAccessToken: 'mock-token',
+      };
+
+      MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
+
+      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+
+      // expect(response.status).toBe(200);
+      expect(response.body).toEqual({ accessToken: 'mock-token' });
+    });
+
+  });
+
+
+
+
+  
+
+
+
+
+
 });

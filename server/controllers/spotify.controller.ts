@@ -541,7 +541,7 @@ const spotifyController = (socket: FakeSOSocket) => {
   /**
    * Searches for a song on Spotify
    *
-   * @param req The HTTP request object containing the access token and query (song name)in the request body
+   * @param req The HTTP request object containing the access token and query (song name) in the request body
    * @param res The HTTP response object used to send the status of the function
    *
    * * */
@@ -747,6 +747,7 @@ const spotifyController = (socket: FakeSOSocket) => {
 
       res.status(200).json({ accessToken: user.spotifyAccessToken });
     } catch (error) {
+      console.error('[getSpotifyAccessToken] Caught error:', error);
       res.status(500).json({ error: 'Error getting top artists for current user' });
     }
   };
