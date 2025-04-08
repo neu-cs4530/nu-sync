@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { BsChevronLeft, BsChevronRight, BsSpotify } from 'react-icons/bs';
-import { FaMusic, FaListUl, FaPlayCircle } from 'react-icons/fa';
+import { FaMusic, FaListUl, FaPlayCircle, FaThumbsUp } from 'react-icons/fa';
 import {
   SpotifyTrackItem,
   RecommendedSong,
@@ -165,7 +165,7 @@ const SpotifySharingComponent = ({
               >
                 <FaListUl className="text-[#1db954] text-lg" />
                 <span>Share a Playlist</span>
-                <BsChevronRight className="ml-auto text-gray-400" />
+                <BsChevronRight className="ml-auto text-white-400" />
               </button>
 
               <button
@@ -177,7 +177,7 @@ const SpotifySharingComponent = ({
               >
                 <FaMusic className="text-[#1db954] text-lg" />
                 <span>Share a Song</span>
-                <BsChevronRight className="ml-auto text-gray-400" />
+                <BsChevronRight className="ml-auto text-white-400" />
               </button>
 
               {currentlyPlayingAvailable && (
@@ -198,9 +198,9 @@ const SpotifySharingComponent = ({
                 className="w-full px-4 py-3 flex items-center gap-2 text-gray-200 hover:bg-gray-700 text-left text-base"
                 onClick={handleGetRecommendations}
               >
-                <span className="text-[#1db954] text-lg">🎵</span>
+                <FaThumbsUp className="text-[#1db954] text-lg" />
                 <span>Get Song Recommendations</span>
-                <BsChevronRight className="ml-auto text-gray-400" />
+                <BsChevronRight className="ml-auto text-white-400" />
               </button>
             </div>
           )}
