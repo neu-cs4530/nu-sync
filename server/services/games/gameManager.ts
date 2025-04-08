@@ -10,6 +10,7 @@ import {
 import Game from './game';
 import NimGame from './nim';
 import SpotifyGame from './spotify';
+import SpotifyModel from '../../models/spotify-model';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -49,9 +50,9 @@ class GameManager {
         }
         
         const newGame = new SpotifyGame(username, accessToken);
-        // No need to create a model in the database for Spotify games
-        // as they are single-player and temporary
-        
+        // await newGame.saveGameState(); 
+        // return newGame;
+        await SpotifyModel.create(newGame.toModel());
         return newGame;
       }
       default: {

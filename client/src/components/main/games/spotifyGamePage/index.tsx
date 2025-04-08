@@ -3,6 +3,7 @@ import './index.css';
 import { createGame, joinGame } from '../../../../services/gamesService';
 import { loginSpotify } from '../../../../services/spotifyService';
 import { GameInstance, GameType } from '../../../../types/types';
+// import { SpotifyGameState } from '../../../../types/types';
 
 interface SpotifyGameState {
   status: 'PLAYING' | 'WIN' | 'LOSE';
@@ -33,9 +34,21 @@ const SpotifyGamePage: React.FC = () => {
 
   // Check Spotify connection status
   useEffect(() => {
-    const checkSpotifyConnection = () => {
+    const checkSpotifyConnection = async () => {
       try {
-        const username = localStorage.getItem('username');
+        // extract username from local storage
+        const userRaw = localStorage.getItem('user');
+        let username: string | null = null;
+
+        if (userRaw) {
+            try {
+                const user = JSON.parse(userRaw);
+                username = user.username;
+            } catch (err) {
+                console.error('Failed to parse user from localStorage:', err);
+            }
+        }
+          
         if (!username) {
           setGameState(prev => ({ ...prev, error: 'User not logged in', isLoading: false }));
           return;
@@ -44,6 +57,10 @@ const SpotifyGamePage: React.FC = () => {
         // Check if Spotify access token exists in localStorage
         const spotifyAccessToken = localStorage.getItem('spotify_access_token');
         const isConnected = !!spotifyAccessToken;
+
+        if (isConnected) {
+            await startGame();
+        }
         
         setGameState(prev => ({ ...prev, isSpotifyConnected: isConnected, isLoading: false }));
       } catch (error) {
@@ -55,62 +72,100 @@ const SpotifyGamePage: React.FC = () => {
   }, []);
 
   // Start a new game
-  const startGame = async () => {
-    setGameState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      const username = localStorage.getItem('username');
-      if (!username) {
-        throw new Error('User not logged in');
-      }
-      
-      // Create a new Spotify game
-      const game = await createGame('Spotify' as GameType);
-      
-      // Join the game
-      const updatedGame = await joinGame(game.gameID, username);
-      
-      // Get the game state from the response
-      const spotifyGameState = updatedGame.state as any;
-      
-      setGameState({
-        status: 'PLAYING',
-        hint: spotifyGameState.hint || 'Loading hint...',
-        attemptsLeft: 3,
-        guess: '',
-        answer: spotifyGameState.selectedSong || '',
-        gameId: game.gameID,
-        isLoading: false,
-        error: null,
-        isSpotifyConnected: true,
-      });
-      
-      // Focus the input field
-      if (guessInputRef.current) {
-        guessInputRef.current.focus();
-      }
-    } catch (error) {
-      setGameState(prev => ({ 
-        ...prev, 
-        error: 'Error starting game. Please try again.', 
-        isLoading: false 
-      }));
-    }
-  };
+    const startGame = async () => {
+        alert("startGame triggered");
+        setGameState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        try {
+            // extract username from local storage
+            const userRaw = localStorage.getItem('user');
+            let username: string | null = null;
+
+            if (userRaw) {
+                try {
+                    const user = JSON.parse(userRaw);
+                    username = user.username;
+                } catch (err) {
+                    console.error('Failed to parse user from localStorage:', err);
+                }
+            }
+
+            if (!username) {
+                throw new Error('User not logged in');
+            }
+
+            const url = `${process.env.REACT_APP_SERVER_URL}/spotify/game/start`;
+            console.log("HI", url)
+            const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/spotify/game/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data?.error || 'Failed to start Spotify game');
+            }
+
+            // Set the game state
+            setGameState({
+                status: 'PLAYING',
+                hint: data.hint || 'No hint available yet',
+                attemptsLeft: data.maxGuesses || 3,
+                guess: '',
+                answer: '',
+                gameId: data.gameId,
+                isLoading: false,
+                error: null,
+                isSpotifyConnected: true,
+            });
+
+            if (guessInputRef.current) {
+                guessInputRef.current.focus();
+            }
+        } catch (error) {
+            console.error('Error starting game:', error);
+            setGameState(prev => ({
+                ...prev,
+                error: 'Error starting game. Please try again.',
+                isLoading: false,
+            }));
+        }
+    };
+
+
 
   // Submit a guess
   const handleGuess = async () => {
+    console.log("GAME STATE", gameState)
     if (!gameState.guess.trim() || gameState.isLoading) return;
     
     setGameState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      const username = localStorage.getItem('username');
+        // extract username from local storage
+        const userRaw = localStorage.getItem('user');
+        let username: string | null = null;
+
+        if (userRaw) {
+            try {
+                const user = JSON.parse(userRaw);
+                username = user.username;
+            } catch (err) {
+                console.error('Failed to parse user from localStorage:', err);
+            }
+        }
+        
       if (!username) {
         throw new Error('User not logged in');
       }
+
       
-      // Submit the guess to the backend
+      
+      // submit the guess to the backend
       const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/spotify/game/guess`, {
         method: 'POST',
         headers: {
@@ -142,6 +197,7 @@ const SpotifyGamePage: React.FC = () => {
         throw new Error(data.error || 'Error submitting guess');
       }
     } catch (error) {
+        console.log("ERROR",error)
       setGameState(prev => ({ 
         ...prev, 
         error: 'Error submitting guess. Please try again.', 
@@ -223,7 +279,7 @@ const SpotifyGamePage: React.FC = () => {
             placeholder="Your guess here..."
             value={gameState.guess}
             onChange={(e) => setGameState(prev => ({ ...prev, guess: e.target.value }))}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             className="guess-input"
             disabled={gameState.isLoading}
           />

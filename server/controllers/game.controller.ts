@@ -58,7 +58,8 @@ const gameController = (socket: FakeSOSocket) => {
       let newGame;
       
       if (gameType === 'Spotify') {
-        newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);
+        newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);    // create new spotify game in database, returns gameID
+        console.log("NEW GAME", newGame)
       } else {
         newGame = await GameManager.getInstance().addGame(gameType);
       }
@@ -137,6 +138,7 @@ const gameController = (socket: FakeSOSocket) => {
       const { gameType, status } = req.query;
 
       const games = await findGames(gameType, status);
+      console.log("GAMES AFTER FETCHING", games)
 
       res.status(200).json(games);
     } catch (error) {

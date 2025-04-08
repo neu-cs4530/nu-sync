@@ -4,12 +4,52 @@ import api from './config';
 const GAMES_API_URL = `${process.env.REACT_APP_SERVER_URL}/games`;
 
 /**
- * Function to create a new game of the specified type.
+ * Function to create a new game of the specified type. This puts the game in the database.
  * @param gameType The type of game to create.
  * @returns A promise resolving to the created game instance.
  * @throws Error if there is an issue while creating the game.
  */
 const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> => {
+
+  if (gameType === 'Spotify') {
+     
+    // extract username from local storage
+    const userRaw = localStorage.getItem('user');
+    let username: string | null = null;
+
+    if (userRaw) {
+      try {
+        const user = JSON.parse(userRaw);
+        username = user.username;
+      } catch (err) {
+        console.error('Failed to parse user from localStorage:', err);
+      }
+    }
+
+    const accessToken = localStorage.getItem('spotify_access_token');
+
+    if (!username || !accessToken) {
+      throw new Error('Username and access token are required for Spotify games');
+    }
+
+    const res = await api.post(`${GAMES_API_URL}/create`, {
+      gameType,
+      username,
+      accessToken,
+    });
+
+    if (res.status !== 200) {
+      throw new Error('Error while creating a new Spotify game');
+    }
+
+    console.log("RES",res.data)
+
+    return res.data;
+    
+  }
+
+
+  // use this section for all other game types
   const res = await api.post(`${GAMES_API_URL}/create`, {
     gameType,
   });

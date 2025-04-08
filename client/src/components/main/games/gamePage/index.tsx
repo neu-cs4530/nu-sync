@@ -3,6 +3,7 @@ import './index.css';
 import NimGamePage from '../nimGamePage';
 import useGamePage from '../../../../hooks/useGamePage';
 import { GameInstance, NimGameState } from '../../../../types/types';
+import SpotifyGamePage from '../spotifyGamePage';
 
 /**
  * Component to display the game page for a specific game type, including controls and game state.
@@ -27,6 +28,8 @@ const GamePage = () => {
     switch (gameType) {
       case 'Nim':
         return <NimGamePage gameInstance={gameInstance as GameInstance<NimGameState>} />;
+      case 'Spotify':
+        return <SpotifyGamePage />;
       default:
         return <div>Unknown game type</div>;
     }
@@ -35,7 +38,7 @@ const GamePage = () => {
   return (
     <div className='game-page'>
       <header className='game-header'>
-        <h1>Nim Game</h1>
+        <h1>{gameInstance?.gameType ?? 'Game'} Game</h1>
         <p className='game-status'>
           Status: {gameInstance ? gameInstance.state.status : 'Not started'}
         </p>

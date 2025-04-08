@@ -32,13 +32,15 @@ const useAllGamesPage = () => {
   const handleCreateGame = async (gameType: GameType) => {
     try {
       await createGame(gameType);
-      await fetchGames(); // Refresh the list after creating a game
+      await fetchGames(); 
     } catch (createGameError) {
+      console.error('Error creating game:', createGameError);
       setError('Error creating game');
     }
   };
 
   const handleJoin = (gameID: string) => {
+    console.log("JOINING GAME", gameID)
     navigate(`/games/${gameID}`);
   };
 
@@ -50,8 +52,8 @@ const useAllGamesPage = () => {
     setIsModalOpen(prevState => !prevState);
   };
 
-  const handleSelectGameType = (gameType: GameType) => {
-    handleCreateGame(gameType);
+  const handleSelectGameType = async (gameType: GameType) => {
+    await handleCreateGame(gameType);
     handleToggleModal();
   };
 

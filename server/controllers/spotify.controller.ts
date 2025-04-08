@@ -767,60 +767,74 @@ const spotifyController = (socket: FakeSOSocket) => {
    */
   const startSpotifyGame = async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log(`[startSpotifyGame] Received request to start game`);
+      console.log(`[startSpotifyGame] Body:`, req.body);
+
       const { username } = req.body;
-      
+
       if (!username) {
         res.status(400).json({ error: 'Username is required' });
-        return;
+        return
       }
-      
-      // get user from database
+
+      console.log('[startSpotifyGame] Request received for username:', username);
+
+      // Fetch user from DB
       const user = await UserModel.findOne({ username });
       if (!user) {
+        console.error('[startSpotifyGame] No user found for username:', username);
         res.status(404).json({ error: 'User not found' });
-        return;
+        return
       }
-      
-      // check if user has Spotify connected
+
+      // Check for Spotify token
       if (!user.spotifyAccessToken) {
+        console.error('[startSpotifyGame] User has no Spotify access token');
         res.status(400).json({ error: 'User has not connected Spotify' });
-        return;
+        return
       }
-      
-      // create a new Spotify game
+
+      console.log('[startSpotifyGame] Creating game...');
       const gameId = await GameManager.getInstance().addGame(
         'Spotify',
         username,
         user.spotifyAccessToken
       );
-      
-      if (typeof gameId !== 'string') {
-        throw new Error(gameId.error);
+
+      console.log(`[startSpotifyGame] Created game with ID: ${gameId}`);
+
+      if (!gameId || typeof gameId !== 'string') {
+        const errMsg = typeof gameId === 'object' && 'error' in gameId
+          ? gameId.error
+          : 'Unknown error during game creation';
+        console.error('[startSpotifyGame] Invalid game ID:', errMsg);
+        throw new Error(errMsg);
       }
-      
-      // get the game instance
+
       const game = GameManager.getInstance().getGame(gameId);
-      
+
       if (!game) {
+        console.error('[startSpotifyGame] No game instance found for ID:', gameId);
         throw new Error('Game not found');
       }
-      
-      // join the game
-      const playerId = username; 
-      game.join(playerId);
-      
-      // Get the game state
+
+      console.log('[startSpotifyGame] Game instance found. Joining game...');
+      game.join(username);
+
       const gameState = game.toModel();
-      
+      const hint = (game as any).hint ?? 'No hint generated yet';
+
       res.status(200).json({
         gameId,
-        hint: (game as any).hint,
+        hint,
         maxGuesses: 3,
       });
     } catch (error) {
+      console.error('[startSpotifyGame] Caught error:', error);
       res.status(500).json({ error: 'Error starting Spotify game' });
     }
   };
+
 
   /**
    * Checks a user's guess for a song.
@@ -832,6 +846,8 @@ const spotifyController = (socket: FakeSOSocket) => {
   const checkSpotifyGuess = async (req: Request, res: Response): Promise<void> => {
     try {
       const { gameId, guess, username } = req.body;
+
+      console.log("CHECK SPOTIFY GUESS", req.body)
       
       if (!gameId || !guess || !username) {
         res.status(400).json({ error: 'Game ID, guess, and username are required' });
