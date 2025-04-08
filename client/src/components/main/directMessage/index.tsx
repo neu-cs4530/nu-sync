@@ -191,13 +191,11 @@ const DirectMessage = () => {
     // Add message header with username and timestamp
     const messageHeader = (
       <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          <span>{message.msgFrom}</span>
           {sender?.onlineStatus && (
             <UserStatusIcon status={sender.onlineStatus.status} />
           )}
-          <span className="font-medium text-gray-800 ml-1">
-            {message.msgFrom}
-          </span>
         </div>
         <div className="text-xs text-gray-500">
           {getMetaData(new Date(message.msgDateTime))}

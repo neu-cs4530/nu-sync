@@ -222,29 +222,34 @@ const UserCardView = (props: UserProps) => {
   };
 
   return (
-    <div className='user-card-container'>
-      <div className='user-card' onClick={() => handleUserCardViewClickHandler(user)}>
-        <div className='user-info'>
-          <div className='user-name'>
-            {user.onlineStatus?.status && <UserStatusIcon status={user.onlineStatus.status} />}
+    <div className="user-card-container">
+      <div
+        className="user-card"
+        onClick={() => handleUserCardViewClickHandler(user)}
+      >
+        <div className="user-info">
+          <div className="flex items-center gap-2">
             {user.username}
-            
+            {user.onlineStatus?.status && (
+              <UserStatusIcon status={user.onlineStatus.status} />
+            )}
           </div>
-          <div className='user-details'>
+          <div className="user-details">
             {!isCurrentUser && mutualFriendsCount > 0 && (
-              <span className='mutual-friends-label'>
-                {mutualFriendsCount} mutual {mutualFriendsCount === 1 ? 'friend' : 'friends'}
+              <span className="mutual-friends-label">
+                {mutualFriendsCount} mutual{' '}
+                {mutualFriendsCount === 1 ? 'friend' : 'friends'}
               </span>
             )}
-            <span className='join-date'>Joined {formatDate(user.dateJoined)}</span>
+            <span className="join-date">
+              Joined {formatDate(user.dateJoined)}
+            </span>
           </div>
         </div>
-        <div className='user-actions'>{renderActionButton()}</div>
-
-       
+        <div className="user-actions">{renderActionButton()}</div>
       </div>
 
-      {statusMessage && <div className='status-message'>{statusMessage}</div>}
+      {statusMessage && <div className="status-message">{statusMessage}</div>}
     </div>
   );
 };
