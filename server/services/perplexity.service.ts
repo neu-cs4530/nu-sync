@@ -53,7 +53,7 @@ const generateHintPerplexity = async (song: string, artist: string): Promise<str
 
         return cleaned;
     } catch (error) {
-        throw new Error('Failed to generate hint using Perplexity hi');
+        throw new Error('Failed to generate hint using Perplexity');
     }
 };
 
