@@ -8,6 +8,12 @@ import {
   updateFriendRequestStatus,
   getMutualFriends,
 } from '../../../../services/friendService';
+import {
+  blockUser,
+  unblockUser,
+  isUserBlocked,
+} from '../../../../services/userService';
+
 import useUserContext from '../../../../hooks/useUserContext';
 import UserStatusIcon from '../../UserStatusIcon';
 
@@ -36,6 +42,7 @@ const UserCardView = (props: UserProps) => {
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [mutualFriendsCount, setMutualFriendsCount] = useState<number>(0);
+  const userIsBlocked = isUserBlocked(currentUser, user.username);
 
   const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
@@ -59,6 +66,27 @@ const UserCardView = (props: UserProps) => {
       day: 'numeric',
     };
     return date.toLocaleDateString(undefined, options);
+  };
+
+  const handleBlockToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event from firing
+
+    try {
+      if (userIsBlocked) {
+        // Unblock user
+        await unblockUser(currentUser.username, user.username);
+      } else {
+        // Block user
+        await blockUser(currentUser.username, user.username);
+      }
+      // The socket event will update the UI automatically
+    } catch (err) {
+      // eslint-disable-next-line
+      console.error(
+        `Failed to ${userIsBlocked ? 'unblock' : 'block'} user:`,
+        err,
+      );
+    }
   };
 
   useEffect(() => {
@@ -228,27 +256,33 @@ const UserCardView = (props: UserProps) => {
         onClick={() => handleUserCardViewClickHandler(user)}
       >
         <div className="user-info">
-          <div className="flex items-center gap-2">
-            {user.username}
-            {user.onlineStatus?.status && (
-              <UserStatusIcon status={user.onlineStatus.status} />
-            )}
-          </div>
+          <div className="user-name">{user.username}</div>
           <div className="user-details">
-            {!isCurrentUser && mutualFriendsCount > 0 && (
+            <span className="join-date">
+              Joined: {formatDate(user.dateJoined)}
+            </span>
+            {mutualFriendsCount > 0 && (
               <span className="mutual-friends-label">
-                {mutualFriendsCount} mutual{' '}
-                {mutualFriendsCount === 1 ? 'friend' : 'friends'}
+                {mutualFriendsCount} mutual friend
+                {mutualFriendsCount > 1 ? 's' : ''}
               </span>
             )}
-            <span className="join-date">
-              Joined {formatDate(user.dateJoined)}
-            </span>
           </div>
         </div>
-        <div className="user-actions">{renderActionButton()}</div>
-      </div>
 
+        {/* Only show actions if it's not the current user */}
+        {!isCurrentUser && (
+          <div className="user-actions">
+            {renderActionButton()}
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
+        )}
+      </div>
       {statusMessage && <div className="status-message">{statusMessage}</div>}
     </div>
   );

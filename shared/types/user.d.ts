@@ -57,6 +57,7 @@ export interface User extends UserCredentials {
   playlistHistory?: PlaylistHistory[];
   spotifyConflictTemp?: boolean;
   spotifyConflictUserId?: string;
+  blockedUsers?: string[];
 }
 
 /**
@@ -77,6 +78,7 @@ export interface User extends UserCredentials {
 export interface DatabaseUser extends User {
   _id: ObjectId;
   friends: string[];
+  blockedUsers: string[];
 }
 
 /**
@@ -208,7 +210,6 @@ export interface PlaylistHistory {
   lastPlayed: Date;
 }
 
-
 /**
  * Express request for updating a user's online status.
  */
@@ -224,7 +225,6 @@ export interface UpdateOnlineStatusRequest extends Request {
   };
 }
 
-
 /**
  * Express request for updating a user's online status.
  */
@@ -235,5 +235,12 @@ export interface UpdateQuietHoursRequest extends Request {
       start: string; // "HH:mm"
       end: string; // "HH:mm"
     };
+  };
+}
+
+export interface BlockUserRequest extends Request {
+  body: {
+    username: string; // Username of the user performing the block
+    userToBlock: string; // Username of the user to be blocked
   };
 }

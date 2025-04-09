@@ -218,6 +218,61 @@ const setUserStatus = async (
   return res.data;
 };
 
+/**
+ * Blocks a user by adding them to the blocker's blockedUsers array.
+ * @param username - Username of the user performing the block
+ * @param userToBlock - Username of the user being blocked
+ * @returns Promise resolving to the updated user
+ */
+const blockUser = async (
+  username: string,
+  userToBlock: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/block`, {
+    username,
+    userToBlock,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error when blocking user');
+  }
+
+  return res.data;
+};
+
+/**
+ * Unblocks a user by removing them from the blocker's blockedUsers array.
+ * @param username - Username of the user performing the unblock
+ * @param userToUnblock - Username of the user being unblocked
+ * @returns Promise resolving to the updated user
+ */
+const unblockUser = async (
+  username: string,
+  userToUnblock: string,
+): Promise<SafeDatabaseUser> => {
+  const res = await api.post(`${USER_API_URL}/unblock`, {
+    username,
+    userToBlock: userToUnblock,
+  });
+
+  if (res.status !== 200) {
+    throw new Error('Error when unblocking user');
+  }
+
+  return res.data;
+};
+
+/**
+ * Checks if a user is blocked by the current user.
+ * @param currentUser - The current user object
+ * @param usernameToCheck - Username to check if blocked
+ * @returns Boolean indicating if the user is blocked
+ */
+const isUserBlocked = (
+  currentUser: SafeDatabaseUser,
+  usernameToCheck: string,
+): boolean => currentUser.blockedUsers?.includes(usernameToCheck) || false;
+
 export {
   getUsers,
   getUserByUsername,
@@ -230,4 +285,7 @@ export {
   updateSpotifyTokens,
   updatePrivacySettings,
   setUserStatus,
+  blockUser,
+  unblockUser,
+  isUserBlocked,
 };
