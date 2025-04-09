@@ -8,6 +8,7 @@ import {
   UpdateBiographyRequest,
   UpdatePrivacySettingsRequest,
   UpdateOnlineStatusRequest,
+  BlockUserRequest,
 } from '../types/types';
 import {
   deleteUserByUsername,
@@ -17,6 +18,8 @@ import {
   saveUser,
   updateUser,
   updateUserPrivacySettings,
+  blockUser,
+  unblockUser,
 } from '../services/user.service';
 
 const userController = (socket: FakeSOSocket) => {
@@ -44,15 +47,19 @@ const userController = (socket: FakeSOSocket) => {
     req.body.username !== undefined &&
     req.body.username.trim() !== '' &&
     req.body.biography !== undefined;
-  
+
   const isOnlineStatusBodyValid = (req: UpdateOnlineStatusRequest): boolean =>
     req.body !== undefined &&
     req.body.username !== undefined &&
     req.body.username.trim() !== '' &&
     req.body.onlineStatus !== undefined &&
-    ['online', 'away', 'busy', 'invisible'].includes(req.body.onlineStatus.status) &&
+    ['online', 'away', 'busy', 'invisible'].includes(
+      req.body.onlineStatus.status,
+    ) &&
     (req.body.onlineStatus.status !== 'busy' ||
-      ['friends-only', 'everyone'].includes(req.body.onlineStatus.busySettings?.muteScope || ''));
+      ['friends-only', 'everyone'].includes(
+        req.body.onlineStatus.busySettings?.muteScope || '',
+      ));
 
   /**
    * Validates that the request body contains all required fields to update privacy settings.
@@ -69,6 +76,19 @@ const userController = (socket: FakeSOSocket) => {
     req.body.privacySettings.profileVisibility !== undefined &&
     (req.body.privacySettings.profileVisibility === 'public' ||
       req.body.privacySettings.profileVisibility === 'private');
+
+  /**
+   * Validates that the request body contains all required fields for a block/unblock action.
+   * @param req The incoming request containing block data.
+   * @returns `true` if the body contains valid block fields; otherwise, `false`.
+   */
+  const isBlockBodyValid = (req: BlockUserRequest): boolean =>
+    req.body !== undefined &&
+    req.body.username !== undefined &&
+    req.body.username.trim() !== '' &&
+    req.body.userToBlock !== undefined &&
+    req.body.userToBlock.trim() !== '' &&
+    req.body.username !== req.body.userToBlock;
 
   /**
    * Handles the creation of a new user account.
@@ -156,8 +176,8 @@ const userController = (socket: FakeSOSocket) => {
       // Return the updated user to the logging-in user
       res.status(200).json(updatedUser);
     } catch (error) {
-    res.status(500).send('Login failed');
-  }
+      res.status(500).send('Login failed');
+    }
   };
 
   /**
@@ -371,6 +391,77 @@ const userController = (socket: FakeSOSocket) => {
     }
   };
 
+  /**
+   * Handles blocking a user.
+   * @param req The request containing the username and the user to block.
+   * @param res The response, either returning the updated user or an error.
+   * @returns A promise resolving to void.
+   */
+  const handleBlockUser = async (
+    req: BlockUserRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      if (!isBlockBodyValid(req)) {
+        res.status(400).send('Invalid block request');
+        return;
+      }
+
+      const { username, userToBlock } = req.body;
+
+      const result = await blockUser(username, userToBlock);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      // Emit socket event for real-time updates
+      socket.emit('userUpdate', {
+        user: result,
+        type: 'updated',
+      });
+
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error blocking user: ${error}`);
+    }
+  };
+
+  /**
+   * Handles unblocking a user.
+   * @param req The request containing the username and the user to unblock.
+   * @param res The response, either returning the updated user or an error.
+   * @returns A promise resolving to void.
+   */
+  const handleUnblockUser = async (
+    req: BlockUserRequest,
+    res: Response,
+  ): Promise<void> => {
+    try {
+      if (!isBlockBodyValid(req)) {
+        res.status(400).send('Invalid unblock request');
+        return;
+      }
+
+      const { username, userToBlock: userToUnblock } = req.body;
+
+      const result = await unblockUser(username, userToUnblock);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      // Emit socket event for real-time updates
+      socket.emit('userUpdate', {
+        user: result,
+        type: 'updated',
+      });
+
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).send(`Error unblocking user: ${error}`);
+    }
+  };
 
   // Define routes for the user-related operations.
   router.post('/signup', createUser);
@@ -382,6 +473,8 @@ const userController = (socket: FakeSOSocket) => {
   router.patch('/updateBiography', updateBiography);
   router.patch('/updatePrivacySettings', updatePrivacySettings);
   router.patch('/updateOnlineStatus', updateOnlineStatus);
+  router.post('/block', handleBlockUser);
+  router.post('/unblock', handleUnblockUser);
   return router;
 };
 

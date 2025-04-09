@@ -18,6 +18,7 @@ import { Schema } from 'mongoose';
  * - `playlists`: Stores user-created playlists.
  * - `currentlyPlaying`: The currently playing track on Spotify.
  * - `playlistHistory`: The history of playlists the user has interacted with.
+ * - `blockedUsers`: An array of usernames representing users that have been blocked.
  */
 const userSchema: Schema = new Schema(
   {
@@ -37,6 +38,10 @@ const userSchema: Schema = new Schema(
       default: '',
     },
     friends: {
+      type: [String],
+      default: [],
+    },
+    blockedUsers: {
       type: [String],
       default: [],
     },
