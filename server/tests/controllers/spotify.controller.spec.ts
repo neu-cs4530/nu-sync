@@ -4,6 +4,8 @@ import axios from 'axios';
 import express from 'express';
 import UserModel from '../../models/users.model';
 import { DatabaseUser } from '../../types/types';
+import generateHintGemini from '../../services/gemini.service';
+import generateHintPerplexity from '../../services/perplexity.service';
 
 import { app } from '../../app';
 
@@ -11,6 +13,14 @@ jest.mock('../../models/users.model');
 const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('../../services/gemini.service', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+jest.mock('../../services/perplexity.service', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 
 describe('Spotify Controller Tests', () => {
   beforeEach(() => {
@@ -1264,4 +1274,101 @@ describe('Spotify Controller Tests', () => {
       expect(response.body.error).toBe('Failed to fetch conflict status');
     });
   });
+
+
+  describe('POST /spotify/generateRandomTrackAndHint', () => {
+    const mockTrack = {
+      name: 'Test Song',
+      artists: [{ name: 'Test Artist' }],
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should return a random track and generated hint using Gemini', async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { items: Array(10).fill(mockTrack) },
+      });
+
+      const hint = 'This is a hint for Test Song by Test Artist';
+      jest.mocked(generateHintGemini).mockResolvedValue(hint);
+
+      const response = await supertest(app)
+        .post('/spotify/generateRandomTrackAndHint')
+        .send({ accessToken: 'valid-token', llm: 'gemini' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        songName: 'Test Song',
+        artistName: 'Test Artist',
+        hint,
+      });
+    });
+
+    it('should return a random track and generated hint using Perplexity', async () => {
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { items: Array(10).fill(mockTrack) },
+      });
+
+      const hint = 'Perplexity hint';
+      jest.mocked(generateHintPerplexity).mockResolvedValue(hint);
+
+      const response = await supertest(app)
+        .post('/spotify/generateRandomTrackAndHint')
+        .send({ accessToken: 'valid-token', llm: 'perplexity' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.hint).toBe(hint);
+    });
+
+    it('should return 404 if no top tracks are found', async () => {
+      mockedAxios.get.mockResolvedValueOnce({ data: { items: [] } });
+
+      const response = await supertest(app)
+        .post('/spotify/generateRandomTrackAndHint')
+        .send({ accessToken: 'valid-token' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('No top tracks found for this user.');
+    });
+
+    it('should return 500 if Spotify API fails', async () => {
+      mockedAxios.get.mockRejectedValueOnce(new Error('Spotify error'));
+
+      const response = await supertest(app)
+        .post('/spotify/generateRandomTrackAndHint')
+        .send({ accessToken: 'invalid-token' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.error).toBe('Failed to generate track and hint');
+    });
+
+    it('should default artist name to "Unknown Artist" if artist name is missing', async () => {
+      const mockTrack = {
+        name: 'Song1',
+        artists: [{}], 
+      };
+
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { items: Array(10).fill(mockTrack) },
+      });
+
+      const hint = 'hint';
+      jest.mocked(generateHintGemini).mockResolvedValue(hint);
+
+      const response = await supertest(app)
+        .post('/spotify/generateRandomTrackAndHint')
+        .send({ accessToken: 'valid-token', llm: 'gemini' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        songName: 'Song1',
+        artistName: 'Unknown Artist',
+        hint,
+      });
+    });
+  });
+
+
 });

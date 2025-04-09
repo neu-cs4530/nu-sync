@@ -1,289 +1,356 @@
-// import NimModel from '../../../models/nim.model';
-// import GameManager from '../../../services/games/gameManager';
-// import NimGame from '../../../services/games/nim';
-// import { MAX_NIM_OBJECTS } from '../../../types/constants';
-// import { GameInstance, GameInstanceID, NimGameState, GameType } from '../../../types/types';
+import axios from 'axios';
+import NimModel from '../../../models/nim.model';
+import SpotifyModel from '../../../models/spotify.model';
+import GameManager from '../../../services/games/gameManager';
+import NimGame from '../../../services/games/nim';
+import { MAX_NIM_OBJECTS } from '../../../types/constants';
+import { GameInstance, GameInstanceID, NimGameState, GameType } from '../../../types/types';
+import SpotifyGame from '../../../services/games/spotify';
 
-// // eslint-disable-next-line @typescript-eslint/no-var-requires
-// const mockingoose = require('mockingoose');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const mockingoose = require('mockingoose');
 
-// jest.mock('nanoid', () => ({
-//   nanoid: jest.fn(() => 'testGameID'), // Mock the return value
-// }));
+jest.mock('nanoid', () => ({
+  nanoid: jest.fn(() => 'testGameID'), // Mock the return value
+}));
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// describe('GameManager', () => {
-//   afterEach(() => {
-//     GameManager.resetInstance(); // Call the reset method
-//   });
+describe('GameManager', () => {
+  afterEach(() => {
+    GameManager.resetInstance(); // Call the reset method
+  });
 
-//   describe('constructor', () => {
-//     it('should create a singleton instance of GameManager', () => {
-//       const gameManager = GameManager.getInstance();
+  describe('constructor', () => {
+    it('should create a singleton instance of GameManager', () => {
+      const gameManager = GameManager.getInstance();
 
-//       // Object references should be the same
-//       expect(GameManager.getInstance()).toBe(gameManager);
-//     });
-//   });
+      // Object references should be the same
+      expect(GameManager.getInstance()).toBe(gameManager);
+    });
+  });
 
-//   describe('resetInstance', () => {
-//     it('should reset the singleton instance of GameManager', () => {
-//       const gameManager1 = GameManager.getInstance();
+  describe('resetInstance', () => {
+    it('should reset the singleton instance of GameManager', () => {
+      const gameManager1 = GameManager.getInstance();
 
-//       GameManager.resetInstance();
+      GameManager.resetInstance();
 
-//       const gameManager2 = GameManager.getInstance();
+      const gameManager2 = GameManager.getInstance();
 
-//       expect(gameManager1).not.toBe(gameManager2);
-//     });
-//   });
+      expect(gameManager1).not.toBe(gameManager2);
+    });
+  });
 
-//   describe('addGame', () => {
-//     const mapSetSpy = jest.spyOn(Map.prototype, 'set');
+  describe('addGame', () => {
+    const mapSetSpy = jest.spyOn(Map.prototype, 'set');
 
-//     it('should return the gameID for a successfully created game', async () => {
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+    it('should return the gameID for a successfully created game', async () => {
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
 
-//       const gameManager = GameManager.getInstance();
-//       const gameID = await gameManager.addGame('Nim');
+      const gameManager = GameManager.getInstance();
+      const gameID = await gameManager.addGame('Nim');
 
-//       expect(gameID).toEqual('testGameID');
-//       expect(mapSetSpy).toHaveBeenCalledWith(gameID, expect.any(NimGame));
-//     });
+      expect(gameID).toEqual('testGameID');
+      expect(mapSetSpy).toHaveBeenCalledWith(gameID, expect.any(NimGame));
+    });
 
-//     it('should return an error for an invalid game type', async () => {
-//       const gameManager = GameManager.getInstance();
-//       // casting string for error testing purposes
-//       const error = await gameManager.addGame('fakeGame' as GameType);
+    it('should return an error for an invalid game type', async () => {
+      const gameManager = GameManager.getInstance();
+      // casting string for error testing purposes
+      const error = await gameManager.addGame('fakeGame' as GameType);
 
-//       expect(mapSetSpy).not.toHaveBeenCalled();
-//       expect(error).toHaveProperty('error');
-//       expect(error).toEqual({ error: 'Invalid game type' });
-//     });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+      expect(error).toHaveProperty('error');
+      expect(error).toEqual({ error: 'Invalid game type' });
+    });
 
-//     it('should return an error for a database error', async () => {
-//       jest.spyOn(NimModel, 'create').mockRejectedValueOnce(() => new Error('database error'));
+    it('should return an error for a database error', async () => {
+      jest.spyOn(NimModel, 'create').mockRejectedValueOnce(() => new Error('database error'));
 
-//       const gameManager = GameManager.getInstance();
-//       // casting string for error testing purposes
-//       const error = await gameManager.addGame('Nim');
+      const gameManager = GameManager.getInstance();
+      // casting string for error testing purposes
+      const error = await gameManager.addGame('Nim');
 
-//       expect(mapSetSpy).not.toHaveBeenCalled();
-//       expect(error).toHaveProperty('error');
-//     });
-//   });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+      expect(error).toHaveProperty('error');
+    });
 
-//   describe('removeGame', () => {
-//     const mapDeleteSpy = jest.spyOn(Map.prototype, 'delete');
+    it('should return gameID for a successfully created Spotify game', async () => {
+      const mockHintResponse = {
+        data: {
+          songName: 'Test Song',
+          artistName: 'Test Artist',
+          hint: 'This is a test hint',
+        },
+      };
 
-//     it('should remove the game with the provided gameID', async () => {
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+      mockedAxios.post.mockResolvedValueOnce(mockHintResponse);
+      mockingoose(SpotifyModel).toReturn(new SpotifyGame('user123', 'token', 'hint', 'song', 'artist').toModel(), 'create');
 
-//       // assemble
-//       const gameManager = GameManager.getInstance();
-//       const gameID = await gameManager.addGame('Nim');
-//       expect(gameManager.getActiveGameInstances().length).toEqual(1);
+      const gameManager = GameManager.getInstance();
+      const gameID = await gameManager.addGame('Spotify', 'user123', 'token');
 
-//       if (typeof gameID === 'string') {
-//         // act
-//         const removed = gameManager.removeGame(gameID);
+      expect(typeof gameID).toBe('string');
+      expect(gameID).toEqual('testGameID');
+      expect(mapSetSpy).toHaveBeenCalledWith(gameID, expect.any(SpotifyGame));
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `${process.env.SERVER_URL}/spotify/generateRandomTrackAndHint`,
+        { accessToken: 'token' }
+      );
+    });
 
-//         // assess
-//         expect(removed).toBeTruthy();
-//         expect(gameManager.getActiveGameInstances().length).toEqual(0);
-//         expect(mapDeleteSpy).toHaveBeenCalledWith(gameID);
-//       }
-//     });
+    it('should return error if axios.post fails in Spotify case', async () => {
+      mockedAxios.post.mockRejectedValueOnce(new Error('LLM API failure'));
 
-//     it('should return false if there is no game with the provided gameID', async () => {
-//       // assemble
-//       const gameManager = GameManager.getInstance();
-//       const gameID = 'fakeGameID';
+      const gameManager = GameManager.getInstance();
+      const error = await gameManager.addGame('Spotify', 'user123', 'token');
 
-//       // act
-//       const removed = gameManager.removeGame(gameID);
+      expect(error).toEqual({ error: 'LLM API failure' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+    });
 
-//       // assess
-//       expect(removed).toBeFalsy();
-//       expect(mapDeleteSpy).toHaveBeenCalledWith(gameID);
-//     });
-//   });
+    it('should return error if SpotifyModel.create fails', async () => {
+      const mockHintResponse = {
+        data: {
+          songName: 'Test Song',
+          artistName: 'Test Artist',
+          hint: 'This is a test hint',
+        },
+      };
 
-//   describe('joinGame', () => {
-//     let gameManager: GameManager;
-//     let gameID: GameInstanceID;
+      mockedAxios.post.mockResolvedValueOnce(mockHintResponse);
+      jest.spyOn(SpotifyModel, 'create').mockRejectedValueOnce(new Error('DB error'));
 
-//     beforeEach(async () => {
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+      const gameManager = GameManager.getInstance();
+      const error = await gameManager.addGame('Spotify', 'user123', 'token');
 
-//       gameManager = GameManager.getInstance();
-//       const addGameResult = await gameManager.addGame('Nim');
+      expect(error).toEqual({ error: 'DB error' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+    });
 
-//       if (typeof addGameResult === 'string') {
-//         gameID = addGameResult;
-//       }
-//     });
+    it('should return error if missing username or accessToken for Spotify', async () => {
+      const gameManager = GameManager.getInstance();
 
-//     it('should join the requested game', async () => {
-//       const gameState: GameInstance<NimGameState> = {
-//         state: {
-//           moves: [],
-//           player1: 'player1',
-//           status: 'WAITING_TO_START',
-//           remainingObjects: MAX_NIM_OBJECTS,
-//         },
-//         gameID,
-//         players: ['player1'],
-//         gameType: 'Nim',
-//       };
+      const error = await gameManager.addGame('Spotify'); // missing both
 
-//       const saveGameStateSpy = jest
-//         .spyOn(NimGame.prototype, 'saveGameState')
-//         .mockResolvedValueOnce();
-//       const nimGameJoinSpy = jest.spyOn(NimGame.prototype, 'join');
+      expect(error).toEqual({ error: 'Missing Spotify credentials' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+    });
+  });
 
-//       const gameJoined = await gameManager.joinGame(gameID, 'player1');
+  describe('removeGame', () => {
+    const mapDeleteSpy = jest.spyOn(Map.prototype, 'delete');
 
-//       expect(saveGameStateSpy).toHaveBeenCalled();
-//       expect(nimGameJoinSpy).toHaveBeenCalledWith('player1');
-//       expect(gameJoined).toEqual(gameState);
-//     });
+    it('should remove the game with the provided gameID', async () => {
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
 
-//     it('should throw an error if the game does not exist', async () => {
-//       const response = await gameManager.joinGame('fakeGameID', 'player1');
+      // assemble
+      const gameManager = GameManager.getInstance();
+      const gameID = await gameManager.addGame('Nim');
+      expect(gameManager.getActiveGameInstances().length).toEqual(1);
 
-//       expect(response).toEqual({ error: 'Game requested does not exist.' });
-//     });
-//   });
+      if (typeof gameID === 'string') {
+        // act
+        const removed = gameManager.removeGame(gameID);
 
-//   describe('leaveGame', () => {
-//     let gameManager: GameManager;
-//     let gameID: GameInstanceID;
+        // assess
+        expect(removed).toBeTruthy();
+        expect(gameManager.getActiveGameInstances().length).toEqual(0);
+        expect(mapDeleteSpy).toHaveBeenCalledWith(gameID);
+      }
+    });
 
-//     beforeEach(async () => {
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+    it('should return false if there is no game with the provided gameID', async () => {
+      // assemble
+      const gameManager = GameManager.getInstance();
+      const gameID = 'fakeGameID';
 
-//       gameManager = GameManager.getInstance();
-//       const addGameResult = await gameManager.addGame('Nim');
+      // act
+      const removed = gameManager.removeGame(gameID);
 
-//       if (typeof addGameResult === 'string') {
-//         gameID = addGameResult;
-//         await gameManager.joinGame(gameID, 'player1');
-//       }
-//     });
+      // assess
+      expect(removed).toBeFalsy();
+      expect(mapDeleteSpy).toHaveBeenCalledWith(gameID);
+    });
+  });
 
-//     it('should leave the requested game', async () => {
-//       const gameState: GameInstance<NimGameState> = {
-//         state: {
-//           moves: [],
-//           status: 'WAITING_TO_START',
-//           remainingObjects: MAX_NIM_OBJECTS,
-//         },
-//         gameID,
-//         players: [],
-//         gameType: 'Nim',
-//       };
+  describe('joinGame', () => {
+    let gameManager: GameManager;
+    let gameID: GameInstanceID;
 
-//       const saveGameStateSpy = jest
-//         .spyOn(NimGame.prototype, 'saveGameState')
-//         .mockResolvedValueOnce();
-//       const nimGameLeaveSpy = jest.spyOn(NimGame.prototype, 'leave');
+    beforeEach(async () => {
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
 
-//       const gameLeft = await gameManager.leaveGame(gameID, 'player1');
+      gameManager = GameManager.getInstance();
+      const addGameResult = await gameManager.addGame('Nim');
 
-//       expect(saveGameStateSpy).toHaveBeenCalled();
-//       expect(nimGameLeaveSpy).toHaveBeenCalledWith('player1');
-//       expect(gameLeft).toEqual(gameState);
-//     });
+      if (typeof addGameResult === 'string') {
+        gameID = addGameResult;
+      }
+    });
 
-//     it('should leave and remove the requested game if it ends', async () => {
-//       // assemble
-//       await gameManager.joinGame(gameID, 'player2');
+    it('should join the requested game', async () => {
+      const gameState: GameInstance<NimGameState> = {
+        state: {
+          moves: [],
+          player1: 'player1',
+          status: 'WAITING_TO_START',
+          remainingObjects: MAX_NIM_OBJECTS,
+        },
+        gameID,
+        players: ['player1'],
+        gameType: 'Nim',
+      };
 
-//       const gameState: GameInstance<NimGameState> = {
-//         state: {
-//           moves: [],
-//           status: 'OVER',
-//           player1: undefined,
-//           player2: 'player2',
-//           winners: ['player2'],
-//           remainingObjects: MAX_NIM_OBJECTS,
-//         },
-//         gameID: 'testGameID',
-//         players: ['player2'],
-//         gameType: 'Nim',
-//       };
-//       const saveGameStateSpy = jest
-//         .spyOn(NimGame.prototype, 'saveGameState')
-//         .mockResolvedValueOnce();
-//       const nimGameLeaveSpy = jest.spyOn(NimGame.prototype, 'leave');
-//       const removeGameSpy = jest.spyOn(gameManager, 'removeGame');
+      const saveGameStateSpy = jest
+        .spyOn(NimGame.prototype, 'saveGameState')
+        .mockResolvedValueOnce();
+      const nimGameJoinSpy = jest.spyOn(NimGame.prototype, 'join');
 
-//       const gameLeft = await gameManager.leaveGame(gameID, 'player1');
+      const gameJoined = await gameManager.joinGame(gameID, 'player1');
 
-//       expect(saveGameStateSpy).toHaveBeenCalled();
-//       expect(nimGameLeaveSpy).toHaveBeenCalledWith('player1');
-//       expect(removeGameSpy).toHaveBeenLastCalledWith(gameID);
-//       expect(gameLeft).toEqual(gameState);
-//     });
+      expect(saveGameStateSpy).toHaveBeenCalled();
+      expect(nimGameJoinSpy).toHaveBeenCalledWith('player1');
+      expect(gameJoined).toEqual(gameState);
+    });
 
-//     it('should throw an error if the game does not exist', async () => {
-//       const response = await gameManager.leaveGame('fakeGameID', 'player1');
+    it('should throw an error if the game does not exist', async () => {
+      const response = await gameManager.joinGame('fakeGameID', 'player1');
 
-//       expect(response).toEqual({ error: 'Game requested does not exist.' });
-//     });
-//   });
+      expect(response).toEqual({ error: 'Game requested does not exist.' });
+    });
+  });
 
-//   describe('getGame', () => {
-//     let gameManager: GameManager;
-//     const mapGetSpy = jest.spyOn(Map.prototype, 'get');
+  describe('leaveGame', () => {
+    let gameManager: GameManager;
+    let gameID: GameInstanceID;
 
-//     beforeEach(() => {
-//       gameManager = GameManager.getInstance();
-//     });
+    beforeEach(async () => {
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
 
-//     it('should return the game if it exists', async () => {
-//       // assemble
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+      gameManager = GameManager.getInstance();
+      const addGameResult = await gameManager.addGame('Nim');
 
-//       const gameID = await gameManager.addGame('Nim');
+      if (typeof addGameResult === 'string') {
+        gameID = addGameResult;
+        await gameManager.joinGame(gameID, 'player1');
+      }
+    });
 
-//       if (typeof gameID === 'string') {
-//         // act
-//         const game = gameManager.getGame(gameID);
+    it('should leave the requested game', async () => {
+      const gameState: GameInstance<NimGameState> = {
+        state: {
+          moves: [],
+          status: 'WAITING_TO_START',
+          remainingObjects: MAX_NIM_OBJECTS,
+        },
+        gameID,
+        players: [],
+        gameType: 'Nim',
+      };
 
-//         expect(game).toBeInstanceOf(NimGame);
-//         expect(mapGetSpy).toHaveBeenCalledWith(gameID);
-//       }
-//     });
+      const saveGameStateSpy = jest
+        .spyOn(NimGame.prototype, 'saveGameState')
+        .mockResolvedValueOnce();
+      const nimGameLeaveSpy = jest.spyOn(NimGame.prototype, 'leave');
 
-//     it('should return undefined if the game request does not exist', () => {
-//       const gameID = 'fakeGameID';
-//       const game = gameManager.getGame(gameID);
+      const gameLeft = await gameManager.leaveGame(gameID, 'player1');
 
-//       expect(game).toBeUndefined();
-//       expect(mapGetSpy).toHaveBeenCalledWith(gameID);
-//     });
-//   });
+      expect(saveGameStateSpy).toHaveBeenCalled();
+      expect(nimGameLeaveSpy).toHaveBeenCalledWith('player1');
+      expect(gameLeft).toEqual(gameState);
+    });
 
-//   describe('getActiveGameInstances', () => {
-//     it('should be empty on initialization', () => {
-//       const games = GameManager.getInstance().getActiveGameInstances();
-//       expect(games.length).toEqual(0);
-//     });
+    it('should leave and remove the requested game if it ends', async () => {
+      // assemble
+      await gameManager.joinGame(gameID, 'player2');
 
-//     it('should return active games', async () => {
-//       mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
-//       // assemble
-//       const gameManager = GameManager.getInstance();
-//       await gameManager.addGame('Nim');
+      const gameState: GameInstance<NimGameState> = {
+        state: {
+          moves: [],
+          status: 'OVER',
+          player1: undefined,
+          player2: 'player2',
+          winners: ['player2'],
+          remainingObjects: MAX_NIM_OBJECTS,
+        },
+        gameID: 'testGameID',
+        players: ['player2'],
+        gameType: 'Nim',
+      };
+      const saveGameStateSpy = jest
+        .spyOn(NimGame.prototype, 'saveGameState')
+        .mockResolvedValueOnce();
+      const nimGameLeaveSpy = jest.spyOn(NimGame.prototype, 'leave');
+      const removeGameSpy = jest.spyOn(gameManager, 'removeGame');
 
-//       // act
-//       const games = gameManager.getActiveGameInstances();
-//       expect(games.length).toEqual(1);
-//       expect(games[0]).toBeInstanceOf(NimGame);
-//     });
-//   });
-// });
+      const gameLeft = await gameManager.leaveGame(gameID, 'player1');
+
+      expect(saveGameStateSpy).toHaveBeenCalled();
+      expect(nimGameLeaveSpy).toHaveBeenCalledWith('player1');
+      expect(removeGameSpy).toHaveBeenLastCalledWith(gameID);
+      expect(gameLeft).toEqual(gameState);
+    });
+
+    it('should throw an error if the game does not exist', async () => {
+      const response = await gameManager.leaveGame('fakeGameID', 'player1');
+
+      expect(response).toEqual({ error: 'Game requested does not exist.' });
+    });
+  });
+
+  describe('getGame', () => {
+    let gameManager: GameManager;
+    const mapGetSpy = jest.spyOn(Map.prototype, 'get');
+
+    beforeEach(() => {
+      gameManager = GameManager.getInstance();
+    });
+
+    it('should return the game if it exists', async () => {
+      // assemble
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+
+      const gameID = await gameManager.addGame('Nim');
+
+      if (typeof gameID === 'string') {
+        // act
+        const game = gameManager.getGame(gameID);
+
+        expect(game).toBeInstanceOf(NimGame);
+        expect(mapGetSpy).toHaveBeenCalledWith(gameID);
+      }
+    });
+
+    it('should return undefined if the game request does not exist', () => {
+      const gameID = 'fakeGameID';
+      const game = gameManager.getGame(gameID);
+
+      expect(game).toBeUndefined();
+      expect(mapGetSpy).toHaveBeenCalledWith(gameID);
+    });
+  });
+
+  describe('getActiveGameInstances', () => {
+    it('should be empty on initialization', () => {
+      const games = GameManager.getInstance().getActiveGameInstances();
+      expect(games.length).toEqual(0);
+    });
+
+    it('should return active games', async () => {
+      mockingoose(NimModel).toReturn(new NimGame().toModel(), 'create');
+      // assemble
+      const gameManager = GameManager.getInstance();
+      await gameManager.addGame('Nim');
+
+      // act
+      const games = gameManager.getActiveGameInstances();
+      expect(games.length).toEqual(1);
+      expect(games[0]).toBeInstanceOf(NimGame);
+    });
+  });
+});
 
 
 describe('Dummy Test for GameManager', () => {
