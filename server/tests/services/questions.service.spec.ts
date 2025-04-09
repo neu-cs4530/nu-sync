@@ -609,5 +609,18 @@ describe('Question model', () => {
 
       expect(result).toEqual({ error: 'Invalid option index' });
     });
+
+    test('voteOnPoll should return an error when there is an exception during voting', async () => {
+      // Mock QuestionModel.findById to throw an error
+      jest.spyOn(QuestionModel, 'findById').mockImplementation(() => {
+        throw new Error('Database error');
+      });
+
+      // Call the function
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      // Verify the function returns the expected error message
+      expect(result).toEqual({ error: 'Error when voting on poll' });
+    });
   });
 });
