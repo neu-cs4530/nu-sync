@@ -266,7 +266,7 @@ const questionController = (socket: FakeSOSocket) => {
       if (result.poll) {
         socket.emit('pollUpdate', { qid, poll: result.poll });
       } else {
-        res.status(500).send('Poll data is undefined');
+        // res.status(500).send('Poll data is undefined'); already handled in service
       }
       res.json(result);
     } catch (err) {

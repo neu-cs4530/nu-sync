@@ -872,5 +872,39 @@ describe('Test questionController', () => {
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid request');
     });
+
+    it('should handle API errors when voting on a poll', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      // Force the voteOnPoll service to throw an exception
+      voteOnPollSpy.mockImplementationOnce(() => {
+        throw new Error('Database connection failed');
+      });
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Database connection failed');
+    });
+
+    it('should handle network errors when communicating with the database', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      // Mock a network error scenario
+      voteOnPollSpy.mockRejectedValueOnce(new Error('Network failure'));
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Network failure');
+    });
   });
 });
