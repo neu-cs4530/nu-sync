@@ -7,6 +7,7 @@ import { SpotifyTokenResponse } from '../types/spotify';
 import isSpotifyLinkedToAnotherUser from "../services/spotify.service"
 // import generateHintGemini from '../services/gemini.service';
 import generateHintPerplexity from '../services/perplexity.service';
+import generateHintGemini from '../services/gemini.service';
 
 const spotifyController = (socket: FakeSOSocket) => {
   const router: Router = express.Router();
@@ -746,7 +747,7 @@ const spotifyController = (socket: FakeSOSocket) => {
    * * */
   const generateRandomTrackAndHint = async (req: Request, res: Response) => {
     try {
-      const { accessToken } = req.body;
+      const { accessToken, llm = 'gemini' } = req.body;
 
       const topTracksResponse = await axios.get('https://api.spotify.com/v1/me/top/tracks?limit=50', {
         headers: {
@@ -765,17 +766,24 @@ const spotifyController = (socket: FakeSOSocket) => {
       const songName = randomTrack.name;
       const artistName = randomTrack.artists[0]?.name || 'Unknown Artist';
 
-      // generate hint for the track using the Perplexity API
-      const hint = await generateHintPerplexity(songName, artistName);
+      let hint;
 
-      res.status(200).json({
+      if (llm === 'gemini') {
+        hint = await generateHintGemini(songName, artistName);
+      }
+      else {
+        hint = await generateHintPerplexity(songName, artistName);
+      }
+
+      return res.status(200).json({
         songName,
         artistName,
         hint,
       });
+      
+      
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to generate track and hint' });
+      return res.status(500).json({ error: 'Failed to generate track and hint' });
     }
   };
 

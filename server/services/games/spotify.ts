@@ -1,7 +1,7 @@
+import Fuse from 'fuse.js';
 import GameModel from '../../models/games.model';
 import { GameMove, SpotifyMove, SpotifyGameState } from '../../types/types';
 import Game from './game';
-import Fuse from 'fuse.js';
 
 /**
  * Represents a Spotify guessing game, extending the generic Game class.
@@ -21,9 +21,9 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
             won: false,
             status: 'WAITING_TO_START',
             remainingGuesses: 3,
-            hint: hint,
-            songName: songName,
-            artistName: artistName,
+            hint,
+            songName,
+            artistName,
         };
 
         super(initialState, 'Spotify');
@@ -51,7 +51,7 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
         });
 
         const result = fuse.search(guess);
-        const won = result.length > 0 && typeof result[0].score === 'number' && result[0].score <= 0.3;
+        const won = result.length > 0 && typeof result[0].score === 'number' && result[0].score <= 0.1;
         const remaining = this.state.remainingGuesses - 1;
         const newStatus = won || remaining === 0 ? 'OVER' : 'IN_PROGRESS';
 

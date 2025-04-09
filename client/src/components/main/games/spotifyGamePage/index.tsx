@@ -1,4 +1,3 @@
-import React from 'react';
 import './index.css';
 import { GameInstance, SpotifyGameState } from '../../../../types/types';
 import useSpotifyGamePage from '../../../../hooks/useSpotifyGamePage';
@@ -44,7 +43,7 @@ const SpotifyGamePage = ({ gameInstance }: { gameInstance: GameInstance<SpotifyG
                         onChange={handleGuessChange}
                         placeholder='Guess the song title'
                     />
-                    <button className='btn-guess' onClick={handleSubmitGuess}>
+                    <button className='btn-guess' onClick={handleSubmitGuess} disabled={guess.trim() === ''}>
                         Submit Guess
                     </button>
                 </div>
@@ -76,6 +75,18 @@ const SpotifyGamePage = ({ gameInstance }: { gameInstance: GameInstance<SpotifyG
                 </div>
                 
             )}
+            {/* <select
+                className="model-select"
+                value={llmModel}
+                onChange={handleModelChange}
+                
+            >
+                <option value="" disabled hidden>
+                    Choose your LLM model
+                </option>
+                <option value="gemini">Gemini</option>
+                <option value="perplexity">Perplexity</option>
+            </select> */}
         </div>
     );
 };

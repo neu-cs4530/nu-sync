@@ -12,7 +12,7 @@ import { Schema } from 'mongoose';
  *    - `'OVER'`: The game is finished.
  * - `remainingGuesses`: The number of remaining guesses in the game.
  */
-const SpotifyGameStateSchema = new Schema({
+const spotifyGameStateSchema = new Schema({
     player: { type: String, required: true },
     won: { type: Boolean, default: false },
     status: {
@@ -26,8 +26,8 @@ const SpotifyGameStateSchema = new Schema({
     artistName: { type: String },
 }, { _id: false }); 
 
-const SpotifySchema = new Schema({
-    state: { type: SpotifyGameStateSchema, required: true },
+const spotifySchema = new Schema({
+    state: { type: spotifyGameStateSchema, required: true },
 });
 
-export default SpotifySchema;
+export default spotifySchema;

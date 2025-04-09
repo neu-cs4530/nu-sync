@@ -33,6 +33,10 @@ const useAllGamesPage = () => {
   const handleCreateGame = async (gameType: GameType) => {
     setIsCreating(true);
     try {
+      if (!localStorage.getItem('llmModel')) {
+        localStorage.setItem('llmModel', 'gemini');
+      }
+
       if (gameType === 'Spotify') {
         const userRaw = localStorage.getItem('user');
         const accessToken = localStorage.getItem('spotify_access_token');

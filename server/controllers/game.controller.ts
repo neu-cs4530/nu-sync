@@ -41,36 +41,27 @@ const gameController = (socket: FakeSOSocket) => {
    * @param res The response object to send the result.
    */
   const createGame = async (req: CreateGameRequest, res: Response) => {
-    console.log("CREATE GAME CALLED")
     try {
       if (!isCreateGameRequestValid(req)) {
         res.status(400).send('Invalid request');
         return;
       }
 
+      // could add functionality for other types of llm models
       const { gameType, username, accessToken } = req.body;
-
-      
 
       // special case for Spotify
       if (gameType === 'Spotify') {
-        console.log("GAME TYPE: ", gameType)
-        console.log("USERNAME: ", username)
-        console.log("ACCESS TOKEN: ", accessToken)
         if (!username || !accessToken) {
           res.status(400).send('Username and access token are required for Spotify games');
           return;
         }
 
-        console.log("ADDING GAME")
         const newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);
-        console.log("AFTER ADDING GAME", newGame)
 
         if (typeof newGame !== 'string') {
           throw new Error(newGame.error);
         }
-
-        console.log("NEW GAME: ", newGame)
 
         res.status(200).json(newGame);
         return;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUserContext from './useUserContext';
 import { GameInstance, GameMove, SpotifyGameState, SpotifyMove } from '../types/types';
@@ -18,7 +18,15 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
     const { user, socket } = useUserContext();
     const [guess, setGuess] = useState('');
     const [isRestarting, setIsRestarting] = useState(false);
+    const [llmModel, setLlmModel] = useState<'' | 'gemini' | 'perplexity'>('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const storedModel = localStorage.getItem('llmModel');
+        if (storedModel === 'gemini' || storedModel === 'perplexity') {
+            setLlmModel(storedModel);
+        }
+    }, []);
 
     const handleSubmitGuess = () => {
         const move: GameMove<SpotifyMove> = {
@@ -39,9 +47,16 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
         setGuess(e.target.value);
     };
 
+    const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selected = e.target.value as 'gemini' | 'perplexity';
+        setLlmModel(selected);
+        localStorage.setItem('llmModel', selected);
+    };
+
     const handleRestartGame = async () => {
         setIsRestarting(true);
         try {
+            const currModel = localStorage.getItem('llmModel') || 'gemini';
             const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/games/create`, {
                 method: 'POST',
                 headers: {
@@ -51,6 +66,7 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
                     gameType: 'Spotify',
                     username: user.username,
                     accessToken: user.spotifyAccessToken,
+                    currModel
                 }),
             });
 
@@ -58,11 +74,8 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
             if (typeof newGameId === 'string') {
                 navigate(`/games/${newGameId}`);
             } 
-            else {
-                console.error('Failed to restart game:', newGameId);
-            }
         } catch (err) {
-            console.error('Error restarting game:', err);
+            // handle error
         }
         finally {
             setIsRestarting(false);
@@ -75,7 +88,10 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
         handleGuessChange,
         handleSubmitGuess,
         handleRestartGame,
-        isRestarting
+        isRestarting,
+        llmModel,
+        handleModelChange,
+        setLlmModel
     };
 };
 

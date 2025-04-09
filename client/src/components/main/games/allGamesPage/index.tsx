@@ -19,7 +19,7 @@ const AllGamesPage = () => {
     handleToggleModal,
     handleSelectGameType,
     error,
-    isCreating
+    isCreating,
   } = useAllGamesPage();
 
   return (
@@ -29,21 +29,6 @@ const AllGamesPage = () => {
           Create Game
         </button>
       </div>
-
-      {/* {isModalOpen && (
-        <div className='game-modal'>
-          <div className='modal-content'>
-            <h2>Select Game Type</h2>
-            <div className="game-type-row">
-              <button className='btn-game-option' onClick={() => handleSelectGameType('Nim')}>Nim Game</button>
-              <button className='btn-game-option' onClick={() => handleSelectGameType('Spotify')}>Spotify Guessing Game</button>
-            </div>
-            <div className="cancel-row">
-              <button className='btn-cancel' onClick={handleToggleModal}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )} */}
 
       {isModalOpen && (
         <div className='game-modal'>

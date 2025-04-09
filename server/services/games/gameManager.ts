@@ -1,3 +1,4 @@
+import axios from 'axios';
 import NimModel from '../../models/nim.model';
 import {
   BaseMove,
@@ -11,7 +12,6 @@ import Game from './game';
 import NimGame from './nim';
 import SpotifyModel from '../../models/spotify.model';
 import SpotifyGame from './spotify';
-import axios from 'axios';
 
 /**
  * Manages the lifecycle of games, including creation, joining, and leaving games.
@@ -37,7 +37,7 @@ class GameManager {
    * @returns A promise resolving to the created game instance.
    * @throws an error for an unsupported game type
    */
-  private async _gameFactory(gameType: GameType, username?: string, accessToken?: string): Promise<Game<GameState, BaseMove>> {
+  private async _gameFactory(gameType: GameType, username?: string, accessToken?: string, llm?: string): Promise<Game<GameState, BaseMove>> {
     switch (gameType) {
       case 'Nim': {
         const newGame = new NimGame();
@@ -50,6 +50,7 @@ class GameManager {
 
         const response = await axios.post(`${process.env.SERVER_URL}/spotify/generateRandomTrackAndHint`, {
           accessToken,
+          llm
         });
 
         const { songName, artistName, hint } = response.data;
@@ -82,9 +83,9 @@ class GameManager {
    * @param gameType The type of the game to add.
    * @returns The game ID or an error message.
    */
-  public async addGame(gameType: GameType, username?: string, accessToken?: string): Promise<GameInstanceID | { error: string }> {
+  public async addGame(gameType: GameType, username?: string, accessToken?: string, llm? : string): Promise<GameInstanceID | { error: string }> {
     try {
-      const newGame = await this._gameFactory(gameType, username, accessToken);
+      const newGame = await this._gameFactory(gameType, username, accessToken, llm);
       this._games.set(newGame.id, newGame);
 
       return newGame.id;

@@ -175,3 +175,36 @@
         transform: rotate(360deg);
     }
 }
+
+.model-select {
+    margin-top: 1rem;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #1a1a1a;
+    color: white;
+    outline: none;
+    transition: border 0.2s ease;
+}
+
+.model-select:focus {
+    border-color: #1ED760;
+}
+
+.model-select option {
+    background-color: #1a1a1a;
+    color: white;
+}
+
+.btn-guess:disabled,
+.btn-guess[disabled] {
+    background-color: #ccc;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.btn-guess:disabled:hover,
+.btn-guess[disabled]:hover {
+    background-color: #ccc;
+}
