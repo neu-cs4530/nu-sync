@@ -15,7 +15,6 @@ import {
 } from '../../../../services/userService';
 
 import useUserContext from '../../../../hooks/useUserContext';
-import UserStatusIcon from '../../UserStatusIcon';
 
 /**
  * Interface representing the props for the User component.
