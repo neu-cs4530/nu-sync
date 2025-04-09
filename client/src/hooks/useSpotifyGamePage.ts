@@ -56,7 +56,7 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
     const handleRestartGame = async () => {
         setIsRestarting(true);
         try {
-            const currModel = localStorage.getItem('llmModel') || 'gemini';
+            // const currModel = localStorage.getItem('llmModel') || 'gemini';
             const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/games/create`, {
                 method: 'POST',
                 headers: {
@@ -66,7 +66,6 @@ const useSpotifyGamePage = (gameInstance: GameInstance<SpotifyGameState>) => {
                     gameType: 'Spotify',
                     username: user.username,
                     accessToken: user.spotifyAccessToken,
-                    currModel
                 }),
             });
 
