@@ -96,15 +96,6 @@ class SpotifyGame extends Game<SpotifyGameState, SpotifyMove> {
         } 
     }
 
-    // protected async _leave(playerID: string): Promise<void> {
-    //     if (playerID === this.state.player) {
-    //         this.state = { ...this.state, status: 'OVER' };
-    //         await GameModel.deleteOne({ gameID: this.id, gameType: 'Spotify' });
-    //     } else {
-    //         throw new Error('Cannot leave game: player not in game');
-    //     }
-    // }
-
     /**
      * Converts the current game into a model suitable for DB saving.
      */
