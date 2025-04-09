@@ -8,8 +8,13 @@ import {
   updateFriendRequestStatus,
   getMutualFriends,
 } from '../../../../services/friendService';
+import {
+  blockUser,
+  unblockUser,
+  isUserBlocked,
+} from '../../../../services/userService';
+
 import useUserContext from '../../../../hooks/useUserContext';
-import UserStatusIcon from '../../UserStatusIcon';
 
 /**
  * Interface representing the props for the User component.
@@ -36,6 +41,7 @@ const UserCardView = (props: UserProps) => {
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [mutualFriendsCount, setMutualFriendsCount] = useState<number>(0);
+  const userIsBlocked = isUserBlocked(currentUser, user.username);
 
   const formatDate = (dateString: Date) => {
     const date = new Date(dateString);
@@ -59,6 +65,27 @@ const UserCardView = (props: UserProps) => {
       day: 'numeric',
     };
     return date.toLocaleDateString(undefined, options);
+  };
+
+  const handleBlockToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event from firing
+
+    try {
+      if (userIsBlocked) {
+        // Unblock user
+        await unblockUser(currentUser.username, user.username);
+      } else {
+        // Block user
+        await blockUser(currentUser.username, user.username);
+      }
+      // The socket event will update the UI automatically
+    } catch (err) {
+      // eslint-disable-next-line
+      console.error(
+        `Failed to ${userIsBlocked ? 'unblock' : 'block'} user:`,
+        err,
+      );
+    }
   };
 
   useEffect(() => {
@@ -178,8 +205,8 @@ const UserCardView = (props: UserProps) => {
   // Don't show action buttons for yourself
   const isCurrentUser = currentUser.username === user.username;
 
-  // Render the appropriate button based on friendship status
-  const renderActionButton = () => {
+  // Render the appropriate actions based on friendship status
+  const renderActions = () => {
     if (isCurrentUser) {
       return null;
     }
@@ -187,33 +214,60 @@ const UserCardView = (props: UserProps) => {
     switch (friendshipStatus) {
       case 'none':
         return (
-          <button className="friend-request-button" onClick={handleAddFriend}>
-            Add Friend
-          </button>
+          <div className="user-actions">
+            <button className="friend-request-button" onClick={handleAddFriend}>
+              Add Friend
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'sent':
         return (
-          <button className="friend-request-pending-button" disabled>
-            Request Sent
-          </button>
+          <div className="user-actions">
+            <button className="friend-request-pending-button" disabled>
+              Request Sent
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'received':
         return (
-          <button
-            className="friend-request-accept-button"
-            onClick={handleAcceptRequest}
-          >
-            Accept Request
-          </button>
+          <div className="user-actions">
+            <button
+              className="friend-request-accept-button"
+              onClick={handleAcceptRequest}
+            >
+              Accept Request
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'friends':
         return (
-          <button className="send-message-button" onClick={handleSendMessage}>
-            Send Message
-          </button>
+          <div className="user-actions">
+            <button className="send-message-button" onClick={handleSendMessage}>
+              Send Message
+            </button>
+            {/* Block button is intentionally removed for friends */}
+          </div>
         );
 
       default:
@@ -228,27 +282,23 @@ const UserCardView = (props: UserProps) => {
         onClick={() => handleUserCardViewClickHandler(user)}
       >
         <div className="user-info">
-          <div className="flex items-center gap-2">
-            {user.username}
-            {user.onlineStatus?.status && (
-              <UserStatusIcon status={user.onlineStatus.status} />
-            )}
-          </div>
+          <div className="user-name">{user.username}</div>
           <div className="user-details">
-            {!isCurrentUser && mutualFriendsCount > 0 && (
+            <span className="join-date">
+              Joined: {formatDate(user.dateJoined)}
+            </span>
+            {mutualFriendsCount > 0 && (
               <span className="mutual-friends-label">
-                {mutualFriendsCount} mutual{' '}
-                {mutualFriendsCount === 1 ? 'friend' : 'friends'}
+                {mutualFriendsCount} mutual friend
+                {mutualFriendsCount > 1 ? 's' : ''}
               </span>
             )}
-            <span className="join-date">
-              Joined {formatDate(user.dateJoined)}
-            </span>
           </div>
         </div>
-        <div className="user-actions">{renderActionButton()}</div>
-      </div>
 
+        {/* Render buttons based on friendship status */}
+        {renderActions()}
+      </div>
       {statusMessage && <div className="status-message">{statusMessage}</div>}
     </div>
   );

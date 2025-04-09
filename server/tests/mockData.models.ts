@@ -102,7 +102,12 @@ export const QUESTIONS: DatabaseQuestion[] = [
     answers: [],
     askedBy: 'q_by3',
     askDateTime: new Date('2023-11-19T09:24:00'),
-    views: ['question1_user', 'question2_user', 'question3_user', 'question4_user'],
+    views: [
+      'question1_user',
+      'question2_user',
+      'question3_user',
+      'question4_user',
+    ],
     upVotes: [],
     downVotes: [],
     comments: [],
@@ -171,7 +176,12 @@ export const POPULATED_QUESTIONS: PopulatedDatabaseQuestion[] = [
     answers: [],
     askedBy: 'q_by3',
     askDateTime: new Date('2023-11-19T09:24:00'),
-    views: ['question1_user', 'question2_user', 'question3_user', 'question4_user'],
+    views: [
+      'question1_user',
+      'question2_user',
+      'question3_user',
+      'question4_user',
+    ],
     upVotes: [],
     downVotes: [],
     comments: [],
@@ -202,4 +212,5 @@ export const safeUser: SafeDatabaseUser = {
   username: 'user1',
   dateJoined: new Date('2024-12-03'),
   friends: [],
+  blockedUsers: [],
 };

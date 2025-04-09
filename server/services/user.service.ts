@@ -31,6 +31,7 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
       biography: result.biography,
       friends: result.friends,
       quietHours: result.quietHours ?? undefined,
+      blockedUsers: result.blockedUsers,
     };
 
     return safeUser;
@@ -45,7 +46,9 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
  * @param {string} username - The username of the user to find.
  * @returns {Promise<UserResponse>} - Resolves with the found user object (without the password) or an error message.
  */
-export const getUserByUsername = async (username: string): Promise<UserResponse> => {
+export const getUserByUsername = async (
+  username: string,
+): Promise<UserResponse> => {
   try {
     const user: SafeDatabaseUser | null = await UserModel.findOne({
       username,
@@ -69,7 +72,8 @@ export const getUserByUsername = async (username: string): Promise<UserResponse>
  */
 export const getUsersList = async (): Promise<UsersResponse> => {
   try {
-    const users: SafeDatabaseUser[] = await UserModel.find().select('-password');
+    const users: SafeDatabaseUser[] =
+      await UserModel.find().select('-password');
 
     if (!users) {
       throw Error('Users could not be retrieved');
@@ -87,7 +91,9 @@ export const getUsersList = async (): Promise<UsersResponse> => {
  * @param {UserCredentials} loginCredentials - An object containing the username and password.
  * @returns {Promise<UserResponse>} - Resolves with the authenticated user object (without the password) or an error message.
  */
-export const loginUser = async (loginCredentials: UserCredentials): Promise<UserResponse> => {
+export const loginUser = async (
+  loginCredentials: UserCredentials,
+): Promise<UserResponse> => {
   const { username, password } = loginCredentials;
 
   try {
@@ -112,11 +118,14 @@ export const loginUser = async (loginCredentials: UserCredentials): Promise<User
  * @param {string} username - The username of the user to delete.
  * @returns {Promise<UserResponse>} - Resolves with the deleted user object (without the password) or an error message.
  */
-export const deleteUserByUsername = async (username: string): Promise<UserResponse> => {
+export const deleteUserByUsername = async (
+  username: string,
+): Promise<UserResponse> => {
   try {
-    const deletedUser: SafeDatabaseUser | null = await UserModel.findOneAndDelete({
-      username,
-    }).select('-password');
+    const deletedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndDelete({
+        username,
+      }).select('-password');
 
     if (!deletedUser) {
       throw Error('Error deleting user');
@@ -140,11 +149,12 @@ export const updateUser = async (
   updates: Partial<User>,
 ): Promise<UserResponse> => {
   try {
-    const updatedUser: SafeDatabaseUser | null = await UserModel.findOneAndUpdate(
-      { username },
-      { $set: updates },
-      { new: true },
-    ).select('-password');
+    const updatedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndUpdate(
+        { username },
+        { $set: updates },
+        { new: true },
+      ).select('-password');
 
     if (!updatedUser) {
       throw Error('Error updating user');
@@ -232,5 +242,116 @@ export const updateUserQuietHours = async (
     return updatedUser;
   } catch (error) {
     return { error: `Error occurred when updating quiet hours: ${error}` };
+  }
+};
+
+/**
+ * Blocks a user by adding them to the blocker's blockedUsers array.
+ *
+ * @param {string} blocker - Username of the user performing the block.
+ * @param {string} blocked - Username of the user being blocked.
+ * @returns {Promise<UserResponse>} - Resolves with the updated user object (without the password) or an error message.
+ */
+export const blockUser = async (
+  blocker: string,
+  blocked: string,
+): Promise<UserResponse> => {
+  try {
+    // Check if the blocker and blocked users exist
+    const blockerUser = await UserModel.findOne({ username: blocker });
+    const blockedUser = await UserModel.findOne({ username: blocked });
+
+    if (!blockerUser || !blockedUser) {
+      return { error: 'One or both users not found' };
+    }
+
+    // Check if already blocked
+    const typedUser = blockerUser as unknown as DatabaseUser;
+    if (typedUser.blockedUsers && typedUser.blockedUsers.includes(blocked)) {
+      return { error: 'User is already blocked' };
+    }
+
+    // Add the blocked user to the blocker's blockedUsers array
+    const updatedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndUpdate(
+        { username: blocker },
+        { $addToSet: { blockedUsers: blocked } },
+        { new: true },
+      ).select('-password');
+
+    if (!updatedUser) {
+      throw Error('Error updating blocked users');
+    }
+
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error occurred when blocking user: ${error}` };
+  }
+};
+
+/**
+ * Unblocks a user by removing them from the blocker's blockedUsers array.
+ *
+ * @param {string} blocker - Username of the user performing the unblock.
+ * @param {string} blocked - Username of the user being unblocked.
+ * @returns {Promise<UserResponse>} - Resolves with the updated user object (without the password) or an error message.
+ */
+export const unblockUser = async (
+  blocker: string,
+  blocked: string,
+): Promise<UserResponse> => {
+  try {
+    // Check if the blocker and blocked users exist
+    const blockerUser = await UserModel.findOne({ username: blocker });
+    const blockedUser = await UserModel.findOne({ username: blocked });
+
+    if (!blockerUser || !blockedUser) {
+      return { error: 'One or both users not found' };
+    }
+
+    // Remove the blocked user from the blocker's blockedUsers array
+    const updatedUser: SafeDatabaseUser | null =
+      await UserModel.findOneAndUpdate(
+        { username: blocker },
+        { $pull: { blockedUsers: blocked } },
+        { new: true },
+      ).select('-password');
+
+    if (!updatedUser) {
+      throw Error('Error updating blocked users');
+    }
+
+    return updatedUser;
+  } catch (error) {
+    return { error: `Error occurred when unblocking user: ${error}` };
+  }
+};
+
+/**
+ * Checks if a user is blocked by another user.
+ *
+ * @param {string} blocker - Username of the potential blocker.
+ * @param {string} potentiallyBlocked - Username of the user to check if blocked.
+ * @returns {Promise<boolean | { error: string }>} - Resolves with true if blocked, false if not, or an error message.
+ */
+export const isUserBlocked = async (
+  blocker: string,
+  potentiallyBlocked: string,
+): Promise<boolean | { error: string }> => {
+  try {
+    const user = await UserModel.findOne({ username: blocker });
+
+    if (!user) {
+      return { error: 'User not found' };
+    }
+
+    // Cast the MongoDB document to DatabaseUser type
+    const typedUser = user as unknown as DatabaseUser;
+    return !!(
+      typedUser.blockedUsers &&
+      typedUser.blockedUsers.includes(potentiallyBlocked)
+    );
+  } catch (error) {
+    return { error: `Error occurred when checking block status: ${error}` };
   }
 };
