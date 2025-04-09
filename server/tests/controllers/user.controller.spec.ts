@@ -15,6 +15,7 @@ const mockSafeUser: SafeDatabaseUser = {
   username: 'user1',
   dateJoined: new Date('2024-12-03'),
   friends: [],
+  blockedUsers: [],
 };
 
 const mockUserJSONResponse = {
@@ -22,6 +23,7 @@ const mockUserJSONResponse = {
   username: 'user1',
   dateJoined: new Date('2024-12-03').toISOString(),
   friends: [],
+  blockedUsers: [],
 };
 
 const saveUserSpy = jest.spyOn(util, 'saveUser');
@@ -40,12 +42,20 @@ describe('Test userController', () => {
         biography: 'This is a test biography',
       };
 
-      saveUserSpy.mockResolvedValueOnce({ ...mockSafeUser, biography: mockReqBody.biography });
+      saveUserSpy.mockResolvedValueOnce({
+        ...mockSafeUser,
+        biography: mockReqBody.biography,
+      });
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ ...mockUserJSONResponse, biography: mockReqBody.biography });
+      expect(response.body).toEqual({
+        ...mockUserJSONResponse,
+        biography: mockReqBody.biography,
+      });
       expect(saveUserSpy).toHaveBeenCalledWith({
         ...mockReqBody,
         biography: mockReqBody.biography,
@@ -58,7 +68,9 @@ describe('Test userController', () => {
         password: mockUser.password,
       };
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -70,7 +82,9 @@ describe('Test userController', () => {
         password: mockUser.password,
       };
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -81,7 +95,9 @@ describe('Test userController', () => {
         username: mockUser.username,
       };
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -93,7 +109,9 @@ describe('Test userController', () => {
         password: '',
       };
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -107,7 +125,9 @@ describe('Test userController', () => {
 
       saveUserSpy.mockResolvedValueOnce({ error: 'Error saving user' });
 
-      const response = await supertest(app).post('/user/signup').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/signup')
+        .send(mockReqBody);
 
       expect(response.status).toBe(500);
     });
@@ -126,7 +146,9 @@ describe('Test userController', () => {
         onlineStatus: { status: 'online' },
       });
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -145,7 +167,9 @@ describe('Test userController', () => {
         password: mockUser.password,
       };
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -157,7 +181,9 @@ describe('Test userController', () => {
         password: mockUser.password,
       };
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -168,7 +194,9 @@ describe('Test userController', () => {
         username: mockUser.username,
       };
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -180,7 +208,9 @@ describe('Test userController', () => {
         password: '',
       };
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -192,9 +222,13 @@ describe('Test userController', () => {
         password: mockUser.password,
       };
 
-      loginUserSpy.mockResolvedValueOnce({ error: 'Error authenticating user' });
+      loginUserSpy.mockResolvedValueOnce({
+        error: 'Error authenticating user',
+      });
 
-      const response = await supertest(app).post('/user/login').send(mockReqBody);
+      const response = await supertest(app)
+        .post('/user/login')
+        .send(mockReqBody);
 
       expect(response.status).toBe(500);
     });
@@ -209,11 +243,15 @@ describe('Test userController', () => {
 
       updatedUserSpy.mockResolvedValueOnce(mockSafeUser);
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ ...mockUserJSONResponse });
-      expect(updatedUserSpy).toHaveBeenCalledWith(mockUser.username, { password: 'newPassword' });
+      expect(updatedUserSpy).toHaveBeenCalledWith(mockUser.username, {
+        password: 'newPassword',
+      });
     });
 
     it('should return 400 for request missing username', async () => {
@@ -221,7 +259,9 @@ describe('Test userController', () => {
         password: 'newPassword',
       };
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -233,7 +273,9 @@ describe('Test userController', () => {
         password: 'newPassword',
       };
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -244,7 +286,9 @@ describe('Test userController', () => {
         username: mockUser.username,
       };
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -256,7 +300,9 @@ describe('Test userController', () => {
         password: '',
       };
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -270,7 +316,9 @@ describe('Test userController', () => {
 
       updatedUserSpy.mockResolvedValueOnce({ error: 'Error updating user' });
 
-      const response = await supertest(app).patch('/user/resetPassword').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/resetPassword')
+        .send(mockReqBody);
 
       expect(response.status).toBe(500);
     });
@@ -280,7 +328,9 @@ describe('Test userController', () => {
     it('should return the user given correct arguments', async () => {
       getUserByUsernameSpy.mockResolvedValueOnce(mockSafeUser);
 
-      const response = await supertest(app).get(`/user/getUser/${mockUser.username}`);
+      const response = await supertest(app).get(
+        `/user/getUser/${mockUser.username}`,
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockUserJSONResponse);
@@ -288,9 +338,13 @@ describe('Test userController', () => {
     });
 
     it('should return 500 if database error while searching username', async () => {
-      getUserByUsernameSpy.mockResolvedValueOnce({ error: 'Error finding user' });
+      getUserByUsernameSpy.mockResolvedValueOnce({
+        error: 'Error finding user',
+      });
 
-      const response = await supertest(app).get(`/user/getUser/${mockUser.username}`);
+      const response = await supertest(app).get(
+        `/user/getUser/${mockUser.username}`,
+      );
 
       expect(response.status).toBe(500);
     });
@@ -327,7 +381,9 @@ describe('Test userController', () => {
     it('should return the deleted user given correct arguments', async () => {
       deleteUserByUsernameSpy.mockResolvedValueOnce(mockSafeUser);
 
-      const response = await supertest(app).delete(`/user/deleteUser/${mockUser.username}`);
+      const response = await supertest(app).delete(
+        `/user/deleteUser/${mockUser.username}`,
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockUserJSONResponse);
@@ -335,9 +391,13 @@ describe('Test userController', () => {
     });
 
     it('should return 500 if database error while searching username', async () => {
-      deleteUserByUsernameSpy.mockResolvedValueOnce({ error: 'Error deleting user' });
+      deleteUserByUsernameSpy.mockResolvedValueOnce({
+        error: 'Error deleting user',
+      });
 
-      const response = await supertest(app).delete(`/user/deleteUser/${mockUser.username}`);
+      const response = await supertest(app).delete(
+        `/user/deleteUser/${mockUser.username}`,
+      );
 
       expect(response.status).toBe(500);
     });
@@ -360,7 +420,9 @@ describe('Test userController', () => {
       // Mock a successful updateUser call
       updatedUserSpy.mockResolvedValueOnce(mockSafeUser);
 
-      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updateBiography')
+        .send(mockReqBody);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockUserJSONResponse);
@@ -375,7 +437,9 @@ describe('Test userController', () => {
         biography: 'some new biography',
       };
 
-      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updateBiography')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -387,7 +451,9 @@ describe('Test userController', () => {
         biography: 'a new bio',
       };
 
-      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updateBiography')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -398,7 +464,9 @@ describe('Test userController', () => {
         username: mockUser.username,
       };
 
-      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updateBiography')
+        .send(mockReqBody);
 
       expect(response.status).toBe(400);
       expect(response.text).toEqual('Invalid user body');
@@ -413,7 +481,9 @@ describe('Test userController', () => {
       // Simulate a DB error
       updatedUserSpy.mockResolvedValueOnce({ error: 'Error updating user' });
 
-      const response = await supertest(app).patch('/user/updateBiography').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updateBiography')
+        .send(mockReqBody);
 
       expect(response.status).toBe(500);
       expect(response.text).toContain(
@@ -421,7 +491,6 @@ describe('Test userController', () => {
       );
     });
   });
-
 
   describe('PATCH /updatePrivacySettings', () => {
     const mockReqBody = {
@@ -436,7 +505,9 @@ describe('Test userController', () => {
         ...mockSafeUser,
         privacySettings: mockReqBody.privacySettings,
       });
-      const response = await supertest(app).patch('/user/updatePrivacySettings').send(mockReqBody);
+      const response = await supertest(app)
+        .patch('/user/updatePrivacySettings')
+        .send(mockReqBody);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         ...mockUserJSONResponse,
@@ -456,8 +527,12 @@ describe('Test userController', () => {
     });
 
     it('should return 500 if updateUserPrivacySettings returns error', async () => {
-      updatedUserSpy.mockResolvedValueOnce({ error: 'Failed to update privacy settings' });
-      const response = await supertest(app).patch('/user/updatePrivacySettings').send(mockReqBody);
+      updatedUserSpy.mockResolvedValueOnce({
+        error: 'Failed to update privacy settings',
+      });
+      const response = await supertest(app)
+        .patch('/user/updatePrivacySettings')
+        .send(mockReqBody);
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error when updating privacy settings');
     });
@@ -477,7 +552,9 @@ describe('Test userController', () => {
         ...mockSafeUser,
         onlineStatus: validStatus.onlineStatus,
       });
-      const response = await supertest(app).patch('/user/updateOnlineStatus').send(validStatus);
+      const response = await supertest(app)
+        .patch('/user/updateOnlineStatus')
+        .send(validStatus);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         ...mockUserJSONResponse,
@@ -497,11 +574,188 @@ describe('Test userController', () => {
     });
 
     it('should return 500 if updateUser returns error', async () => {
-      updatedUserSpy.mockResolvedValueOnce({ error: 'Failed to update status' });
-      const response = await supertest(app).patch('/user/updateOnlineStatus').send(validStatus);
+      updatedUserSpy.mockResolvedValueOnce({
+        error: 'Failed to update status',
+      });
+      const response = await supertest(app)
+        .patch('/user/updateOnlineStatus')
+        .send(validStatus);
       expect(response.status).toBe(500);
       expect(response.text).toContain('Error when updating online status');
     });
   });
 
+  describe('POST /block', () => {
+    const mockBlockUser = {
+      username: 'blocker',
+      userToBlock: 'blocked',
+    };
+
+    const mockUpdatedUser = {
+      ...mockSafeUser,
+      blockedUsers: ['blocked'],
+    };
+
+    const mockUpdatedUserJSONResponse = {
+      ...mockUserJSONResponse,
+      blockedUsers: ['blocked'],
+    };
+
+    const blockUserSpy = jest.spyOn(util, 'blockUser');
+
+    it('should successfully block a user when given valid input', async () => {
+      blockUserSpy.mockResolvedValueOnce(mockUpdatedUser);
+
+      const response = await supertest(app)
+        .post('/user/block')
+        .send(mockBlockUser);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUpdatedUserJSONResponse);
+      expect(blockUserSpy).toHaveBeenCalledWith(
+        mockBlockUser.username,
+        mockBlockUser.userToBlock,
+      );
+    });
+
+    it('should return 400 for request with empty username', async () => {
+      const mockReqBody = {
+        username: '',
+        userToBlock: 'blocked',
+      };
+
+      const response = await supertest(app)
+        .post('/user/block')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid block request');
+    });
+
+    it('should return 400 for request with empty userToBlock', async () => {
+      const mockReqBody = {
+        username: 'blocker',
+        userToBlock: '',
+      };
+
+      const response = await supertest(app)
+        .post('/user/block')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid block request');
+    });
+
+    it('should return 400 if trying to block yourself', async () => {
+      const mockReqBody = {
+        username: 'sameuser',
+        userToBlock: 'sameuser',
+      };
+
+      const response = await supertest(app)
+        .post('/user/block')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid block request');
+    });
+
+    it('should return 500 if blockUser returns an error', async () => {
+      blockUserSpy.mockResolvedValueOnce({ error: 'Error blocking user' });
+
+      const response = await supertest(app)
+        .post('/user/block')
+        .send(mockBlockUser);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error blocking user');
+    });
+  });
+
+  describe('POST /unblock', () => {
+    const mockUnblockUser = {
+      username: 'blocker',
+      userToBlock: 'blocked', // The field is still called userToBlock in the request
+    };
+
+    const mockUpdatedUser = {
+      ...mockSafeUser,
+      blockedUsers: [], // Empty after unblocking
+    };
+
+    const mockUpdatedUserJSONResponse = {
+      ...mockUserJSONResponse,
+      blockedUsers: [], // Empty after unblocking
+    };
+
+    const unblockUserSpy = jest.spyOn(util, 'unblockUser');
+
+    it('should successfully unblock a user when given valid input', async () => {
+      unblockUserSpy.mockResolvedValueOnce(mockUpdatedUser);
+
+      const response = await supertest(app)
+        .post('/user/unblock')
+        .send(mockUnblockUser);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockUpdatedUserJSONResponse);
+      expect(unblockUserSpy).toHaveBeenCalledWith(
+        mockUnblockUser.username,
+        mockUnblockUser.userToBlock,
+      );
+    });
+
+    it('should return 400 for request with empty username', async () => {
+      const mockReqBody = {
+        username: '',
+        userToBlock: 'blocked',
+      };
+
+      const response = await supertest(app)
+        .post('/user/unblock')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid unblock request');
+    });
+
+    it('should return 400 for request with empty userToBlock', async () => {
+      const mockReqBody = {
+        username: 'blocker',
+        userToBlock: '',
+      };
+
+      const response = await supertest(app)
+        .post('/user/unblock')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid unblock request');
+    });
+
+    it('should return 400 if trying to unblock yourself', async () => {
+      const mockReqBody = {
+        username: 'sameuser',
+        userToBlock: 'sameuser',
+      };
+
+      const response = await supertest(app)
+        .post('/user/unblock')
+        .send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toEqual('Invalid unblock request');
+    });
+
+    it('should return 500 if unblockUser returns an error', async () => {
+      unblockUserSpy.mockResolvedValueOnce({ error: 'Error unblocking user' });
+
+      const response = await supertest(app)
+        .post('/user/unblock')
+        .send(mockUnblockUser);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toContain('Error unblocking user');
+    });
+  });
 });

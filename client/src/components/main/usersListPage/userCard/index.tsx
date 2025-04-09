@@ -205,8 +205,8 @@ const UserCardView = (props: UserProps) => {
   // Don't show action buttons for yourself
   const isCurrentUser = currentUser.username === user.username;
 
-  // Render the appropriate button based on friendship status
-  const renderActionButton = () => {
+  // Render the appropriate actions based on friendship status
+  const renderActions = () => {
     if (isCurrentUser) {
       return null;
     }
@@ -214,33 +214,60 @@ const UserCardView = (props: UserProps) => {
     switch (friendshipStatus) {
       case 'none':
         return (
-          <button className="friend-request-button" onClick={handleAddFriend}>
-            Add Friend
-          </button>
+          <div className="user-actions">
+            <button className="friend-request-button" onClick={handleAddFriend}>
+              Add Friend
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'sent':
         return (
-          <button className="friend-request-pending-button" disabled>
-            Request Sent
-          </button>
+          <div className="user-actions">
+            <button className="friend-request-pending-button" disabled>
+              Request Sent
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'received':
         return (
-          <button
-            className="friend-request-accept-button"
-            onClick={handleAcceptRequest}
-          >
-            Accept Request
-          </button>
+          <div className="user-actions">
+            <button
+              className="friend-request-accept-button"
+              onClick={handleAcceptRequest}
+            >
+              Accept Request
+            </button>
+            <button
+              className={userIsBlocked ? 'unblock-button' : 'block-button'}
+              onClick={handleBlockToggle}
+            >
+              {userIsBlocked ? 'Unblock User' : 'Block User'}
+            </button>
+          </div>
         );
 
       case 'friends':
         return (
-          <button className="send-message-button" onClick={handleSendMessage}>
-            Send Message
-          </button>
+          <div className="user-actions">
+            <button className="send-message-button" onClick={handleSendMessage}>
+              Send Message
+            </button>
+            {/* Block button is intentionally removed for friends */}
+          </div>
         );
 
       default:
@@ -269,18 +296,8 @@ const UserCardView = (props: UserProps) => {
           </div>
         </div>
 
-        {/* Only show actions if it's not the current user */}
-        {!isCurrentUser && (
-          <div className="user-actions">
-            {renderActionButton()}
-            <button
-              className={userIsBlocked ? 'unblock-button' : 'block-button'}
-              onClick={handleBlockToggle}
-            >
-              {userIsBlocked ? 'Unblock User' : 'Block User'}
-            </button>
-          </div>
-        )}
+        {/* Render buttons based on friendship status */}
+        {renderActions()}
       </div>
       {statusMessage && <div className="status-message">{statusMessage}</div>}
     </div>

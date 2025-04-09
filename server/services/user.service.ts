@@ -265,11 +265,6 @@ export const blockUser = async (
       return { error: 'One or both users not found' };
     }
 
-    // Check if attempting to block oneself
-    if (blocker === blocked) {
-      return { error: 'Cannot block yourself' };
-    }
-
     // Check if already blocked
     const typedUser = blockerUser as unknown as DatabaseUser;
     if (typedUser.blockedUsers && typedUser.blockedUsers.includes(blocked)) {
