@@ -62,29 +62,47 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
 
   const sendPlaylist = async (playlist: SpotifyPlaylist) => {
     if (!selectedChatId) return;
+    const messagePayload = {
+      type: 'spotify-playlist',
+      name: playlist.name,
+      url: playlist.external_urls.spotify,
+      owner: playlist.owner.display_name,
+      image: playlist.images?.[0]?.url || null,
+      description: playlist.description || '',
+    };
     const message: Omit<Message, 'type'> = {
-      msg: `Check out this playlist: ${playlist.name} (link: ${playlist.external_urls.spotify})`,
+      msg: JSON.stringify(messagePayload),
       msgFrom: user.username,
       msgDateTime: new Date(),
     };
+
     await sendMessage(message, selectedChatId);
   };
+
 
   const sendSong = async (song: SpotifyTrackItem) => {
     if (!selectedChatId) return;
 
     const artistNames = Array.isArray(song.track.artists)
-      ? song.track.artists.map(a => a.name).join(', ')
-      : 'Unknown Artist';
+      ? song.track.artists.map(a => a.name)
+      : [];
+
+    const messagePayload = {
+      type: 'spotify-song',
+      name: song.track.name,
+      artists: artistNames,
+      url: song.track.external_urls?.spotify || '',
+    };
 
     const message: Omit<Message, 'type'> = {
-      msg: ` ${song.track.name} by ${artistNames}\n${song.track.external_urls?.spotify}`,
+      msg: JSON.stringify(messagePayload),
       msgFrom: user.username,
       msgDateTime: new Date(),
     };
 
     await sendMessage(message, selectedChatId);
   };
+
 
   const handleRecommendSongs = async () => {
     if (!songForRecommendation) {
@@ -102,15 +120,19 @@ const useSpotifySharing = (selectedChatId: ObjectId | undefined) => {
       const res = await getCurrentlyPlaying(user.username);
       if (!res?.isPlaying || !res.track) return;
 
-
-      const artistNames = Array.isArray(res.track.artists)
-        ? res.track.artists?.map((a : { name: string }) => a.name).join(', ')
-        : 'Unknown Artist';
-
       const spotifyUrl = res.track.external_urls?.spotify || 'No URL';
 
+      const messagePayload = {
+        type: 'spotify-song',
+        name: res.track.name,
+        artists: res.track.artists.map((a: { name: string }) => a.name),
+        url: spotifyUrl,
+        albumImage: res.track.album?.images?.[0]?.url || null,
+        nowPlaying: true,
+      };
+
       const message: Omit<Message, 'type'> = {
-        msg: `Now Playing: ${res.track.name} by ${artistNames}\n${spotifyUrl}`,
+        msg: JSON.stringify(messagePayload),
         msgFrom: user.username,
         msgDateTime: new Date(),
       };

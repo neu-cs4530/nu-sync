@@ -3,6 +3,8 @@ import './index.css';
 import { DatabaseMessage, SafeDatabaseUser } from '../../../types/types';
 import { getMetaData } from '../../../tool';
 import UserStatusIcon from '../UserStatusIcon';
+import SpotifyPlaylistCard from '../directMessage/spotifyCards/playlist';
+import SpotifySongCard from '../directMessage/spotifyCards/songs';
 
 interface Props {
   message: DatabaseMessage;
@@ -20,19 +22,25 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
   const renderMessageContent = (currentMessage: DatabaseMessage) => {
     try {
       const parsedContent = JSON.parse(currentMessage.msg);
-      if (
-        parsedContent.type === 'spotify-song' ||
-        parsedContent.type === 'spotify-playlist'
-      ) {
+      if (parsedContent.type === 'spotify-song') {
         return (
-          <a
-            href={parsedContent.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
-          >
-            {parsedContent.displayText}
-          </a>
+          <SpotifySongCard
+            name={parsedContent.name}
+            artists={parsedContent.artists}
+            spotifyUrl={parsedContent.url}
+          />
+        );
+      }
+
+      if (parsedContent.type === 'spotify-playlist') {
+        return (
+          <SpotifyPlaylistCard
+            name={parsedContent.name}
+            url={parsedContent.url}
+            owner={parsedContent.owner}
+            image={parsedContent.image}
+            description={parsedContent.description}
+          />
         );
       }
     } catch (e) {
@@ -49,10 +57,9 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
           Check out this playlist:{' '}
           <a
             href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
-          >
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200'>
             {name}
           </a>
         </>
@@ -60,8 +67,7 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
     }
 
     // Check for direct Spotify URLs (as a fallback)
-    const urlRegex =
-      /(https?:\/\/open\.spotify\.com\/(track|playlist|album)\/[a-zA-Z0-9]+)/g;
+    const urlRegex = /(https?:\/\/open\.spotify\.com\/(track|playlist|album)\/[a-zA-Z0-9]+)/g;
     const parts: (string | JSX.Element)[] = [];
     let lastIndex = 0;
 
@@ -80,10 +86,9 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
           <a
             key={urlMatch.index}
             href={urlMatch[0]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200"
-          >
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-[#1DB954] hover:underline hover:text-[#1DB954]/80 transition-colors duration-200'>
             {urlMatch[0]}
           </a>,
         );
@@ -104,19 +109,15 @@ const MessageCard: React.FC<Props> = ({ message, sender }) => {
   };
 
   return (
-    <div className="message">
-      <div className="message-header">
-        <div className="message-sender flex items-center gap-2">
+    <div className='message'>
+      <div className='message-header'>
+        <div className='message-sender flex items-center gap-2'>
           <span>{message.msgFrom}</span>
-          {sender?.onlineStatus && (
-            <UserStatusIcon status={sender.onlineStatus.status} />
-          )}
+          {sender?.onlineStatus && <UserStatusIcon status={sender.onlineStatus.status} />}
         </div>
-        <div className="message-time">
-          {getMetaData(new Date(message.msgDateTime))}
-        </div>
+        <div className='message-time'>{getMetaData(new Date(message.msgDateTime))}</div>
       </div>
-      <div className="message-body">{renderMessageContent(message)}</div>
+      <div className='message-body'>{renderMessageContent(message)}</div>
     </div>
   );
 };
