@@ -10,6 +10,7 @@ describe('Quiet Controller', () => {
     username: 'quietUser',
     dateJoined: new Date('2024-01-01'),
     friends: [],
+    blockedUsers: [],
   };
 
   const userJson = {
@@ -58,7 +59,9 @@ describe('Quiet Controller', () => {
     it('should restore quiet hours successfully', async () => {
       restoreSpy.mockResolvedValueOnce(mockUser);
 
-      const res = await supertest(app).post('/quiet/restoreQuietHours/quietUser');
+      const res = await supertest(app).post(
+        '/quiet/restoreQuietHours/quietUser',
+      );
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
@@ -70,7 +73,9 @@ describe('Quiet Controller', () => {
     it('should return 400 on service error', async () => {
       restoreSpy.mockResolvedValueOnce({ error: 'Invalid user' });
 
-      const res = await supertest(app).post('/quiet/restoreQuietHours/quietUser');
+      const res = await supertest(app).post(
+        '/quiet/restoreQuietHours/quietUser',
+      );
 
       expect(res.status).toBe(400);
       expect(res.body).toEqual({ error: 'Invalid user' });
@@ -79,7 +84,9 @@ describe('Quiet Controller', () => {
     it('should return 500 on internal error', async () => {
       restoreSpy.mockRejectedValueOnce(new Error('DB error'));
 
-      const res = await supertest(app).post('/quiet/restoreQuietHours/quietUser');
+      const res = await supertest(app).post(
+        '/quiet/restoreQuietHours/quietUser',
+      );
 
       expect(res.status).toBe(500);
       expect(res.body.error).toContain('Failed to restore quiet hours:');
@@ -95,7 +102,9 @@ describe('Quiet Controller', () => {
     it('should update quiet hours successfully', async () => {
       updateSpy.mockResolvedValueOnce(mockUser);
 
-      const res = await supertest(app).patch('/quiet/updateQuietHours').send(validBody);
+      const res = await supertest(app)
+        .patch('/quiet/updateQuietHours')
+        .send(validBody);
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
@@ -116,7 +125,9 @@ describe('Quiet Controller', () => {
     it('should return 400 on service error', async () => {
       updateSpy.mockResolvedValueOnce({ error: 'Bad hours' });
 
-      const res = await supertest(app).patch('/quiet/updateQuietHours').send(validBody);
+      const res = await supertest(app)
+        .patch('/quiet/updateQuietHours')
+        .send(validBody);
 
       expect(res.status).toBe(400);
       expect(res.body).toEqual({ error: 'Bad hours' });
@@ -125,7 +136,9 @@ describe('Quiet Controller', () => {
     it('should return 500 on internal error', async () => {
       updateSpy.mockRejectedValueOnce(new Error('Unexpected fail'));
 
-      const res = await supertest(app).patch('/quiet/updateQuietHours').send(validBody);
+      const res = await supertest(app)
+        .patch('/quiet/updateQuietHours')
+        .send(validBody);
 
       expect(res.status).toBe(500);
       expect(res.body.error).toContain('Failed to update quiet hours:');

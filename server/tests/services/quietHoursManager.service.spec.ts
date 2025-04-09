@@ -35,6 +35,7 @@ describe('Quiet Hours Cron Job', () => {
       end: '23:00',
     },
     oldStatus: { status: 'online' },
+    blockedUsers: [],
   };
 
   beforeEach(() => {
@@ -47,12 +48,19 @@ describe('Quiet Hours Cron Job', () => {
     it('should set user to quiet hours if within range', async () => {
       mockingoose(UserModel).toReturn([baseUser], 'find');
       jest.spyOn(moment, 'utc').mockReturnValue(moment.utc('02:00', 'HH:mm'));
-      jest.spyOn(userService, 'setUserToQuietHours').mockResolvedValue(baseUser);
+      jest
+        .spyOn(userService, 'setUserToQuietHours')
+        .mockResolvedValue(baseUser);
 
       await scheduledCallback();
 
-      expect(userService.setUserToQuietHours).toHaveBeenCalledWith(baseUser.username);
-      expect(mockEmit).toHaveBeenCalledWith('userUpdate', { user: baseUser, type: 'updated' });
+      expect(userService.setUserToQuietHours).toHaveBeenCalledWith(
+        baseUser.username,
+      );
+      expect(mockEmit).toHaveBeenCalledWith('userUpdate', {
+        user: baseUser,
+        type: 'updated',
+      });
     });
 
     it('should restore user from quiet hours if outside range and currently busy', async () => {
@@ -64,12 +72,19 @@ describe('Quiet Hours Cron Job', () => {
 
       mockingoose(UserModel).toReturn([busyUser], 'find');
       jest.spyOn(moment, 'utc').mockReturnValue(moment.utc('03:00', 'HH:mm'));
-      jest.spyOn(userService, 'restoreUserFromQuietHours').mockResolvedValue(busyUser);
+      jest
+        .spyOn(userService, 'restoreUserFromQuietHours')
+        .mockResolvedValue(busyUser);
 
       await scheduledCallback();
 
-      expect(userService.restoreUserFromQuietHours).toHaveBeenCalledWith(busyUser.username);
-      expect(mockEmit).toHaveBeenCalledWith('userUpdate', { user: busyUser, type: 'updated' });
+      expect(userService.restoreUserFromQuietHours).toHaveBeenCalledWith(
+        busyUser.username,
+      );
+      expect(mockEmit).toHaveBeenCalledWith('userUpdate', {
+        user: busyUser,
+        type: 'updated',
+      });
     });
 
     it('should skip users with invalid start time format', async () => {
@@ -103,7 +118,9 @@ describe('Quiet Hours Cron Job', () => {
     it('should not emit if service returns error', async () => {
       mockingoose(UserModel).toReturn([baseUser], 'find');
       jest.spyOn(moment, 'utc').mockReturnValue(moment.utc('02:00', 'HH:mm'));
-      jest.spyOn(userService, 'setUserToQuietHours').mockResolvedValue({ error: 'failure' });
+      jest
+        .spyOn(userService, 'setUserToQuietHours')
+        .mockResolvedValue({ error: 'failure' });
 
       await scheduledCallback();
 
