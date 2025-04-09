@@ -9,9 +9,13 @@ const GAMES_API_URL = `${process.env.REACT_APP_SERVER_URL}/games`;
  * @returns A promise resolving to the created game instance.
  * @throws Error if there is an issue while creating the game.
  */
-const createGame = async (gameType: GameType): Promise<GameInstance<GameState>> => {
-  const res = await api.post(`${GAMES_API_URL}/create`, {
+const createGame = async (gameType: GameType, username?: string, accessToken?: string): Promise<GameInstance<GameState>> => {
+  const res = await api.post(`https://cs4530-s25-203-api.onrender.com/games/create`, {
     gameType,
+    ...(gameType === 'Spotify' && {
+      username,
+      accessToken,
+    }),
   });
 
   if (res.status !== 200) {
