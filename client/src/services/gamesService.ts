@@ -17,7 +17,6 @@ const createGame = async (gameType: GameType, username?: string, accessToken?: s
     ...(gameType === 'Spotify' && {
       username,
       accessToken,
-      llm: llmModel
     }),
   });
 

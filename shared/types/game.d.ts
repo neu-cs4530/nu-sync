@@ -116,7 +116,6 @@ export interface CreateGameRequest extends Request {
     gameType: GameType,
     username?: string,
     accessToken?: string,
-    llmModel?: string
   };
 }
 
