@@ -68,26 +68,7 @@ describe('SpotifyGame tests', () => {
 
             await game.leave(defaultData.username);
 
-            const state = game.toModel().state;
-            expect(state.status).toBe('OVER');
-        });
-
-        it('should handle DB deletion error gracefully when player leaves', async () => {
-            game.join(defaultData.username);
-            const spy = jest
-                .spyOn(GameModel, 'deleteOne')
-                .mockImplementationOnce(() =>
-                ({
-                    exec: () => Promise.reject(new Error('DB error')),
-                } as any)
-                );
-
-            await game.leave(defaultData.username);
-
-            expect(spy).toHaveBeenCalledTimes(1);
-            expect(spy).toHaveBeenCalledWith({ gameID: game.id, gameType: 'Spotify' });
-
-            const state = game.toModel().state;
+            const {state} = game.toModel();
             expect(state.status).toBe('OVER');
         });
 

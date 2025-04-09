@@ -1,8 +1,7 @@
-import generateHintGemini from '../../services/gemini.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import generateHintGemini from '../../services/gemini.service';
 
-jest.mock('@google/generative-ai', () => {
-    return {
+jest.mock('@google/generative-ai', () => ({
         GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
             getGenerativeModel: jest.fn(() => ({
                 generateContent: jest.fn().mockResolvedValue({
@@ -12,8 +11,7 @@ jest.mock('@google/generative-ai', () => {
                 }),
             })),
         })),
-    };
-});
+    }));
 
 describe('generateHintGemini', () => {
     it('should return a hint string based on song and artist input', async () => {

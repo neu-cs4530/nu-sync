@@ -1,5 +1,5 @@
-import generateHintPerplexity from '../../services/perplexity.service';
 import axios from 'axios';
+import generateHintPerplexity from '../../services/perplexity.service';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

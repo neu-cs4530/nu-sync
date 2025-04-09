@@ -1345,13 +1345,13 @@ describe('Spotify Controller Tests', () => {
     });
 
     it('should default artist name to "Unknown Artist" if artist name is missing', async () => {
-      const mockTrack = {
+      const mockTrack2 = {
         name: 'Song1',
         artists: [{}], 
       };
 
       mockedAxios.get.mockResolvedValueOnce({
-        data: { items: Array(10).fill(mockTrack) },
+        data: { items: Array(10).fill(mockTrack2) },
       });
 
       const hint = 'hint';
