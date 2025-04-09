@@ -7,12 +7,10 @@ import { DatabaseUser } from '../../types/types';
 
 import { app } from '../../app';
 
-
 jest.mock('../../models/users.model');
 const MockedUserModel = UserModel as jest.Mocked<typeof UserModel>;
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
-
 
 describe('Spotify Controller Tests', () => {
   beforeEach(() => {
@@ -22,9 +20,13 @@ describe('Spotify Controller Tests', () => {
 
   describe('GET /spotify/auth/spotify', () => {
     it('should redirect to Spotify login', async () => {
-      const response = await supertest(app).get('/spotify/auth/spotify?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/auth/spotify?username=testuser',
+      );
       expect(response.status).toBe(302);
-      expect(response.headers.location).toContain('https://accounts.spotify.com/authorize');
+      expect(response.headers.location).toContain(
+        'https://accounts.spotify.com/authorize',
+      );
     });
 
     it('should handle missing username in query and still redirect (with undefined in state)', async () => {
@@ -42,23 +44,25 @@ describe('Spotify Controller Tests', () => {
           throw new Error('Redirect failed');
         });
 
-      const response = await supertest(app).get('/spotify/auth/spotify?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/auth/spotify?username=testuser',
+      );
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error logging into Spotify');
 
       redirectSpy.mockRestore();
     });
-
-    
-
   });
 
   describe('GET /spotify/auth/callback', () => {
-
     it('should handle Error instance while fetching Spotify profile', async () => {
       mockedAxios.post.mockResolvedValueOnce({
-        data: { access_token: 'access', refresh_token: 'refresh', expires_in: 3600 },
+        data: {
+          access_token: 'access',
+          refresh_token: 'refresh',
+          expires_in: 3600,
+        },
       });
 
       mockedAxios.get.mockRejectedValueOnce(new Error('profile failed'));
@@ -67,17 +71,25 @@ describe('Spotify Controller Tests', () => {
         '/spotify/auth/callback?code=abc&state=TEST:testuser',
       );
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Invalid spotify access token: profile failed');
+      expect(response.text).toBe(
+        'Invalid spotify access token: profile failed',
+      );
     });
     it('should redirect to frontend after successful auth', async () => {
       const code = 'testcode';
       const state = 'TEST:testuser';
 
       mockedAxios.post.mockResolvedValueOnce({
-        data: { access_token: 'access', refresh_token: 'refresh', expires_in: 3600 },
+        data: {
+          access_token: 'access',
+          refresh_token: 'refresh',
+          expires_in: 3600,
+        },
       });
 
-      mockedAxios.get.mockResolvedValueOnce({ data: { id: 'spotify_user_id' } });
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { id: 'spotify_user_id' },
+      });
       MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({
         username: 'testuser',
       } as DatabaseUser);
@@ -91,16 +103,24 @@ describe('Spotify Controller Tests', () => {
     });
 
     it('should handle missing state in callback by redirecting with error', async () => {
-      const response = await supertest(app).get('/spotify/auth/callback?code=testcode');
+      const response = await supertest(app).get(
+        '/spotify/auth/callback?code=testcode',
+      );
       expect(response.status).toBe(302);
       expect(response.headers.location).toContain('state_mismatch');
     });
 
     it('should return 404 if user not found', async () => {
       mockedAxios.post.mockResolvedValueOnce({
-        data: { access_token: 'access', refresh_token: 'refresh', expires_in: 3600 },
+        data: {
+          access_token: 'access',
+          refresh_token: 'refresh',
+          expires_in: 3600,
+        },
       });
-      mockedAxios.get.mockResolvedValueOnce({ data: { id: 'spotify_user_id' } });
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { id: 'spotify_user_id' },
+      });
       MockedUserModel.findOneAndUpdate.mockResolvedValueOnce(null);
 
       const response = await supertest(app).get(
@@ -111,7 +131,11 @@ describe('Spotify Controller Tests', () => {
 
     it('should handle unknown error while fetching Spotify profile', async () => {
       mockedAxios.post.mockResolvedValueOnce({
-        data: { access_token: 'access', refresh_token: 'refresh', expires_in: 3600 },
+        data: {
+          access_token: 'access',
+          refresh_token: 'refresh',
+          expires_in: 3600,
+        },
       });
       mockedAxios.get.mockRejectedValueOnce('unexpected');
 
@@ -139,7 +163,6 @@ describe('Spotify Controller Tests', () => {
       expect(response.text).toBe('Invalid spotify access token');
     });
 
-
     it('should update conflict fields if Spotify is already linked to another user', async () => {
       const code = 'testcode';
       const state = 'TEST:testuser';
@@ -162,9 +185,13 @@ describe('Spotify Controller Tests', () => {
 
       MockedUserModel.findOne.mockResolvedValueOnce({ username: 'otheruser' });
 
-      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({ username: 'testuser' } as DatabaseUser);
+      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({
+        username: 'testuser',
+      } as DatabaseUser);
 
-      const response = await supertest(app).get(`/spotify/auth/callback?code=${code}&state=${state}`);
+      const response = await supertest(app).get(
+        `/spotify/auth/callback?code=${code}&state=${state}`,
+      );
 
       expect(MockedUserModel.findOneAndUpdate).toHaveBeenCalledWith(
         { username: 'testuser' },
@@ -183,7 +210,9 @@ describe('Spotify Controller Tests', () => {
 
   describe('PATCH /spotify/disconnect', () => {
     it('should successfully disconnect Spotify', async () => {
-      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({} as DatabaseUser);
+      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce(
+        {} as DatabaseUser,
+      );
 
       const response = await supertest(app)
         .patch('/spotify/disconnect')
@@ -205,7 +234,9 @@ describe('Spotify Controller Tests', () => {
     });
 
     it('should return 500 if DB update fails', async () => {
-      MockedUserModel.findOneAndUpdate.mockRejectedValueOnce(new Error('DB error'));
+      MockedUserModel.findOneAndUpdate.mockRejectedValueOnce(
+        new Error('DB error'),
+      );
       const response = await supertest(app)
         .patch('/spotify/disconnect')
         .send({ username: 'testuser' });
@@ -215,11 +246,15 @@ describe('Spotify Controller Tests', () => {
 
   describe('GET /spotify/getPlaylistTracks', () => {
     it('should return 400 if playlistId or access_token is missing', async () => {
-      const res1 = await supertest(app).get('/spotify/getPlaylistTracks?access_token=abc');
+      const res1 = await supertest(app).get(
+        '/spotify/getPlaylistTracks?access_token=abc',
+      );
       expect(res1.status).toBe(400);
       expect(res1.body.error).toBe('Missing playlistId or access_token');
 
-      const res2 = await supertest(app).get('/spotify/getPlaylistTracks?playlistId=123');
+      const res2 = await supertest(app).get(
+        '/spotify/getPlaylistTracks?playlistId=123',
+      );
       expect(res2.status).toBe(400);
       expect(res2.body.error).toBe('Missing playlistId or access_token');
     });
@@ -248,7 +283,9 @@ describe('Spotify Controller Tests', () => {
       );
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toContain('Failed to fetch playlist tracks');
+      expect(response.body.message).toContain(
+        'Failed to fetch playlist tracks',
+      );
     });
 
     it('should append market to queryParams when market is provided', async () => {
@@ -331,13 +368,17 @@ describe('Spotify Controller Tests', () => {
     it('should return 404 if user not found in currently-playing route', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce(null);
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
       expect(response.status).toBe(404);
     });
 
     it('should handle unknown error when fetching user from DB for current-track', async () => {
       MockedUserModel.findOne.mockRejectedValueOnce('Unknown failure');
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
       expect(response.status).toBe(500);
       expect(response.body.message).toContain(
         'Unknown error occurred while checking current track.',
@@ -347,7 +388,9 @@ describe('Spotify Controller Tests', () => {
     it('should handle Error instance when DB fetch fails in current-track route', async () => {
       MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB down'));
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
       expect(response.status).toBe(500);
       expect(response.body.message).toContain('DB down');
     });
@@ -359,7 +402,9 @@ describe('Spotify Controller Tests', () => {
 
       mockedAxios.get.mockResolvedValueOnce({ status: 204 });
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
       expect(response.status).toBe(200);
       expect(response.body.isPlaying).toBe(false);
     });
@@ -379,7 +424,9 @@ describe('Spotify Controller Tests', () => {
         },
       });
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -397,10 +444,14 @@ describe('Spotify Controller Tests', () => {
 
       mockedAxios.get.mockRejectedValueOnce(new Error('Spotify failed'));
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
 
       expect(response.status).toBe(500);
-      expect(response.body.message).toBe('Failed to fetch currently playing track: Spotify failed');
+      expect(response.body.message).toBe(
+        'Failed to fetch currently playing track: Spotify failed',
+      );
     });
 
     it('should return 500 with generic error if Spotify track fetch fails non-Error', async () => {
@@ -410,7 +461,9 @@ describe('Spotify Controller Tests', () => {
 
       mockedAxios.get.mockRejectedValueOnce('random string');
 
-      const response = await supertest(app).get('/spotify/current-track?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/current-track?username=testuser',
+      );
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe(
@@ -427,7 +480,9 @@ describe('Spotify Controller Tests', () => {
       mockedAxios.post.mockResolvedValueOnce({
         data: { access_token: 'newAccess', refresh_token: 'newRefresh' },
       });
-      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce({} as DatabaseUser);
+      MockedUserModel.findOneAndUpdate.mockResolvedValueOnce(
+        {} as DatabaseUser,
+      );
 
       const response = await supertest(app)
         .post('/spotify/auth/refresh')
@@ -437,7 +492,9 @@ describe('Spotify Controller Tests', () => {
     });
 
     it('should return 400 for missing username', async () => {
-      const response = await supertest(app).post('/spotify/auth/refresh').send({});
+      const response = await supertest(app)
+        .post('/spotify/auth/refresh')
+        .send({});
       expect(response.status).toBe(400);
     });
 
@@ -453,7 +510,9 @@ describe('Spotify Controller Tests', () => {
         .send({ username: 'testuser' });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Unknown error refreshing Spotify token');
+      expect(response.body.error).toBe(
+        'Unknown error refreshing Spotify token',
+      );
     });
 
     it('should return 404 if user not found', async () => {
@@ -472,6 +531,7 @@ describe('Spotify Controller Tests', () => {
         dateJoined: new Date(),
         friends: [],
         spotifyRefreshToken: undefined,
+        blockedUsers: [],
       };
       MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
 
@@ -517,8 +577,10 @@ describe('Spotify Controller Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.access_token).toEqual(newAccessToken);
-      expect(response.body.refresh_token).toEqual(existingRefreshToken); 
-      expect(response.body.message).toBe('Spotify access token refreshed successfully');
+      expect(response.body.refresh_token).toEqual(existingRefreshToken);
+      expect(response.body.message).toBe(
+        'Spotify access token refreshed successfully',
+      );
     });
   });
 
@@ -527,7 +589,9 @@ describe('Spotify Controller Tests', () => {
       MockedUserModel.findOne.mockResolvedValueOnce({
         spotifyAccessToken: 'token',
       } as DatabaseUser);
-      mockedAxios.get.mockResolvedValueOnce({ data: { items: ['playlist1', 'playlist2'] } });
+      mockedAxios.get.mockResolvedValueOnce({
+        data: { items: ['playlist1', 'playlist2'] },
+      });
 
       const response = await supertest(app)
         .post('/spotify/getPlaylists')
@@ -543,7 +607,9 @@ describe('Spotify Controller Tests', () => {
       } as DatabaseUser);
 
       mockedAxios.get.mockRejectedValueOnce({ response: { status: 401 } });
-      mockedAxios.post.mockResolvedValueOnce({ data: { access_token: 'new_token' } });
+      mockedAxios.post.mockResolvedValueOnce({
+        data: { access_token: 'new_token' },
+      });
       mockedAxios.get.mockResolvedValueOnce({ data: { items: ['playlist1'] } });
 
       const response = await supertest(app)
@@ -602,10 +668,18 @@ describe('Spotify Controller Tests', () => {
           spotifyId: 'id',
         }),
       } as unknown as DatabaseUser);
-      mockedAxios.get.mockResolvedValueOnce({ status: 200, data: { is_playing: true } });
-      const response = await supertest(app).get('/spotify/isConnected?username=testuser');
+      mockedAxios.get.mockResolvedValueOnce({
+        status: 200,
+        data: { is_playing: true },
+      });
+      const response = await supertest(app).get(
+        '/spotify/isConnected?username=testuser',
+      );
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ isConnected: true, currentlyPlaying: true });
+      expect(response.body).toEqual({
+        isConnected: true,
+        currentlyPlaying: true,
+      });
     });
 
     it('should return 400 if username is missing in query for checkSpotifyConnection', async () => {
@@ -617,7 +691,9 @@ describe('Spotify Controller Tests', () => {
     it('should return 404 if user not found in checkSpotifyConnection', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce(null);
 
-      const response = await supertest(app).get('/spotify/isConnected?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/isConnected?username=testuser',
+      );
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('User not found');
     });
@@ -636,26 +712,33 @@ describe('Spotify Controller Tests', () => {
 
       mockedAxios.get.mockRejectedValueOnce(new Error('fail'));
 
-      const response = await supertest(app).get('/spotify/isConnected?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/isConnected?username=testuser',
+      );
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ isConnected: true, currentlyPlaying: false });
+      expect(response.body).toEqual({
+        isConnected: true,
+        currentlyPlaying: false,
+      });
     });
 
     it('should return 500 if user lookup throws unexpected error', async () => {
       MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB failed'));
 
-      const response = await supertest(app).get('/spotify/isConnected?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/isConnected?username=testuser',
+      );
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to check Spotify connection');
     });
-
-
 
     it('should return not connected if no tokens', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce({
         toObject: () => ({}),
       } as unknown as DatabaseUser);
-      const response = await supertest(app).get('/spotify/isConnected?username=testuser');
+      const response = await supertest(app).get(
+        '/spotify/isConnected?username=testuser',
+      );
       expect(response.body.isConnected).toBe(false);
     });
 
@@ -665,7 +748,7 @@ describe('Spotify Controller Tests', () => {
         spotifyAccessToken: 'access',
         spotifyRefreshToken: 'refresh',
         spotifyId: 'spotify-user-id',
-        toObject () {
+        toObject() {
           return this;
         },
       };
@@ -694,7 +777,7 @@ describe('Spotify Controller Tests', () => {
         spotifyAccessToken: 'access',
         spotifyRefreshToken: 'refresh',
         spotifyId: 'spotify-user-id',
-        toObject () {
+        toObject() {
           return this;
         },
       };
@@ -718,8 +801,6 @@ describe('Spotify Controller Tests', () => {
     });
   });
 
-
-
   describe('GET /spotify/conflict-user-id/:username', () => {
     it('should return spotifyConflictUserId if conflict data exists', async () => {
       const conflictUserId = 'spotify-user-123';
@@ -730,7 +811,9 @@ describe('Spotify Controller Tests', () => {
         spotifyConflictUserId: conflictUserId,
       } as DatabaseUser);
 
-      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-user-id/testuser',
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.spotifyUserId).toBe(conflictUserId);
@@ -739,7 +822,9 @@ describe('Spotify Controller Tests', () => {
     it('should return 404 if user is not found', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce(null);
 
-      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-user-id/testuser',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('No Spotify conflict data available');
@@ -752,7 +837,9 @@ describe('Spotify Controller Tests', () => {
         spotifyConflictUserId: null,
       });
 
-      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-user-id/testuser',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('No Spotify conflict data available');
@@ -761,14 +848,14 @@ describe('Spotify Controller Tests', () => {
     it('should return 500 if DB call throws error', async () => {
       MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB is down'));
 
-      const response = await supertest(app).get('/spotify/conflict-user-id/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-user-id/testuser',
+      );
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to get Spotify user ID');
     });
   });
-
-
 
   describe('POST /searchSong', () => {
     it('should return the song when searched', async () => {
@@ -802,7 +889,9 @@ describe('Spotify Controller Tests', () => {
         .send({ access_token: 'valid-token', query: 'Test Song' });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Error searching Spotify songs controller');
+      expect(response.body.error).toBe(
+        'Error searching Spotify songs controller',
+      );
     });
 
     it('should return 500 if Spotify API throws a non-Error value', async () => {
@@ -813,7 +902,9 @@ describe('Spotify Controller Tests', () => {
         .send({ access_token: 'valid-token', query: 'Test Song' });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Error searching Spotify songs controller');
+      expect(response.body.error).toBe(
+        'Error searching Spotify songs controller',
+      );
     });
   });
 
@@ -879,8 +970,6 @@ describe('Spotify Controller Tests', () => {
     });
   });
 
-
-
   describe('POST /spotify/getSongsFromSpotifyPlaylist', () => {
     it('should return songs if Spotify API call succeeds', async () => {
       const mockTracks = [{ name: 'Track 1' }, { name: 'Track 2' }];
@@ -907,7 +996,9 @@ describe('Spotify Controller Tests', () => {
         .send({ access_token: 'valid-token', playlistId: 'playlist123' });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Error fetching Spotify songs from playlist Controller');
+      expect(response.body.error).toBe(
+        'Error fetching Spotify songs from playlist Controller',
+      );
     });
 
     it('should return 500 if Spotify API throws a non-Error', async () => {
@@ -918,10 +1009,11 @@ describe('Spotify Controller Tests', () => {
         .send({ access_token: 'valid-token', playlistId: 'playlist123' });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Error fetching Spotify songs from playlist Controller');
+      expect(response.body.error).toBe(
+        'Error fetching Spotify songs from playlist Controller',
+      );
     });
   });
-
 
   describe('POST /spotify/disconnectFromAllAccounts', () => {
     it('should disconnect all accounts linked to this spotify id', async () => {
@@ -932,22 +1024,29 @@ describe('Spotify Controller Tests', () => {
         matchedCount: 1,
         modifiedCount: 1,
         upsertedCount: 0,
-        upsertedId: null
+        upsertedId: null,
       });
 
-      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({ spotifyUserId: mockSpotifyId });
+      const response = await supertest(app)
+        .post('/spotify/disconnectFromAllAccounts')
+        .send({ spotifyUserId: mockSpotifyId });
 
       expect(response.status).toBe(200);
-      expect(response.body.message).toBe("Disconnected Spotify account from 1 user(s).");
+      expect(response.body.message).toBe(
+        'Disconnected Spotify account from 1 user(s).',
+      );
       expect(response.body.modifiedCount).toBe(1);
-
     });
 
-    it('should return 400 if spotify user ID is missing in request body', async () => {      
-      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({});
+    it('should return 400 if spotify user ID is missing in request body', async () => {
+      const response = await supertest(app)
+        .post('/spotify/disconnectFromAllAccounts')
+        .send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('spotifyUserId is required in the request body');
+      expect(response.body.error).toBe(
+        'spotifyUserId is required in the request body',
+      );
     });
 
     it('should return 500 if mongo returns an error', async () => {
@@ -955,17 +1054,21 @@ describe('Spotify Controller Tests', () => {
 
       MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB down'));
 
-      const response = await supertest(app).post('/spotify/disconnectFromAllAccounts').send({ spotifyUserId: mockSpotifyId });
+      const response = await supertest(app)
+        .post('/spotify/disconnectFromAllAccounts')
+        .send({ spotifyUserId: mockSpotifyId });
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe("Failed to disconnect Spotify from all accounts: Cannot read properties of undefined (reading 'modifiedCount')");
+      expect(response.body.error).toBe(
+        "Failed to disconnect Spotify from all accounts: Cannot read properties of undefined (reading 'modifiedCount')",
+      );
     });
 
     it('should handle non-Error thrown values gracefully', async () => {
       const testSpotifyUserId = 'some-id';
 
       MockedUserModel.updateMany.mockImplementationOnce(() => {
-        throw 'Something went wrong'; 
+        throw 'Something went wrong';
       });
 
       const response = await supertest(app)
@@ -977,10 +1080,7 @@ describe('Spotify Controller Tests', () => {
         error: 'Failed to disconnect Spotify from all accounts: Unknown error',
       });
     });
-
-
-  })
-
+  });
 
   describe('POST /spotify/topArtists', () => {
     it('should return top artists if access token is valid', async () => {
@@ -1002,7 +1102,7 @@ describe('Spotify Controller Tests', () => {
         'https://api.spotify.com/v1/me/top/artists',
         {
           headers: { Authorization: 'Bearer valid-token' },
-        }
+        },
       );
     });
 
@@ -1024,24 +1124,27 @@ describe('Spotify Controller Tests', () => {
 
       const response = await supertest(app)
         .post('/spotify/topArtists')
-        .send({}); 
+        .send({});
 
       expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Error getting top artists for current user');
+      expect(response.body.error).toBe(
+        'Error getting top artists for current user',
+      );
     });
   });
 
-
   describe('GET /spotify/getSpotifyAccessToken/:username', () => {
-    it('should return 200 and the user\'s Spotify access token if user exists and token is present', async () => {
-      const testToken = 'test-token'
+    it("should return 200 and the user's Spotify access token if user exists and token is present", async () => {
+      const testToken = 'test-token';
 
       MockedUserModel.findOne.mockResolvedValueOnce({
         username: 'testuser',
-        spotifyAccessToken: 'test-token'
+        spotifyAccessToken: 'test-token',
       });
 
-      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+      const response = await supertest(app).get(
+        '/spotify/getSpotifyAccessToken/testuser',
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.accessToken).toEqual(testToken);
@@ -1050,7 +1153,9 @@ describe('Spotify Controller Tests', () => {
     it('should return 404 if user is not found', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce(null);
 
-      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/unknownuser');
+      const response = await supertest(app).get(
+        '/spotify/getSpotifyAccessToken/unknownuser',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
@@ -1064,7 +1169,9 @@ describe('Spotify Controller Tests', () => {
         spotifyAccessToken: undefined,
       });
 
-      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+      const response = await supertest(app).get(
+        '/spotify/getSpotifyAccessToken/testuser',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({
@@ -1073,20 +1180,20 @@ describe('Spotify Controller Tests', () => {
     });
 
     it('should return 500 if there is a database error', async () => {
-      MockedUserModel.findOne.mockRejectedValueOnce(new Error('Error getting top artists for current user'));
+      MockedUserModel.findOne.mockRejectedValueOnce(
+        new Error('Error getting top artists for current user'),
+      );
 
-      const response = await supertest(app).get('/spotify/getSpotifyAccessToken/testuser');
+      const response = await supertest(app).get(
+        '/spotify/getSpotifyAccessToken/testuser',
+      );
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
         error: 'Error getting top artists for current user',
       });
     });
-
-
   });
-
-
 
   describe('GET /spotify/conflict-status/:username', () => {
     beforeEach(() => jest.resetAllMocks());
@@ -1100,7 +1207,9 @@ describe('Spotify Controller Tests', () => {
 
       MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
 
-      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-status/testuser',
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -1120,7 +1229,9 @@ describe('Spotify Controller Tests', () => {
 
       MockedUserModel.findOne.mockResolvedValueOnce(mockUser);
 
-      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-status/testuser',
+      );
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -1134,7 +1245,9 @@ describe('Spotify Controller Tests', () => {
     it('should return 404 if user not found', async () => {
       MockedUserModel.findOne.mockResolvedValueOnce(null);
 
-      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-status/testuser',
+      );
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('User not found');
@@ -1143,20 +1256,12 @@ describe('Spotify Controller Tests', () => {
     it('should return 500 if database throws error', async () => {
       MockedUserModel.findOne.mockRejectedValueOnce(new Error('DB error'));
 
-      const response = await supertest(app).get('/spotify/conflict-status/testuser');
+      const response = await supertest(app).get(
+        '/spotify/conflict-status/testuser',
+      );
 
       expect(response.status).toBe(500);
       expect(response.body.error).toBe('Failed to fetch conflict status');
     });
   });
-
-
-
-
-  
-
-
-
-
-
 });
