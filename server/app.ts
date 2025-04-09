@@ -22,7 +22,7 @@ import gameController from './controllers/game.controller';
 import friendRequestController from './controllers/friend.controller';
 import spotifyController from './controllers/spotify.controller';
 import UserModel from './models/users.model';
-import startQuietHoursCronJob from './services/quietHoursManager.service';
+import startQuietHoursCronJob from './services/quiet.service';
 import quietController from './controllers/quiet.controller';
 
 dotenv.config();
@@ -38,13 +38,11 @@ const socket: FakeSOSocket = new Server(server, {
 });
 
 function connectDatabase() {
-  return mongoose
-    .connect(MONGO_URL)
-    .catch((err) => console.log('MongoDB connection error: ', err));
+  return mongoose.connect(MONGO_URL).catch(err => console.log('MongoDB connection error: ', err));
 }
 function isWithinQuietHours(start: string, end: string): boolean {
   if (!start || !end) return false;
-  
+
   const now = moment.utc();
   const nowMinutes = now.hours() * 60 + now.minutes();
   const [startH, startM] = start.split(':').map(Number);
@@ -167,7 +165,7 @@ app.use('/chat', chatController(socket));
 app.use('/quiet', quietController(socket));
 app.use('/games', gameController(socket));
 app.use('/friend', friendRequestController(socket));
-app.use('/spotify', spotifyController(socket))
+app.use('/spotify', spotifyController(socket));
 
 // Export the app instance
 export { app, server, startServer };

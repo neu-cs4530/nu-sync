@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { Server } from 'socket.io';
 
 import UserModel from '../../models/users.model';
-import startQuietHoursCronJob from '../../services/quietHoursManager.service';
+import startQuietHoursCronJob from '../../services/quiet.service';
 import * as userService from '../../services/user.service';
 import { SafeDatabaseUser } from '../../types/types';
 
