@@ -10,14 +10,11 @@ const GAMES_API_URL = `${process.env.REACT_APP_SERVER_URL}/games`;
  * @throws Error if there is an issue while creating the game.
  */
 const createGame = async (gameType: GameType, username?: string, accessToken?: string): Promise<GameInstance<GameState>> => {
-  // console.log(gameType, username, accessToken)
-  const llmModel = localStorage.getItem('llmModel') || 'gemini';
-  const res = await api.post(`${GAMES_API_URL}/create`, {
+  const res = await api.post(`https://cs4530-s25-203-api.onrender.com/games/create`, {
     gameType,
     ...(gameType === 'Spotify' && {
       username,
       accessToken,
-      llm: llmModel
     }),
   });
 
