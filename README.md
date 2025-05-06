@@ -1,5 +1,10 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/fE-a_qEp)
-The individual and team project for this class are designed to mirror the experiences of a software engineer joining a new development team: you will be “onboarded” to our codebase, make several individual contributions, and then form a team to propose, develop and implement new features. The codebase that we’ll be developing on is a Fake Stack Overflow project (let’s call it HuskyFlow). You will get an opportunity to work with the starter code which provides basic skeleton for the app and then additional features will be proposed and implemented by you! All implementation will take place in the TypeScript programming language, using React for the user interface.
+NU Sync is a full-stack social web application built to foster technical collaboration and community engagement among Northeastern students. Designed as a modern reimagining of a Q&A platform, NU Sync integrates user networking, real-time messaging, music sharing, and code collaboration—all within a clean, interactive interface.
+
+The platform allows users to build connections through customizable profiles, friend requests, and mutual contact discovery. Once connected, users can exchange messages, share music via Spotify, and collaborate through code snippet sharing with built-in execution support for five languages.
+
+Interactive elements include polls on questions, real-time notifications, music taste compatibility indicators, and a Spotify-powered guessing game. Privacy and user control are core to the experience, with features such as custom notification preferences, quiet hours, user blocking, and detailed status settings (online, idle, DND, invisible).
+
+NU Sync supports an enhanced user experience through comprehensive backend testing, a responsive frontend, and seamless integration with third-party services like Spotify and Piston API. Designed and delivered in Agile sprints, the platform exemplifies scalable, user-centric full-stack development with a strong emphasis on interactivity, customization, and collaboration.
 
 ## Getting Started
 
