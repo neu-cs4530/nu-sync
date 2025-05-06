@@ -1,9 +1,15 @@
 import { PopulatedDatabaseAnswer } from './answer';
 import { PopulatedDatabaseChat } from './chat';
 import { DatabaseMessage } from './message';
-import { PopulatedDatabaseQuestion } from './question';
+import { PopulatedDatabaseQuestion, Poll } from './question';
 import { SafeDatabaseUser } from './user';
-import { BaseMove, GameInstance, GameInstanceID, GameMove, GameState } from './game';
+import {
+  BaseMove,
+  GameInstance,
+  GameInstanceID,
+  GameMove,
+  GameState,
+} from './game';
 
 /**
  * Payload for an answer update event.
@@ -71,6 +77,7 @@ export interface CommentUpdatePayload {
  */
 export interface MessageUpdatePayload {
   msg: DatabaseMessage;
+  originalMessage?: Message;
 }
 
 /**
@@ -94,12 +101,35 @@ export interface GameMovePayload {
 }
 
 /**
+ * Payload for a friend request update event.
+ * - `friendRequest`: The updated friend request object.
+ * - `type`: The type of update (`'created'`, `'updated'`, or `'deleted'`).
+ */
+export interface FriendRequestUpdatePayload {
+  friendRequest: DatabaseFriendRequest;
+  type: 'created' | 'updated' | 'deleted';
+}
+
+
+/**
+ * Payload for a poll update event.
+ * - `qid`: The unique identifier of the question.
+ * - `poll`: The updated poll object.
+ */
+export interface PollUpdatePayload {
+  qid: ObjectId;
+  poll: Poll;
+}
+
+/**
  * Interface representing the events the client can emit to the server.
  * - `makeMove`: Client can emit a move in the game.
  * - `joinGame`: Client can join a game.
  * - `leaveGame`: Client can leave a game.
  * - `joinChat`: Client can join a chat.
  * - `leaveChat`: Client can leave a chat.
+ * - `joinFriendRequests`: Client can subscribe to friend request updates.
+ * - `leaveFriendRequests`: Client can unsubscribe from friend request updates.
  */
 export interface ClientToServerEvents {
   makeMove: (move: GameMovePayload) => void;
@@ -107,6 +137,10 @@ export interface ClientToServerEvents {
   leaveGame: (gameID: string) => void;
   joinChat: (chatID: string) => void;
   leaveChat: (chatID: string | undefined) => void;
+  joinFriendRequests: (username: string) => void;
+  leaveFriendRequests: (username: string) => void;
+  connect_user: (username: string) => void;
+  logout_user: (username: string) => void;
 }
 
 /**
@@ -121,6 +155,8 @@ export interface ClientToServerEvents {
  * - `gameUpdate`: Server sends updated game state.
  * - `gameError`: Server sends error message related to game operation.
  * - `chatUpdate`: Server sends updated chat.
+ * - `friendRequestUpdate`: Server sends updated friend request status.
+ * - `userStatusUpdate`: Server sends user online status updates.
  */
 export interface ServerToClientEvents {
   questionUpdate: (question: PopulatedDatabaseQuestion) => void;
@@ -133,4 +169,15 @@ export interface ServerToClientEvents {
   gameUpdate: (game: GameUpdatePayload) => void;
   gameError: (error: GameErrorPayload) => void;
   chatUpdate: (chat: ChatUpdatePayload) => void;
+  pollUpdate: (poll: PollUpdatePayload) => void;
+  friendRequestUpdate: (friendRequest: FriendRequestUpdatePayload) => void;
+  userStatusUpdate: (payload: {
+    username: string;
+    onlineStatus: {
+      status: 'online' | 'away' | 'busy' | 'invisible';
+      busySettings?: {
+        muteScope: 'friends-only' | 'everyone';
+      };
+    };
+  }) => void;
 }

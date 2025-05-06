@@ -8,6 +8,7 @@ import {
   VoteRequest,
   FakeSOSocket,
   PopulatedDatabaseQuestion,
+  PollVoteRequest,
 } from '../types/types';
 import {
   addVoteToQuestion,
@@ -16,6 +17,7 @@ import {
   filterQuestionsBySearch,
   getQuestionsByOrder,
   saveQuestion,
+  voteOnPoll,
 } from '../services/question.service';
 import { processTags } from '../services/tag.service';
 import { populateDocument } from '../utils/database.util';
@@ -236,12 +238,49 @@ const questionController = (socket: FakeSOSocket) => {
     voteQuestion(req, res, 'downvote');
   };
 
+  /**
+   * Handles voting on a poll option. The request must contain the question ID (qid), the option index, and the username.
+   * If the request is invalid or an error occurs, the appropriate HTTP response status and message are returned.
+   *
+   * @param req The PollVoteRequest object containing the question ID, option index, and username.
+   * @param res The HTTP response object used to send back the result of the operation.
+   *
+   * @returns A Promise that resolves to void.
+   */
+  const voteOnPollOption = async (req: PollVoteRequest, res: Response): Promise<void> => {
+    const { qid, optionIndex, username } = req.body;
+
+    if (!qid || optionIndex === undefined || !username) {
+      res.status(400).send('Invalid request');
+      return;
+    }
+
+    try {
+      const result = await voteOnPoll(qid, optionIndex, username);
+
+      if ('error' in result) {
+        throw new Error(result.error);
+      }
+
+      // Emit the updated poll to all connected clients
+      if (result.poll) {
+        socket.emit('pollUpdate', { qid, poll: result.poll });
+      } else {
+        // res.status(500).send('Poll data is undefined'); already handled in service
+      }
+      res.json(result);
+    } catch (err) {
+      res.status(500).send(`Error when voting on poll: ${(err as Error).message}`);
+    }
+  };
+
   // add appropriate HTTP verbs and their endpoints to the router
   router.get('/getQuestion', getQuestionsByFilter);
   router.get('/getQuestionById/:qid', getQuestionById);
   router.post('/addQuestion', addQuestion);
   router.post('/upvoteQuestion', upvoteQuestion);
   router.post('/downvoteQuestion', downvoteQuestion);
+  router.post('/voteOnPoll', voteOnPollOption); // Added poll voting endpoint
 
   return router;
 };

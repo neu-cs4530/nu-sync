@@ -9,6 +9,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@fake-stack-overflow/shared": "file:",
     "express": "^4.21.2",
     "mongodb": "6.12.0"
   },

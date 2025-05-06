@@ -6,6 +6,7 @@ import {
   fetchAndIncrementQuestionViewsById,
   saveQuestion,
   addVoteToQuestion,
+  voteOnPoll,
 } from '../../services/question.service';
 import { DatabaseQuestion, PopulatedDatabaseQuestion } from '../../types/types';
 import {
@@ -471,6 +472,155 @@ describe('Question model', () => {
       const result = await addVoteToQuestion('someQuestionId', 'testUser', 'downvote');
 
       expect(result).toEqual({ error: 'Error when adding downvote to question' });
+    });
+  });
+
+  describe('voteOnPoll', () => {
+    test('should successfully vote on a poll', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+        save: jest.fn().mockResolvedValue(true), // Mock save method
+      };
+
+      // Mock the Mongoose findById method
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      // Call the function
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      // Verify the result
+      expect(result).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['testUser'] }, // User's vote should be added
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      });
+
+      // Verify that the save method was called
+      expect(mockQuestion.save).toHaveBeenCalled();
+    });
+
+    test('should allow multiple users to vote on different poll options', async () => {
+      // Mock poll data
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      // Mock the Mongoose findById method to return the mock question
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      // Simulate the first user voting on the first option (React)
+      const result1 = await voteOnPoll('someQuestionId', 0, 'user1');
+
+      // Verify the first user's vote
+      expect(result1).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['user1'] }, // user1 voted for React
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      });
+
+      // Simulate the second user voting on the second option (Vue)
+      const result2 = await voteOnPoll('someQuestionId', 1, 'user2');
+
+      // Verify the second user's vote
+      expect(result2).toEqual({
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['user1'] }, // user1's vote remains
+            { optionText: 'Vue', votes: ['user2'] }, // user2 voted for Vue
+          ],
+        },
+      });
+
+      // Verify that the save method was called twice (once for each vote)
+      expect(mockQuestion.save).toHaveBeenCalledTimes(2);
+    });
+
+    test('should return an error if the question is not found', async () => {
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(null);
+
+      const result = await voteOnPoll('nonExistentId', 0, 'testUser');
+
+      expect(result).toEqual({ error: 'Question or poll not found' });
+    });
+
+    test('should return an error if the question does not have a poll', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: undefined,
+      };
+
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      expect(result).toEqual({ error: 'Question or poll not found' });
+    });
+
+    test('should return an error if the option index is invalid', async () => {
+      const mockQuestion = {
+        _id: 'someQuestionId',
+        upVotes: [],
+        downVotes: [],
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: [] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      };
+
+      jest.spyOn(QuestionModel, 'findById').mockResolvedValue(mockQuestion);
+
+      const result = await voteOnPoll('someQuestionId', 2, 'testUser');
+
+      expect(result).toEqual({ error: 'Invalid option index' });
+    });
+
+    test('voteOnPoll should return an error when there is an exception during voting', async () => {
+      // Mock QuestionModel.findById to throw an error
+      jest.spyOn(QuestionModel, 'findById').mockImplementation(() => {
+        throw new Error('Database error');
+      });
+
+      // Call the function
+      const result = await voteOnPoll('someQuestionId', 0, 'testUser');
+
+      // Verify the function returns the expected error message
+      expect(result).toEqual({ error: 'Error when voting on poll' });
     });
   });
 });

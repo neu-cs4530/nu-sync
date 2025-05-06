@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import useUserContext from './useUserContext';
-import { DatabaseMessage, Message, MessageUpdatePayload } from '../types/types';
+import { DatabaseMessage, Message, MessageUpdatePayload, SafeDatabaseUser } from '../types/types';
 import { addMessage, getMessages } from '../services/messageService';
+import { getUserByUsername } from '../services/userService';
 
 /**
  * Custom hook that handles the logic for the messaging page.
@@ -16,6 +17,7 @@ const useMessagingPage = () => {
   const [messages, setMessages] = React.useState<DatabaseMessage[]>([]);
   const [newMessage, setNewMessage] = React.useState<string>('');
   const [error, setError] = React.useState<string>('');
+  const [userMap, setUserMap] = useState<Record<string, SafeDatabaseUser>>({});
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -25,10 +27,10 @@ const useMessagingPage = () => {
 
     fetchMessages();
   }, []);
-
+  
   useEffect(() => {
     const handleMessageUpdate = async (data: MessageUpdatePayload) => {
-      setMessages([...messages, data.msg]);
+      setMessages(prevMessages => [...prevMessages, data.msg]);
     };
 
     socket.on('messageUpdate', handleMessageUpdate);
@@ -36,7 +38,49 @@ const useMessagingPage = () => {
     return () => {
       socket.off('messageUpdate', handleMessageUpdate);
     };
-  }, [socket, messages]);
+  }, [socket]);
+
+  useEffect(() => {
+    const handleUserUpdate = (payload: { user: SafeDatabaseUser; type: string }) => {
+      const updatedUser = payload.user;
+      setUserMap(prevMap => {
+        if (!(updatedUser.username in prevMap)) return prevMap;
+        return { ...prevMap, [updatedUser.username]: updatedUser };
+      });
+    };
+
+    socket.on('userUpdate', handleUserUpdate);
+
+    return () => {
+      socket.off('userUpdate', handleUserUpdate);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    const fetchMissingUsers = async () => {
+      const missingUsernames = Array.from(new Set(messages.map(msg => msg.msgFrom))).filter(
+        username => !userMap[username],
+      );
+
+      if (missingUsernames.length === 0) return;
+
+      const newMap: Record<string, SafeDatabaseUser> = { ...userMap };
+
+      await Promise.all(
+        missingUsernames.map(async username => {
+          try {
+            const fetchedUser = await getUserByUsername(username);
+            newMap[username] = fetchedUser;
+          } catch (err) {
+            // console.error(`Failed to fetch user ${username}:`, err);
+          }
+        }),
+      );
+
+      setUserMap(newMap);
+    };
+    fetchMissingUsers();
+  }, [messages, userMap]);
 
   /**
    * Handles sending a new message.
@@ -61,8 +105,8 @@ const useMessagingPage = () => {
 
     setNewMessage('');
   };
-
-  return { messages, newMessage, setNewMessage, handleSendMessage, error };
+  
+  return { userMap, messages, newMessage, setNewMessage, handleSendMessage, error };
 };
 
 export default useMessagingPage;

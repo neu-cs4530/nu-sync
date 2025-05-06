@@ -1,10 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .sideBarNav {
   display: flex;
   flex-direction: column;
   width: 15%;
-  border-right: dashed;
+  border-right: 1px solid #e2e8f0;
   padding: 4% 0 4% 0;
   align-items: center;
+  background: #ffffff;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.status-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.status-row {
+  width: 80%;
+  margin: 20px 0;
+  text-align: center;
+  line-height: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background-color: #f1f1f1;
+  color: #4a5568;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #d0d0d0;
+}
+
+.status-row:hover {
+  background-color: #f7f7f7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border-color: #333;
 }
 
 .menu_button:first-child {
@@ -15,14 +58,28 @@
   height: 40px;
   width: 80%;
   margin-top: 20px;
-  border-radius: 5px;
+  border-radius: 6px;
+  /* Slightly more rounded */
   text-align: center;
   line-height: 40px;
-  color: cornflowerblue;
+  color: #4a5568;
+  /* More sophisticated blue-gray */
+  background: transparent;
+  transition: background-color 0.15s ease;
+  /* Smooth color transition */
+}
+
+.menu_button:hover {
+  background-color: #f8fafc;
+  /* Very light hover state */
 }
 
 .menu_selected {
-  background: #cccccc;
+  background: #4299e1;
+  /* Brighter, more modern blue */
+  color: white;
+  box-shadow: 0 1px 3px rgba(66, 153, 225, 0.3);
+  /* Subtle glow */
 }
 
 .additional-options {
@@ -30,6 +87,8 @@
   flex-direction: column;
   padding: 4% 0 4% 0;
   align-items: center;
+  border-top: 1px solid #edf2f7;
+  /* Light divider */
 }
 
 .message-options {
@@ -37,7 +96,25 @@
 }
 
 .message-option-selected {
-  background: #3090e2;
+  background: #4299e1;
+  /* Matching modern blue */
   color: white;
   width: 110%;
+  box-shadow: 0 1px 3px rgba(66, 153, 225, 0.3);
+  /* Consistent glow */
+}
+
+.main {
+  display: flex;
+  height: calc(100vh - 70px);
+  background-color: white;
+  border: 1px solid #e2e8f0;
+}
+
+.right_main {
+  flex: 1;
+  overflow: auto;
+  padding: 2rem;
+  background-color: white;
+  border: 1px solid #e2e8f0;
 }

@@ -5,10 +5,22 @@ import {
   getUserByUsername,
   getUsersList,
   loginUser,
+  restoreUserFromQuietHours,
   saveUser,
+  setUserToQuietHours,
   updateUser,
+  updateUserPrivacySettings,
+  updateUserQuietHours,
+  blockUser,
+  unblockUser,
+  isUserBlocked,
 } from '../../services/user.service';
-import { SafeDatabaseUser, User, UserCredentials } from '../../types/types';
+import {
+  PrivacySettings,
+  SafeDatabaseUser,
+  User,
+  UserCredentials,
+} from '../../types/types';
 import { user, safeUser } from '../mockData.models';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -54,7 +66,9 @@ describe('getUserByUsername', () => {
   it('should return the matching user', async () => {
     mockingoose(UserModel).toReturn(safeUser, 'findOne');
 
-    const retrievedUser = (await getUserByUsername(user.username)) as SafeDatabaseUser;
+    const retrievedUser = (await getUserByUsername(
+      user.username,
+    )) as SafeDatabaseUser;
 
     expect(retrievedUser.username).toEqual(user.username);
     expect(retrievedUser.dateJoined).toEqual(user.dateJoined);
@@ -69,7 +83,10 @@ describe('getUserByUsername', () => {
   });
 
   it('should throw an error if there is an error while searching the database', async () => {
-    mockingoose(UserModel).toReturn(new Error('Error finding document'), 'findOne');
+    mockingoose(UserModel).toReturn(
+      new Error('Error finding document'),
+      'findOne',
+    );
 
     const getUserError = await getUserByUsername(user.username);
 
@@ -100,7 +117,10 @@ describe('getUsersList', () => {
   });
 
   it('should throw an error if there is an error while searching the database', async () => {
-    mockingoose(UserModel).toReturn(new Error('Error finding document'), 'find');
+    mockingoose(UserModel).toReturn(
+      new Error('Error finding document'),
+      'find',
+    );
 
     const getUsersError = await getUsersList();
 
@@ -162,7 +182,9 @@ describe('deleteUserByUsername', () => {
   it('should return the deleted user when deleted succesfully', async () => {
     mockingoose(UserModel).toReturn(safeUser, 'findOneAndDelete');
 
-    const deletedUser = (await deleteUserByUsername(user.username)) as SafeDatabaseUser;
+    const deletedUser = (await deleteUserByUsername(
+      user.username,
+    )) as SafeDatabaseUser;
 
     expect(deletedUser.username).toEqual(user.username);
     expect(deletedUser.dateJoined).toEqual(user.dateJoined);
@@ -177,7 +199,10 @@ describe('deleteUserByUsername', () => {
   });
 
   it('should throw an error if a database error while deleting', async () => {
-    mockingoose(UserModel).toReturn(new Error('Error deleting object'), 'findOneAndDelete');
+    mockingoose(UserModel).toReturn(
+      new Error('Error deleting object'),
+      'findOneAndDelete',
+    );
 
     const deletedError = await deleteUserByUsername(user.username);
 
@@ -195,6 +220,8 @@ describe('updateUser', () => {
     _id: new mongoose.Types.ObjectId(),
     username: user.username,
     dateJoined: user.dateJoined,
+    friends: [],
+    blockedUsers: [],
   };
 
   const updates: Partial<User> = {
@@ -208,7 +235,10 @@ describe('updateUser', () => {
   it('should return the updated user when updated succesfully', async () => {
     mockingoose(UserModel).toReturn(safeUpdatedUser, 'findOneAndUpdate');
 
-    const result = (await updateUser(user.username, updates)) as SafeDatabaseUser;
+    const result = (await updateUser(
+      user.username,
+      updates,
+    )) as SafeDatabaseUser;
 
     expect(result.username).toEqual(user.username);
     expect(result.username).toEqual(updatedUser.username);
@@ -225,7 +255,10 @@ describe('updateUser', () => {
   });
 
   it('should throw an error if a database error while deleting', async () => {
-    mockingoose(UserModel).toReturn(new Error('Error updating object'), 'findOneAndUpdate');
+    mockingoose(UserModel).toReturn(
+      new Error('Error updating object'),
+      'findOneAndUpdate',
+    );
 
     const updatedError = await updateUser(user.username, updates);
 
@@ -238,7 +271,10 @@ describe('updateUser', () => {
     const biographyUpdates: Partial<User> = { biography: newBio };
 
     // Mock the DB to return a safe user (i.e., no password in results)
-    mockingoose(UserModel).toReturn({ ...safeUpdatedUser, biography: newBio }, 'findOneAndUpdate');
+    mockingoose(UserModel).toReturn(
+      { ...safeUpdatedUser, biography: newBio },
+      'findOneAndUpdate',
+    );
 
     const result = await updateUser(user.username, biographyUpdates);
 
@@ -259,5 +295,440 @@ describe('updateUser', () => {
     const updatedError = await updateUser(user.username, biographyUpdates);
 
     expect('error' in updatedError).toBe(true);
+  });
+
+  describe('setUserToQuietHours', () => {
+    it('should update user status to busy with muteScope: everyone', async () => {
+      mockingoose(UserModel).toReturn(safeUser, 'findOne');
+      const updatedUser1 = {
+        ...safeUser,
+        onlineStatus: {
+          status: 'busy',
+          busySettings: { muteScope: 'everyone' },
+        },
+        oldStatus: { status: 'online' },
+      };
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await setUserToQuietHours(user.username);
+      expect(result).toHaveProperty('onlineStatus');
+      if (!('error' in result)) {
+        expect(result.onlineStatus?.status).toBe('busy');
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+
+    it('should return error if user not found', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+      const result = await setUserToQuietHours(user.username);
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('restoreUserFromQuietHours', () => {
+    it('should restore old status and unset quiet hours', async () => {
+      const userWithOldStatus = {
+        ...safeUser,
+        oldStatus: { status: 'away' },
+      };
+      const updatedUser1 = {
+        ...safeUser,
+        onlineStatus: { status: 'away' },
+        oldStatus: undefined,
+      };
+      mockingoose(UserModel).toReturn(userWithOldStatus, 'findOne');
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await restoreUserFromQuietHours(user.username);
+      expect(result).toHaveProperty('onlineStatus');
+      if (!('error' in result)) {
+        expect(result.onlineStatus?.status).toBe('away');
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+    it('should return error if user not found', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOne');
+      const result = await restoreUserFromQuietHours(user.username);
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('updateUserQuietHours', () => {
+    it('should update quiet hours when value is provided', async () => {
+      const updated = {
+        ...safeUser,
+        quietHours: { start: '01:00', end: '23:00' },
+      };
+      mockingoose(UserModel).toReturn(updated, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(
+        user.username,
+        updated.quietHours,
+      );
+      expect(result).toHaveProperty('quietHours');
+    });
+
+    it('should clear quiet hours when called without value', async () => {
+      const updatedUser1 = {
+        ...safeUser,
+        quietHours: undefined,
+        oldStatus: undefined,
+      };
+      mockingoose(UserModel).toReturn(updatedUser1, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username);
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result.quietHours).toBeUndefined();
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+
+    it('should return error if update fails', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+      const result = await updateUserQuietHours(user.username, {
+        start: '00:00',
+        end: '01:00',
+      });
+      expect('error' in result).toBe(true);
+    });
+
+    it('should return error if update throws', async () => {
+      mockingoose(UserModel).toReturn(
+        new Error('update error'),
+        'findOneAndUpdate',
+      );
+      const result = await updateUserQuietHours(user.username, {
+        start: '00:00',
+        end: '01:00',
+      });
+      expect('error' in result).toBe(true);
+    });
+  });
+
+  describe('updateUserPrivacySettings', () => {
+    const mockUsername = 'privacyTestUser';
+    const mockPrivacySettings: PrivacySettings = {
+      profileVisibility: 'private',
+    };
+
+    const mockUser: SafeDatabaseUser = {
+      _id: new mongoose.Types.ObjectId(),
+      username: mockUsername,
+      dateJoined: new Date(),
+      friends: [],
+      privacySettings: mockPrivacySettings,
+      blockedUsers: [],
+    };
+
+    beforeEach(() => {
+      mockingoose.resetAll();
+    });
+
+    it('should return updated user if update is successful', async () => {
+      mockingoose(UserModel).toReturn(mockUser, 'findOneAndUpdate');
+      const result = await updateUserPrivacySettings(
+        mockUsername,
+        mockPrivacySettings,
+      );
+      expect('error' in result).toBe(false);
+      if (!('error' in result)) {
+        expect(result).toHaveProperty('username', mockUsername);
+        expect(result).toHaveProperty('privacySettings');
+        expect(result.privacySettings?.profileVisibility).toBe('private');
+      } else {
+        throw new Error('Expected a user object, but got an error object.');
+      }
+    });
+
+    it('should return error if updateUser returns null (user not found)', async () => {
+      mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+      const result = await updateUserPrivacySettings(
+        mockUsername,
+        mockPrivacySettings,
+      );
+      expect('error' in result).toBe(true);
+    });
+
+    it('should return error if updateUser throws an exception', async () => {
+      mockingoose(UserModel).toReturn(
+        new Error('Update failed'),
+        'findOneAndUpdate',
+      );
+      const result = await updateUserPrivacySettings(
+        mockUsername,
+        mockPrivacySettings,
+      );
+      expect('error' in result).toBe(true);
+    });
+  });
+});
+
+describe('blockUser', () => {
+  const blocker = 'blockerUser';
+  const blocked = 'blockedUser';
+
+  const mockBlockerUser = {
+    _id: new mongoose.Types.ObjectId(),
+    username: blocker,
+    blockedUsers: [],
+  };
+
+  const mockBlockedUser = {
+    _id: new mongoose.Types.ObjectId(),
+    username: blocked,
+  };
+
+  const updatedUser = {
+    ...mockBlockerUser,
+    blockedUsers: [blocked],
+  };
+
+  beforeEach(() => {
+    mockingoose.resetAll();
+  });
+
+  it('should add a user to blockedUsers array if successful', async () => {
+    // Mock findOne for both user lookups
+    mockingoose(UserModel).toReturn(mockBlockerUser, 'findOne');
+    // Need second mock for second findOne call
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock findOneAndUpdate for the update operation
+    mockingoose(UserModel).toReturn(updatedUser, 'findOneAndUpdate');
+
+    const result = await blockUser(blocker, blocked);
+
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.blockedUsers).toContain(blocked);
+    } else {
+      throw new Error('Expected a user object, but got an error object.');
+    }
+  });
+
+  it('should return error if a user is not found', async () => {
+    // Mock first user found, second not found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(null);
+
+    const result = await blockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error).toContain('One or both users not found');
+    }
+  });
+
+  it('should return error if user is already blocked', async () => {
+    const alreadyBlockedUser = {
+      ...mockBlockerUser,
+      blockedUsers: [blocked],
+    };
+
+    // Mock both users found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(alreadyBlockedUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    const result = await blockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error).toContain('User is already blocked');
+    }
+  });
+
+  it('should return error if the update fails', async () => {
+    // Mock both users found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock update failure
+    mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+
+    const result = await blockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if there is a database error', async () => {
+    // Mock both users found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock database error
+    mockingoose(UserModel).toReturn(
+      new Error('Database error'),
+      'findOneAndUpdate',
+    );
+
+    const result = await blockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('unblockUser', () => {
+  const blocker = 'blockerUser';
+  const blocked = 'blockedUser';
+
+  const mockBlockerUser = {
+    _id: new mongoose.Types.ObjectId(),
+    username: blocker,
+    blockedUsers: [blocked],
+  };
+
+  const mockBlockedUser = {
+    _id: new mongoose.Types.ObjectId(),
+    username: blocked,
+  };
+
+  const updatedUser = {
+    ...mockBlockerUser,
+    blockedUsers: [],
+  };
+
+  beforeEach(() => {
+    mockingoose.resetAll();
+  });
+
+  it('should remove a user from blockedUsers array if successful', async () => {
+    // Mock findOne for both user lookups
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock findOneAndUpdate for the update operation
+    mockingoose(UserModel).toReturn(updatedUser, 'findOneAndUpdate');
+
+    const result = await unblockUser(blocker, blocked);
+
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.blockedUsers).not.toContain(blocked);
+    } else {
+      throw new Error('Expected a user object, but got an error object.');
+    }
+  });
+
+  it('should return error if a user is not found', async () => {
+    // Mock first user found, second not found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(null);
+
+    const result = await unblockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error).toContain('One or both users not found');
+    }
+  });
+
+  it('should return error if the update fails', async () => {
+    // Mock both users found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock update failure
+    mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+
+    const result = await unblockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+  });
+
+  it('should return error if there is a database error', async () => {
+    // Mock both users found
+    jest
+      .spyOn(UserModel, 'findOne')
+      .mockResolvedValueOnce(mockBlockerUser)
+      .mockResolvedValueOnce(mockBlockedUser);
+
+    // Mock database error
+    mockingoose(UserModel).toReturn(
+      new Error('Database error'),
+      'findOneAndUpdate',
+    );
+
+    const result = await unblockUser(blocker, blocked);
+
+    expect('error' in result).toBe(true);
+  });
+});
+
+describe('isUserBlocked', () => {
+  const blocker = 'blockerUser';
+  const blocked = 'blockedUser';
+
+  const mockBlockerUser = {
+    _id: new mongoose.Types.ObjectId(),
+    username: blocker,
+    blockedUsers: [blocked],
+  };
+
+  beforeEach(() => {
+    mockingoose.resetAll();
+  });
+
+  it('should return true if user is blocked', async () => {
+    mockingoose(UserModel).toReturn(mockBlockerUser, 'findOne');
+
+    const result = await isUserBlocked(blocker, blocked);
+
+    expect(result).toBe(true);
+  });
+
+  it('should return false if user is not blocked', async () => {
+    const userWithNoBlocked = {
+      ...mockBlockerUser,
+      blockedUsers: [],
+    };
+
+    mockingoose(UserModel).toReturn(userWithNoBlocked, 'findOne');
+
+    const result = await isUserBlocked(blocker, blocked);
+
+    expect(result).toBe(false);
+  });
+
+  it('should return error if user not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOne');
+
+    const result = await isUserBlocked(blocker, blocked);
+
+    // Check if result is an error object using type assertion
+    expect(
+      typeof result === 'object' && result !== null && 'error' in result,
+    ).toBe(true);
+    // Type assertion to access the error property
+    if (typeof result === 'object' && result !== null && 'error' in result) {
+      expect(result.error).toContain('User not found');
+    }
+  });
+
+  it('should return error if there is a database error', async () => {
+    mockingoose(UserModel).toReturn(new Error('Database error'), 'findOne');
+
+    const result = await isUserBlocked(blocker, blocked);
+
+    // Check if result is an error object using type assertion
+    expect(
+      typeof result === 'object' && result !== null && 'error' in result,
+    ).toBe(true);
   });
 });

@@ -8,7 +8,7 @@ import { app } from '../../app';
 import * as messageService from '../../services/message.service';
 import * as chatService from '../../services/chat.service';
 import * as databaseUtil from '../../utils/database.util';
-import { DatabaseChat, PopulatedDatabaseChat, Message } from '../../types/types';
+import { DatabaseChat, PopulatedDatabaseChat, Message, MessageSearchResult } from '../../types/types';
 import chatController from '../../controllers/chat.controller';
 
 /**
@@ -578,4 +578,90 @@ describe('Chat Controller', () => {
       clientSocket.emit('leaveChat', 'chat123');
     });
   });
+
+  describe('POST /chat/searchMessages', () => {
+    const endpoint = '/chat/searchMessages';
+
+    const mockMessageResult = (msg: string): MessageSearchResult => ({
+      _id: new mongoose.Types.ObjectId(),
+      msg,
+      msgFrom: 'user1',
+      msgDateTime: new Date(),
+      type: 'direct',
+      user: null,
+      chatId: new mongoose.Types.ObjectId(),
+      participants: ['user1', 'user2'],
+      matchedKeyword: 'alice',
+    });
+
+    const searchSpy = jest.spyOn(chatService, 'searchMessagesInUserChats');
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it('should return 200 and matching messages', async () => {
+      const mockResults = [mockMessageResult('Yes Alice!'), mockMessageResult('Hello Alice again')];
+      searchSpy.mockResolvedValue(mockResults);
+
+      const res = await supertest(app).post(endpoint).send({ username: 'user1', keyword: 'alice' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+      expect(searchSpy).toHaveBeenCalledWith('user1', 'alice');
+    });
+
+    it('should return 400 if body is missing', async () => {
+      const res = await supertest(app).post(endpoint).send();
+
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('Invalid search request. Missing or invalid fields.');
+    });
+
+    it('should return 400 if username is missing', async () => {
+      const res = await supertest(app).post(endpoint).send({ keyword: 'test' });
+
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('Invalid search request. Missing or invalid fields.');
+    });
+
+    it('should return 400 if keyword is missing', async () => {
+      const res = await supertest(app).post(endpoint).send({ username: 'user1' });
+
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('Invalid search request. Missing or invalid fields.');
+    });
+
+    it('should return 400 if keyword is too long', async () => {
+      const longKeyword = 'x'.repeat(51);
+      const res = await supertest(app)
+        .post(endpoint)
+        .send({ username: 'user1', keyword: longKeyword });
+
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('Invalid search request. Missing or invalid fields.');
+    });
+
+    it('should return 500 if service returns error', async () => {
+      searchSpy.mockResolvedValue({ error: 'DB failure' });
+
+      const res = await supertest(app).post(endpoint).send({ username: 'user1', keyword: 'hello' });
+
+      expect(res.status).toBe(500);
+      expect(res.text).toBe('Error searching messages: DB failure');
+    });
+
+    it('should sanitize keyword with special regex characters', async () => {
+      searchSpy.mockResolvedValue([]);
+
+      const res = await supertest(app)
+        .post(endpoint)
+        .send({ username: 'user1', keyword: 'Hello?' });
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body).toHaveLength(0);
+    });
+  });
+
 });

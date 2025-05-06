@@ -102,7 +102,12 @@ export const QUESTIONS: DatabaseQuestion[] = [
     answers: [],
     askedBy: 'q_by3',
     askDateTime: new Date('2023-11-19T09:24:00'),
-    views: ['question1_user', 'question2_user', 'question3_user', 'question4_user'],
+    views: [
+      'question1_user',
+      'question2_user',
+      'question3_user',
+      'question4_user',
+    ],
     upVotes: [],
     downVotes: [],
     comments: [],
@@ -138,6 +143,13 @@ export const POPULATED_QUESTIONS: PopulatedDatabaseQuestion[] = [
     upVotes: [],
     downVotes: [],
     comments: [],
+    poll: {
+      question: 'What is your favorite framework?',
+      options: [
+        { optionText: 'React', votes: [] },
+        { optionText: 'Vue', votes: [] },
+      ],
+    },
   },
   {
     _id: new ObjectId('65e9b5a995b6c7045a30d823'),
@@ -164,7 +176,12 @@ export const POPULATED_QUESTIONS: PopulatedDatabaseQuestion[] = [
     answers: [],
     askedBy: 'q_by3',
     askDateTime: new Date('2023-11-19T09:24:00'),
-    views: ['question1_user', 'question2_user', 'question3_user', 'question4_user'],
+    views: [
+      'question1_user',
+      'question2_user',
+      'question3_user',
+      'question4_user',
+    ],
     upVotes: [],
     downVotes: [],
     comments: [],
@@ -194,4 +211,6 @@ export const safeUser: SafeDatabaseUser = {
   _id: new ObjectId(),
   username: 'user1',
   dateJoined: new Date('2024-12-03'),
+  friends: [],
+  blockedUsers: [],
 };

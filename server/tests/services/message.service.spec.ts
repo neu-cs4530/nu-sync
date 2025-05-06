@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import MessageModel from '../../models/messages.model';
 import UserModel from '../../models/users.model';
-import { getMessages, saveMessage } from '../../services/message.service';
+import { getMessages, saveMessage, getMessageById } from '../../services/message.service';
 import { Message } from '../../types/types';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -98,6 +98,57 @@ describe('Message model', () => {
       const messages = await getMessages();
 
       expect(messages).toEqual([]);
+    });
+  });
+
+  describe('getMessageById', () => {
+    const mockMessageId = new mongoose.Types.ObjectId();
+
+    beforeEach(() => {
+      mockingoose.resetAll();
+      jest.clearAllMocks();
+    });
+
+    it('should return a message with schema defaults when found', async () => {
+      // Mock the minimal message that would come from DB
+      const dbMessage = {
+        _id: mockMessageId,
+        msg: 'Test message',
+        msgFrom: 'testUser',
+        msgDateTime: new Date('2024-06-06'),
+        type: 'global'
+      };
+
+      mockingoose(MessageModel).toReturn(dbMessage, 'findOne');
+
+      const result = await getMessageById(mockMessageId.toString());
+
+      // Verify core properties
+      expect(result).toMatchObject({
+        _id: mockMessageId,
+        msg: 'Test message',
+        msgFrom: 'testUser',
+        type: 'global'
+      });
+
+      // Verify schema defaults were applied
+      expect(result?.isCodeSnippet).toBe(false);
+      expect(result?.isEditSuggestion).toBe(false);
+      expect(result?.codeSnippet?.isEdited).toBe(false);
+    });
+
+    it('should return null when message is not found', async () => {
+      mockingoose(MessageModel).toReturn(null, 'findOne');
+
+      const result = await getMessageById(mockMessageId.toString());
+      expect(result).toBeNull();
+    });
+
+    it('should return null when database operation fails', async () => {
+      mockingoose(MessageModel).toReturn(new Error('Database error'), 'findOne');
+
+      const result = await getMessageById(mockMessageId.toString());
+      expect(result).toBeNull();
     });
   });
 });

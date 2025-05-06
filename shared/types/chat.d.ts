@@ -12,6 +12,21 @@ export interface MessageInChat extends DatabaseMessage {
   user: Pick<DatabaseUser, '_id' | 'username'> | null;
 }
 
+export interface MessageSearchResult extends MessageInChat {
+  chatId: ObjectId;
+  participants: string[];
+  matchedKeyword: string;
+}
+
+export type MessageSearchResponse = MessageSearchResult[] | { error: string };
+
+
+export interface SearchMessagesRequest extends Request {
+  body: {
+    username: string;
+    keyword: string;
+  };
+}
 /**
  * Represents a Chat with participants and messages (unpopulated).
  * - `participants`: Array of usernames representing the chat participants.

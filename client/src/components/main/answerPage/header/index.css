@@ -1,3 +1,34 @@
+#answersHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  /* Maintains spacing but with cleaner units */
+  border-bottom: 1px solid #e2e8f0;
+  /* Subtle divider matching your theme */
+  margin-bottom: 1.5rem;
+  /* Space below header */
+}
+
+.bold_title {
+  font-weight: 600;
+  /* Semi-bold instead of just bold */
+  color: #2d3748;
+  /* Dark blue-gray for better readability */
+  font-size: 1.25rem;
+  /* Slightly larger for hierarchy */
+}
+
 .answer_question_title {
   max-width: 60%;
+  color: #1a365d;
+  /* Darker color for the title */
+  font-weight: 700;
+  /* Bold for emphasis */
+  line-height: 1.4;
+  /* Better text spacing */
+  text-align: center;
+  /* Centered for balance */
+  padding: 0 1rem;
+  /* Prevents text from touching edges */
 }

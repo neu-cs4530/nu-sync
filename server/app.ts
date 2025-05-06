@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import moment from 'moment';
 import { Server } from 'socket.io';
 import * as http from 'http';
 
@@ -18,6 +19,11 @@ import userController from './controllers/user.controller';
 import messageController from './controllers/message.controller';
 import chatController from './controllers/chat.controller';
 import gameController from './controllers/game.controller';
+import friendRequestController from './controllers/friend.controller';
+import spotifyController from './controllers/spotify.controller';
+import UserModel from './models/users.model';
+import startQuietHoursCronJob from './services/quiet.service';
+import quietController from './controllers/quiet.controller';
 
 dotenv.config();
 
@@ -34,19 +40,94 @@ const socket: FakeSOSocket = new Server(server, {
 function connectDatabase() {
   return mongoose.connect(MONGO_URL).catch(err => console.log('MongoDB connection error: ', err));
 }
+function isWithinQuietHours(start: string, end: string): boolean {
+  if (!start || !end) return false;
+
+  const now = moment.utc();
+  const nowMinutes = now.hours() * 60 + now.minutes();
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  const startMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+
+  return startMinutes <= endMinutes
+    ? nowMinutes >= startMinutes && nowMinutes < endMinutes
+    : nowMinutes >= startMinutes || nowMinutes < endMinutes;
+}
 
 function startServer() {
   connectDatabase();
+  startQuietHoursCronJob(socket);
   server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
 }
 
 socket.on('connection', socket => {
-  console.log('A user connected ->', socket.id);
+  // console.log('A user connected ->', socket.id);
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
+  // 1. Handle user login/online connection
+  socket.on('connect_user', async (username: string) => {
+    // console.log(`User ${username} connected`);
+    socket.data.username = username;
+
+    const user = await UserModel.findOne({ username });
+
+    if (user?.quietHours && isWithinQuietHours(user.quietHours.start, user.quietHours.end)) {
+      console.log(`User ${username} is in quiet hours — skipping status update.`);
+      return;
+    }
+
+    // Only override to online if user was invisible (logged out)
+    let newStatus =
+      user?.onlineStatus?.status === 'invisible' ? { status: 'online' } : user?.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userStatusUpdate', {
+      username,
+      onlineStatus: newStatus,
+    });
+  });
+
+  // 2. Handle user disconnect (browser close, refresh, tab switch)
+  socket.on('disconnect', async () => {
+    const username = socket.data?.username;
+    if (!username) return;
+
+    const user = await UserModel.findOne({ username });
+
+    if (!user) return;
+
+    // Determine what status to preserve
+    const previousStatus = user.onlineStatus?.status || 'online';
+    const newStatus = previousStatus === 'online' ? { status: 'invisible' } : user.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userUpdate', {
+      user: { ...user.toObject(), onlineStatus: newStatus },
+      type: 'updated',
+    });
+
+    // console.log(`User ${username} disconnected — marked as ${newStatus.status}`);
+  });
+
+  socket.on('logout_user', async (username: string) => {
+    const user = await UserModel.findOne({ username });
+    if (!user) return;
+
+    const previousStatus = user.onlineStatus?.status || 'online';
+    const newStatus = previousStatus === 'online' ? { status: 'invisible' } : user.onlineStatus;
+
+    await UserModel.updateOne({ username }, { $set: { onlineStatus: newStatus } });
+
+    socket.broadcast.emit('userUpdate', {
+      user: { ...user.toObject(), onlineStatus: newStatus },
+      type: 'updated',
+    });
+
+    // console.log(`User ${username} logged out — marked as ${newStatus.status}`);
   });
 });
 
@@ -81,7 +162,10 @@ app.use('/comment', commentController(socket));
 app.use('/messaging', messageController(socket));
 app.use('/user', userController(socket));
 app.use('/chat', chatController(socket));
+app.use('/quiet', quietController(socket));
 app.use('/games', gameController(socket));
+app.use('/friend', friendRequestController(socket));
+app.use('/spotify', spotifyController(socket));
 
 // Export the app instance
 export { app, server, startServer };

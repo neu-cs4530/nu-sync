@@ -1,34 +1,69 @@
 .question {
   display: flex;
   flex-direction: row;
-  border-top: #000000 1px dashed;
+  border-top: 1px solid #e2e8f0;
+  /* Changed from dashed to solid */
+  padding: 1.5rem 0;
+  /* Added vertical padding */
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.question:hover {
+  background-color: #f8fafc;
+  /* Subtle hover effect */
 }
 
 .postStats {
-  color: #bbbbbb;
+  color: #718096;
+  /* Updated from #bbbbbb to modern gray */
   text-align: center;
   width: 10%;
+  font-size: 0.875rem;
+  /* Slightly smaller for stats */
 }
 
 .question_mid {
   width: 60%;
+  padding: 0 1rem;
+  /* Added horizontal padding */
 }
 
 .postTitle {
-  color: cornflowerblue;
+  color: #4299e1;
+  /* Updated from cornflowerblue to match your theme */
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  /* Space between title and tags */
+  font-size: 1.1rem;
+  /* Slightly larger for emphasis */
 }
 
 .question_tags {
   margin-top: 1%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  /* Better tag spacing */
 }
 
 .question_tag_button {
   color: #ffffff;
-  background: gray;
+  background: #4a5568;
+  /* Dark gray instead of plain gray */
   border-width: 0;
   border-radius: 8px;
-  margin-left: 2%;
-  padding: 1% 3% 1% 3%;
+  padding: 0.25rem 0.75rem;
+  /* Better padding units */
+  font-size: 0.75rem;
+  /* Smaller tag text */
+  transition: all 0.15s ease;
+}
+
+.question_tag_button:hover {
+  background: #2d3748;
+  /* Darker on hover */
+  transform: translateY(-1px);
 }
 
 .question_tag_button:first-child {
@@ -39,12 +74,67 @@
   width: 30%;
   display: flex;
   flex-direction: row;
+  align-items: center;
+  font-size: 0.875rem;
+  /* Smaller for metadata */
 }
 
 .question_author {
-  color: red;
+  color: #e53e3e;
+  /* Updated red to modern shade */
+  font-weight: 500;
+  margin-right: 0.5rem;
 }
 
 .question_meta {
-  color: #bbbbbb;
+  color: #a0aec0;
+  /* Lighter gray for metadata */
+}
+
+/* New Poll Styling */
+.poll {
+  margin-top: 15px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.poll h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.poll-option {
+  margin-bottom: 10px;
+}
+
+.poll-option button {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.poll-option button:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.poll-option button:active {
+  background-color: #004080;
+  border-color: #004080;
+}
+
+.poll-option button:disabled {
+  background-color: #cccccc;
+  border-color: #cccccc;
+  cursor: not-allowed;
 }
