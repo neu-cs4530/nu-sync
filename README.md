@@ -1,3 +1,5 @@
+## Overview
+
 NU Sync is a full-stack social web application built to foster technical collaboration and community engagement among Northeastern students. Designed as a modern reimagining of a Q&A platform, NU Sync integrates user networking, real-time messaging, music sharing, and code collaboration—all within a clean, interactive interface.
 
 The platform allows users to build connections through customizable profiles, friend requests, and mutual contact discovery. Once connected, users can exchange messages, share music via Spotify, and collaborate through code snippet sharing with built-in execution support for five languages.
