@@ -19,6 +19,7 @@ const AllGamesPage = () => {
     handleToggleModal,
     handleSelectGameType,
     error,
+    isCreating,
   } = useAllGamesPage();
 
   return (
@@ -33,8 +34,29 @@ const AllGamesPage = () => {
         <div className='game-modal'>
           <div className='modal-content'>
             <h2>Select Game Type</h2>
-            <button onClick={() => handleSelectGameType('Nim')}>Nim</button>
-            <button onClick={handleToggleModal}>Cancel</button>
+            <div className="game-type-row">
+              <button
+                className='btn-game-option'
+                onClick={() => handleSelectGameType('Nim')}
+                disabled={isCreating}
+              >
+                {isCreating ? 'Loading...' : 'Nim Game'}
+              </button>
+              <button
+                className='btn-game-option'
+                onClick={() => handleSelectGameType('Spotify')}
+                disabled={isCreating}
+              >
+                {isCreating ? (<>
+                  Loading<span className="spinner" />
+                </>) : 'Spotify Guessing Game'}
+              </button>
+            </div>
+            <div className="cancel-row">
+              <button className='btn-cancel' onClick={handleToggleModal} disabled={isCreating}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

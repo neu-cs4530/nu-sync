@@ -23,6 +23,7 @@ const useUsersListPage = () => {
     const fetchData = async () => {
       try {
         const res = await getUsers();
+        // console.log('Fetched users:', res);
         setUserList(res || []);
       } catch (error) {
         // eslint-disable-next-line no-console

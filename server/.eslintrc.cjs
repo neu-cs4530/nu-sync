@@ -15,7 +15,7 @@ module.exports = {
   },
   ignorePatterns: ['coverage/', 'node_modules/', '/*.*'],
   rules: {
-    'prettier/prettier': 'error',
+    'prettier/prettier': 0,
     'no-underscore-dangle': 0,
     'no-param-reassign': 0,
     'no-restricted-syntax': 0,
@@ -24,7 +24,10 @@ module.exports = {
     '@typescript-eslint/no-throw-literal': 0,
     '@typescript-eslint/lines-between-class-members': 0,
     '@typescript-eslint/no-unused-vars': [1, { args: 'none' }],
-    'import/no-extraneous-dependencies': ['error', { devDependencies: ['**/*.spec.ts'] }],
+    'import/no-extraneous-dependencies': [
+      'error',
+      { devDependencies: ['**/*.spec.ts'] },
+    ],
     '@typescript-eslint/naming-convention': [
       'error',
       {

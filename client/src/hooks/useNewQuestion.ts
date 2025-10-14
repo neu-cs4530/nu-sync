@@ -11,10 +11,15 @@ import { Question } from '../types/types';
  * @returns title - The current value of the title input.
  * @returns text - The current value of the text input.
  * @returns tagNames - The current value of the tags input.
+ * @returns pollQuestion - The current value of the poll question input.
+ * @returns pollOptions - The current value of the poll options input.
  * @returns titleErr - Error message for the title field, if any.
  * @returns textErr - Error message for the text field, if any.
  * @returns tagErr - Error message for the tag field, if any.
+ * @returns pollErr - Error message for the poll field, if any.
  * @returns postQuestion - Function to validate the form and submit a new question.
+ * @returns setPollQuestion - Function to update the poll question.
+ * @returns setPollOptions - Function to update the poll options.
  */
 const useNewQuestion = () => {
   const navigate = useNavigate();
@@ -22,10 +27,13 @@ const useNewQuestion = () => {
   const [title, setTitle] = useState<string>('');
   const [text, setText] = useState<string>('');
   const [tagNames, setTagNames] = useState<string>('');
+  const [pollQuestion, setPollQuestion] = useState<string>('');
+  const [pollOptions, setPollOptions] = useState<string[]>([]);
 
   const [titleErr, setTitleErr] = useState<string>('');
   const [textErr, setTextErr] = useState<string>('');
   const [tagErr, setTagErr] = useState<string>('');
+  const [pollErr, setPollErr] = useState<string>('');
 
   /**
    * Function to validate the form before submitting the question.
@@ -74,6 +82,19 @@ const useNewQuestion = () => {
       }
     }
 
+    // Validate poll (if pollQuestion is provided)
+    if (pollQuestion) {
+      if (pollOptions.length < 2) {
+        setPollErr('Poll must have at least 2 options');
+        isValid = false;
+      } else if (pollOptions.some(option => option.trim() === '')) {
+        setPollErr('Poll options cannot be empty');
+        isValid = false;
+      } else {
+        setPollErr('');
+      }
+    }
+
     return isValid;
   };
 
@@ -102,6 +123,12 @@ const useNewQuestion = () => {
       downVotes: [],
       views: [],
       comments: [],
+      poll: pollQuestion
+        ? {
+            question: pollQuestion,
+            options: pollOptions.map(option => ({ optionText: option, votes: [] })),
+          }
+        : undefined,
     };
 
     const res = await addQuestion(question);
@@ -118,9 +145,14 @@ const useNewQuestion = () => {
     setText,
     tagNames,
     setTagNames,
+    pollQuestion,
+    setPollQuestion,
+    pollOptions,
+    setPollOptions,
     titleErr,
     textErr,
     tagErr,
+    pollErr,
     postQuestion,
   };
 };

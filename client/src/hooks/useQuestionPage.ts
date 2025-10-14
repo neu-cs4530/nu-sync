@@ -1,7 +1,12 @@
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import useUserContext from './useUserContext';
-import { AnswerUpdatePayload, OrderType, PopulatedDatabaseQuestion } from '../types/types';
+import {
+  AnswerUpdatePayload,
+  OrderType,
+  PopulatedDatabaseQuestion,
+  PollUpdatePayload,
+} from '../types/types';
 import { getQuestionsByFilter } from '../services/questionService';
 
 /**
@@ -92,16 +97,26 @@ const useQuestionPage = () => {
       setQlist(prevQlist => prevQlist.map(q => (q._id === question._id ? question : q)));
     };
 
+    /**
+     * Function to handle poll updates from the socket.
+     * @param payload - The payload with question ID and updated poll data.
+     */
+    const handlePollUpdate = ({ qid, poll }: PollUpdatePayload) => {
+      setQlist(prevQlist => prevQlist.map(q => (q._id === qid ? { ...q, poll } : q)));
+    };
+
     fetchData();
 
     socket.on('questionUpdate', handleQuestionUpdate);
     socket.on('answerUpdate', handleAnswerUpdate);
     socket.on('viewsUpdate', handleViewsUpdate);
+    socket.on('pollUpdate', handlePollUpdate);
 
     return () => {
       socket.off('questionUpdate', handleQuestionUpdate);
       socket.off('answerUpdate', handleAnswerUpdate);
       socket.off('viewsUpdate', handleViewsUpdate);
+      socket.off('pollUpdate', handlePollUpdate);
     };
   }, [questionOrder, search, socket]);
 

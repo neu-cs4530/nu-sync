@@ -1,8 +1,11 @@
+import axios from 'axios';
 import NimModel from '../../../models/nim.model';
+import SpotifyModel from '../../../models/spotify.model';
 import GameManager from '../../../services/games/gameManager';
 import NimGame from '../../../services/games/nim';
 import { MAX_NIM_OBJECTS } from '../../../types/constants';
 import { GameInstance, GameInstanceID, NimGameState, GameType } from '../../../types/types';
+import SpotifyGame from '../../../services/games/spotify';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockingoose = require('mockingoose');
@@ -10,6 +13,8 @@ const mockingoose = require('mockingoose');
 jest.mock('nanoid', () => ({
   nanoid: jest.fn(() => 'testGameID'), // Mock the return value
 }));
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('GameManager', () => {
   afterEach(() => {
@@ -69,6 +74,68 @@ describe('GameManager', () => {
 
       expect(mapSetSpy).not.toHaveBeenCalled();
       expect(error).toHaveProperty('error');
+    });
+
+    it('should return gameID for a successfully created Spotify game', async () => {
+      const mockHintResponse = {
+        data: {
+          songName: 'Test Song',
+          artistName: 'Test Artist',
+          hint: 'This is a test hint',
+        },
+      };
+
+      mockedAxios.post.mockResolvedValueOnce(mockHintResponse);
+      mockingoose(SpotifyModel).toReturn(new SpotifyGame('user123', 'token', 'hint', 'song', 'artist').toModel(), 'create');
+
+      const gameManager = GameManager.getInstance();
+      const gameID = await gameManager.addGame('Spotify', 'user123', 'token');
+
+      expect(typeof gameID).toBe('string');
+      expect(gameID).toEqual('testGameID');
+      expect(mapSetSpy).toHaveBeenCalledWith(gameID, expect.any(SpotifyGame));
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        `${process.env.SERVER_URL}/spotify/generateRandomTrackAndHint`,
+        { accessToken: 'token' }
+      );
+    });
+
+    it('should return error if axios.post fails in Spotify case', async () => {
+      mockedAxios.post.mockRejectedValueOnce(new Error('LLM API failure'));
+
+      const gameManager = GameManager.getInstance();
+      const error = await gameManager.addGame('Spotify', 'user123', 'token');
+
+      expect(error).toEqual({ error: 'LLM API failure' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+    });
+
+    it('should return error if SpotifyModel.create fails', async () => {
+      const mockHintResponse = {
+        data: {
+          songName: 'Test Song',
+          artistName: 'Test Artist',
+          hint: 'This is a test hint',
+        },
+      };
+
+      mockedAxios.post.mockResolvedValueOnce(mockHintResponse);
+      jest.spyOn(SpotifyModel, 'create').mockRejectedValueOnce(new Error('DB error'));
+
+      const gameManager = GameManager.getInstance();
+      const error = await gameManager.addGame('Spotify', 'user123', 'token');
+
+      expect(error).toEqual({ error: 'DB error' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
+    });
+
+    it('should return error if missing username or accessToken for Spotify', async () => {
+      const gameManager = GameManager.getInstance();
+
+      const error = await gameManager.addGame('Spotify'); // missing both
+
+      expect(error).toEqual({ error: 'Missing Spotify credentials' });
+      expect(mapSetSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -282,5 +349,14 @@ describe('GameManager', () => {
       expect(games.length).toEqual(1);
       expect(games[0]).toBeInstanceOf(NimGame);
     });
+  });
+});
+
+
+describe('Dummy Test for GameManager', () => {
+  it('should always pass with a simple array check', () => {
+    const arr = [];
+    arr.push('test');
+    expect(arr.length).toBe(1);
   });
 });

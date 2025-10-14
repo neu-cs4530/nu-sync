@@ -19,6 +19,7 @@ const useAllGamesPage = () => {
   const [availableGames, setAvailableGames] = useState<GameInstance<GameState>[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const fetchGames = async () => {
     try {
@@ -30,11 +31,42 @@ const useAllGamesPage = () => {
   };
 
   const handleCreateGame = async (gameType: GameType) => {
+    setIsCreating(true);
     try {
-      await createGame(gameType);
+      if (!localStorage.getItem('llmModel')) {
+        localStorage.setItem('llmModel', 'gemini');
+      }
+
+      if (gameType === 'Spotify') {
+        const userRaw = localStorage.getItem('user');
+        const accessToken = localStorage.getItem('spotify_access_token');
+
+        if (!userRaw || !accessToken) {
+          setError('User and access token are required for Spotify games');
+          return;
+        }
+
+        // extract username from user object
+        const user = await JSON.parse(userRaw); 
+        const {username} = user;  
+
+        if (!username) {
+          setError('Username is required for Spotify games');
+          return;
+        }
+
+        await createGame(gameType, username, accessToken);
+      }
+      else {
+        await createGame(gameType);
+      }
+      
       await fetchGames(); // Refresh the list after creating a game
     } catch (createGameError) {
       setError('Error creating game');
+    }
+    finally {
+      setIsCreating(false); 
     }
   };
 
@@ -50,8 +82,8 @@ const useAllGamesPage = () => {
     setIsModalOpen(prevState => !prevState);
   };
 
-  const handleSelectGameType = (gameType: GameType) => {
-    handleCreateGame(gameType);
+  const handleSelectGameType = async (gameType: GameType) => {
+    await handleCreateGame(gameType);
     handleToggleModal();
   };
 
@@ -63,6 +95,7 @@ const useAllGamesPage = () => {
     handleToggleModal,
     handleSelectGameType,
     error,
+    isCreating
   };
 };
 

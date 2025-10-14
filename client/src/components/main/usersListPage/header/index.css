@@ -1,12 +1,59 @@
-#user_search_bar {
-    margin-left: auto;
-    margin-right: auto;
-    width: 70%;
-    margin-top: auto;
-    height: 2rem;
+.space_between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  /* Added vertical padding */
+}
+
+.right_padding {
+  padding-right: 2rem;
+  /* Maintains original right padding */
 }
 
 .bold_title {
-  font-weight: bold;
+  font-weight: 600;
+  /* Semi-bold instead of just bold */
+  color: #2d3748;
+  /* Dark blue-gray for better readability */
+  font-size: 1.25rem;
+  /* Slightly larger for hierarchy */
   white-space: nowrap;
+}
+
+#user_search_bar {
+  margin-left: auto;
+  margin-right: auto;
+  width: 70%;
+  height: 2.5rem;
+  /* Slightly taller for better touch target */
+  padding: 0 1rem;
+  /* Inner spacing */
+  border: 1px solid #e2e8f0;
+  /* Subtle border */
+  border-radius: 6px;
+  /* Matching your button radius */
+  font-size: 0.9375rem;
+  /* Comfortable reading size */
+  transition: all 0.2s ease;
+  /* Smooth transitions */
+  background-color: #f8fafc;
+  /* Light background */
+}
+
+#user_search_bar:focus {
+  outline: none;
+  border-color: #4299e1;
+  /* Focus state matches your blue */
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.1);
+  /* Subtle glow */
+}
+
+#user_count {
+  color: #718096;
+  /* Subdued gray for count */
+  font-size: 0.875rem;
+  /* Slightly smaller */
+  margin-top: 0.5rem;
+  /* Space above count */
 }

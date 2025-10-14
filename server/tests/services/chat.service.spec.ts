@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import escapeStringRegexp from 'escape-string-regexp';
 import ChatModel from '../../models/chat.model';
 import MessageModel from '../../models/messages.model';
 import UserModel from '../../models/users.model';
@@ -8,8 +9,9 @@ import {
   getChat,
   addParticipantToChat,
   getChatsByParticipants,
+  searchMessagesInUserChats,
 } from '../../services/chat.service';
-import { Chat, DatabaseChat } from '../../types/types';
+import { Chat, DatabaseChat, MessageSearchResponse } from '../../types/types';
 import { user } from '../mockData.models';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,6 +22,242 @@ describe('Chat service', () => {
     mockingoose.resetAll();
     jest.clearAllMocks();
   });
+
+  const mockChats1 = [
+    {
+      _id: new mongoose.Types.ObjectId(),
+      participants: ['alice', 'bob'],
+      messages: [
+        {
+          _id: new mongoose.Types.ObjectId(),
+          msg: 'Hello Bob! Are you free this weekend?',
+          msgFrom: 'alice',
+          msgDateTime: new Date('2023-01-02T10:00:00Z'),
+          type: 'direct',
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          msg: 'Yes Alice, let’s meet!',
+          msgFrom: 'bob',
+          msgDateTime: new Date('2023-01-01T09:00:00Z'),
+          type: 'direct',
+        },
+      ],
+    },
+    {
+      _id: new mongoose.Types.ObjectId(),
+      participants: ['alice', 'charlie'],
+      messages: [
+        {
+          _id: new mongoose.Types.ObjectId(),
+          msg: 'Charlie, the project is due soon.',
+          msgFrom: 'alice',
+          msgDateTime: new Date('2022-12-31T22:00:00Z'),
+          type: 'direct',
+        },
+        {
+          _id: new mongoose.Types.ObjectId(),
+          msg: 'I will have it ready by tomorrow, Alice.',
+          msgFrom: 'charlie',
+          msgDateTime: new Date('2022-12-31T23:00:00Z'),
+          type: 'direct',
+        },
+      ],
+    },
+  ];
+
+  it('should return error if username is missing', async () => {
+    const result = await searchMessagesInUserChats('', 'hello');
+    expect(result).toEqual({ error: 'Error searching messages: Invalid search input' });
+  });
+
+  it('should return error if keyword is missing', async () => {
+    const result = await searchMessagesInUserChats('alice', '');
+    expect(result).toEqual({ error: 'Error searching messages: Invalid search input' });
+  });
+
+  it('should return error if keyword exceeds 50 characters', async () => {
+    const longKeyword = 'a'.repeat(51);
+    const result = await searchMessagesInUserChats('alice', longKeyword);
+    expect(result).toEqual({ error: 'Error searching messages: Invalid search input' });
+  });
+
+  it('should return empty array if user has no chats', async () => {
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([]),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+    const result = await searchMessagesInUserChats('nobody', 'hello');
+    expect(Array.isArray(result)).toBe(true);
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(0);
+    }
+  });
+
+  it('should return empty array if no message matches keyword', async () => {
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([
+              {
+                _id: new mongoose.Types.ObjectId(),
+                participants: ['alice', 'bob'],
+                messages: [],
+              },
+            ]),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+    const result = await searchMessagesInUserChats('alice', 'nonExistentKeyword');
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(0);
+    } else {
+      throw new Error(result.error);
+    }
+  });
+
+  it('should return matching messages (case-insensitive)', async () => {
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue([
+              {
+                _id: new mongoose.Types.ObjectId(),
+                participants: ['alice', 'bob'],
+                messages: [
+                  {
+                    _id: new mongoose.Types.ObjectId(),
+                    msg: 'Yes Alice, let’s meet!',
+                    msgFrom: 'bob',
+                    msgDateTime: new Date('2023-01-01T09:00:00Z'),
+                    type: 'direct',
+                  },
+                ],
+              },
+            ]),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+    const result: MessageSearchResponse = await searchMessagesInUserChats('alice', 'alIce');
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(1);
+      for (const msg of result) {
+        expect(msg.matchedKeyword).toBe('alIce');
+        expect(result[0].msg.toLowerCase()).toContain('alice');
+      }
+    } else {
+      throw new Error(result.error);
+    }
+  });
+
+  it('should exclude messages not of type "direct"', async () => {
+    const keyword = 'direct';
+    const regex = new RegExp(keyword, 'i');
+
+    const mockWithFilteredMessages = [
+      {
+        ...mockChats1[0],
+        messages: mockChats1[0].messages
+          .concat([
+            {
+              _id: new mongoose.Types.ObjectId(),
+              msg: 'I am a group message, not direct!',
+              msgFrom: 'alice',
+              msgDateTime: new Date(),
+              type: 'group',
+            },
+          ])
+          .filter(m => m.type === 'direct' && regex.test(m.msg)),
+      },
+    ];
+
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(mockWithFilteredMessages),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+
+    const result = await searchMessagesInUserChats('alice', keyword);
+    if (Array.isArray(result)) {
+      expect(result.find(m => m.msg === 'I am a group message, not direct!')).toBeFalsy();
+    } else {
+      throw new Error(result.error);
+    }
+  });
+
+  it('should return messages sorted by date descending', async () => {
+    const keyword = 'Alice';
+    const regex = new RegExp(keyword, 'i');
+
+    const filteredChats = mockChats1.map(chat => ({
+      ...chat,
+      messages: chat.messages.filter(m => m.type === 'direct' && regex.test(m.msg)),
+    }));
+
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(filteredChats),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+
+    const result = await searchMessagesInUserChats('alice', keyword);
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(2);
+      expect(result[0].msgDateTime.getTime()).toBeGreaterThan(result[1].msgDateTime.getTime());
+    } else {
+      throw new Error(result.error);
+    }
+  });
+
+  it('should sanitize special regex characters in the keyword', async () => {
+    const keyword = 'Hello?';
+    const regex = new RegExp(escapeStringRegexp(keyword), 'i');
+
+    const filteredChats = mockChats1.map(chat => ({
+      ...chat,
+      messages: chat.messages.filter(m => m.type === 'direct' && regex.test(m.msg)),
+    }));
+
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(
+      () =>
+        ({
+          populate: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(filteredChats),
+          }),
+        }) as unknown as ReturnType<typeof ChatModel.find>,
+    );
+
+    const result = await searchMessagesInUserChats('alice', keyword);
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(0); // none should match "Hello?" exactly
+    } else {
+      throw new Error(result.error);
+    }
+  });
+
+  it('should return error object on database failure', async () => {
+    jest.spyOn(ChatModel, 'find').mockImplementationOnce(() => {
+      throw new Error('Database failure');
+    });
+    const result = await searchMessagesInUserChats('alice', 'hello');
+    expect('error' in result).toBe(true);
+    if ('error' in result) {
+      expect(result.error).toContain('Error searching messages: Database failure');
+    }
+  });
+
 
   describe('saveChat', () => {
     const mockChatPayload: Chat = {

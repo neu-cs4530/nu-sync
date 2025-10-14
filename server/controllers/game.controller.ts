@@ -47,7 +47,25 @@ const gameController = (socket: FakeSOSocket) => {
         return;
       }
 
-      const { gameType } = req.body;
+      // could add functionality for other types of llm models
+      const { gameType, username, accessToken } = req.body;
+
+      // special case for Spotify
+      if (gameType === 'Spotify') {
+        if (!username || !accessToken) {
+          res.status(400).send('Username and access token are required for Spotify games');
+          return;
+        }
+
+        const newGame = await GameManager.getInstance().addGame(gameType, username, accessToken);
+
+        if (typeof newGame !== 'string') {
+          throw new Error(newGame.error);
+        }
+
+        res.status(200).json(newGame);
+        return;
+      }
 
       const newGame = await GameManager.getInstance().addGame(gameType);
 

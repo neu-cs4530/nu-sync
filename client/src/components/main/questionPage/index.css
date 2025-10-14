@@ -1,7 +1,34 @@
 .btns {
   margin-right: 15%;
+  /* Original spacing preserved */
+}
+
+.question_list {
+  border-top: 1px solid #e2e8f0;
+  /* Added top border for container */
 }
 
 .question_list:last-child {
-  border-bottom: #000000 1px dashed;
+  border-bottom: 1px solid #e2e8f0;
+  /* Changed from dashed to solid gray */
+}
+
+/* Added styling for the "No Questions Found" message */
+.bold_title {
+  font-weight: 600;
+  color: #2d3748;
+  /* Dark blue-gray */
+  padding: 1.5rem 0;
+  /* Balanced spacing */
+  font-size: 1.1rem;
+}
+
+/* Optional: Add subtle transition for question list items */
+.question_list>div {
+  transition: background-color 0.15s ease;
+}
+
+.question_list>div:hover {
+  background-color: #f8fafc;
+  /* Very light hover effect */
 }

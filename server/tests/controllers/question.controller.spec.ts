@@ -17,6 +17,7 @@ import {
 
 const addVoteToQuestionSpy = jest.spyOn(questionUtil, 'addVoteToQuestion');
 const getQuestionsByOrderSpy: jest.SpyInstance = jest.spyOn(questionUtil, 'getQuestionsByOrder');
+const voteOnPollSpy = jest.spyOn(questionUtil, 'voteOnPoll');
 const filterQuestionsBySearchSpy: jest.SpyInstance = jest.spyOn(
   questionUtil,
   'filterQuestionsBySearch',
@@ -730,6 +731,180 @@ describe('Test questionController', () => {
 
       // Asserting the response
       expect(response.status).toBe(500);
+    });
+  });
+
+  describe('POST /voteOnPoll', () => {
+    it('should successfully vote on a poll', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      const mockResponse = {
+        msg: 'Vote recorded successfully',
+        poll: {
+          question: 'What is your favorite framework?',
+          options: [
+            { optionText: 'React', votes: ['testUser'] },
+            { optionText: 'Vue', votes: [] },
+          ],
+        },
+      };
+
+      voteOnPollSpy.mockResolvedValueOnce(mockResponse);
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(mockResponse);
+    });
+
+    it('should return an error if the user has already voted on the poll', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      const mockResponse = {
+        error: 'User has already voted on this poll',
+      };
+
+      voteOnPollSpy.mockResolvedValueOnce(mockResponse);
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: User has already voted on this poll');
+    });
+
+    it('should return an error if the option index is invalid', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 2, // Invalid index
+        username: 'testUser',
+      };
+
+      const mockResponse = {
+        error: 'Invalid option index',
+      };
+
+      voteOnPollSpy.mockResolvedValueOnce(mockResponse);
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Invalid option index');
+    });
+
+    it('should return an error if the question or poll is not found', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      const mockResponse = {
+        error: 'Question or poll not found',
+      };
+
+      voteOnPollSpy.mockResolvedValueOnce(mockResponse);
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Question or poll not found');
+    });
+
+    it('should return an error if an exception occurs during save', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      const mockResponse = {
+        error: 'Error when voting on poll',
+      };
+
+      voteOnPollSpy.mockResolvedValueOnce(mockResponse);
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Error when voting on poll');
+    });
+
+    it('should return bad request if qid is missing', async () => {
+      const mockReqBody = {
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid request');
+    });
+
+    it('should return bad request if optionIndex is missing', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        username: 'testUser',
+      };
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid request');
+    });
+
+    it('should return bad request if username is missing', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+      };
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid request');
+    });
+
+    it('should handle API errors when voting on a poll', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      // Force the voteOnPoll service to throw an exception
+      voteOnPollSpy.mockImplementationOnce(() => {
+        throw new Error('Database connection failed');
+      });
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Database connection failed');
+    });
+
+    it('should handle network errors when communicating with the database', async () => {
+      const mockReqBody = {
+        qid: '65e9b58910afe6e94fc6e6dc',
+        optionIndex: 0,
+        username: 'testUser',
+      };
+
+      // Mock a network error scenario
+      voteOnPollSpy.mockRejectedValueOnce(new Error('Network failure'));
+
+      const response = await supertest(app).post('/question/voteOnPoll').send(mockReqBody);
+
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Error when voting on poll: Network failure');
     });
   });
 });

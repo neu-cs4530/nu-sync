@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import './index.css';
 import { getMetaData } from '../../../../tool';
 import { PopulatedDatabaseQuestion } from '../../../../types/types';
+import { voteOnPollOption } from '../../../../services/questionService';
+import useUserContext from '../../../../hooks/useUserContext';
 
 /**
  * Interface representing the props for the Question component.
@@ -23,6 +25,7 @@ interface QuestionProps {
  */
 const QuestionView = ({ question }: QuestionProps) => {
   const navigate = useNavigate();
+  const { user } = useUserContext();
 
   /**
    * Function to navigate to the home page with the specified tag as a search parameter.
@@ -45,38 +48,72 @@ const QuestionView = ({ question }: QuestionProps) => {
     navigate(`/question/${questionID}`);
   };
 
+  /**
+   * Function to handle voting on a poll option.
+   * @param optionIndex - The index of the poll option to vote on.
+   */
+  const handlePollVote = async (optionIndex: number) => {
+    if (!question._id) {
+      throw new Error('Question ID is missing');
+    }
+
+    await voteOnPollOption(question._id, optionIndex, user.username);
+  };
+
   return (
     <div
-      className='question right_padding'
+      className="question right_padding"
       onClick={() => {
         if (question._id) {
           handleAnswer(question._id);
         }
-      }}>
-      <div className='postStats'>
+      }}
+    >
+      <div className="postStats">
         <div>{question.answers.length || 0} answers</div>
         <div>{question.views.length} views</div>
       </div>
-      <div className='question_mid'>
-        <div className='postTitle'>{question.title}</div>
-        <div className='question_tags'>
-          {question.tags.map(tag => (
+      <div className="question_mid">
+        <div className="postTitle">{question.title}</div>
+        <div className="question_tags">
+          {question.tags.map((tag) => (
             <button
               key={String(tag._id)}
-              className='question_tag_button'
-              onClick={e => {
+              className="question_tag_button"
+              onClick={(e) => {
                 e.stopPropagation();
                 clickTag(tag.name);
-              }}>
+              }}
+            >
               {tag.name}
             </button>
           ))}
         </div>
+        {/* Poll Section */}
+        {question.poll && (
+          <div className="poll">
+            <h4>{question.poll.question}</h4>
+            {question.poll.options.map((option, index) => (
+              <div key={index} className="poll-option">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePollVote(index);
+                  }}
+                >
+                  {option.optionText} ({option.votes.length} votes)
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      <div className='lastActivity'>
-        <div className='question_author'>{question.askedBy}</div>
+      <div className="lastActivity">
+        <div className="question_author">{question.askedBy}</div>
         <div>&nbsp;</div>
-        <div className='question_meta'>asked {getMetaData(new Date(question.askDateTime))}</div>
+        <div className="question_meta">
+          asked {getMetaData(new Date(question.askDateTime))}
+        </div>
       </div>
     </div>
   );

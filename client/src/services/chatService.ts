@@ -5,6 +5,24 @@ import api from './config';
 const CHAT_API_URL = `${process.env.REACT_APP_SERVER_URL}/chat`;
 
 /**
+ * Searches for messages containing a keyword for a specific user.
+ *
+ * @param username - The user performing the search.
+ * @param keyword - The keyword to search within messages.
+ * @returns A list of matched messages.
+ * @throws Error if the search fails.
+ */
+export const searchMessages = async (username: string, keyword: string) => {
+  const res = await api.post(`${CHAT_API_URL}/searchMessages`, { username, keyword });
+
+  if (res.status !== 200) {
+    throw new Error('Error searching messages');
+  }
+
+  return res.data;
+};
+
+/**
  * Fetches all chats associated with a given user.
  *
  * @param username - The username of the user whose chats are to be fetched.

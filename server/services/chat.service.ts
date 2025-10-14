@@ -1,8 +1,10 @@
 import { ObjectId } from 'mongodb';
+import escapeStringRegexp from 'escape-string-regexp';
 import ChatModel from '../models/chat.model';
 import UserModel from '../models/users.model';
-import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser } from '../types/types';
+import { Chat, ChatResponse, DatabaseChat, MessageResponse, DatabaseUser, MessageInChat, MessageSearchResponse } from '../types/types';
 import { saveMessage } from './message.service';
+
 
 /**
  * Saves a new chat, storing any messages provided as part of the argument.
@@ -131,5 +133,74 @@ export const addParticipantToChat = async (
     return updatedChat;
   } catch (error) {
     return { error: `Error adding participant to chat: ${(error as Error).message}` };
+  }
+};
+
+
+
+/**
+ * Searches messages inside the user's direct chats for a keyword.
+ * @param username - The username of the participant to search chats for.
+ * @param keyword - The keyword to search for within messages.
+ * @returns {Promise<MessageSearchResponse>} - Array of matched messages.
+ */
+export const searchMessagesInUserChats = async (
+  username: string,
+  keyword: string,
+): Promise<MessageSearchResponse> => {
+  try {
+    if (!keyword || keyword.length > 50 || !username) {
+      throw new Error('Invalid search input');
+    }
+
+    const sanitizedKeyword = escapeStringRegexp(keyword);
+
+    const rawChats = await ChatModel.find({ participants: username })
+      .populate({
+        path: 'messages',
+        match: {
+          type: 'direct',
+          msg: { $regex: sanitizedKeyword, $options: 'i' },
+        },
+        options: { sort: { msgDateTime: -1 } },
+      })
+      .lean();
+
+    const results: MessageSearchResponse = [];
+    
+
+    for (const chat of rawChats) {
+      if (Array.isArray(chat.messages)) {
+        for (const message of chat.messages) {
+          if (
+            typeof message === 'object' &&
+            'msg' in message &&
+            'msgFrom' in message &&
+            'msgDateTime' in message &&
+            'type' in message
+          ) {
+            const messageInChat: MessageInChat = {
+              _id: message._id as ObjectId,
+              msg: message.msg as string,
+              msgFrom: message.msgFrom as string,
+              msgDateTime: message.msgDateTime as Date,
+              type: 'direct',
+              user: null, // optional
+            };
+
+            results.push({
+              ...messageInChat,
+              chatId: chat._id,
+              participants: chat.participants,
+              matchedKeyword: keyword,
+            });
+          }
+        }
+      }
+    }
+
+    return results;
+  } catch (error) {
+    return { error: `Error searching messages: ${(error as Error).message}` };
   }
 };

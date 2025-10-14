@@ -1,21 +1,49 @@
 .questionBody {
   display: flex;
   flex-direction: row;
-  /* justify-content: space-between;  */
   margin-top: 5%;
-  border-bottom: #000000 1px dashed;
+  border-bottom: 1px solid #e2e8f0;
+  /* Changed from dashed black to subtle solid gray */
+  padding-bottom: 1.5rem;
+  /* Added padding to separate content from border */
 }
 
 .answer_question_view {
   width: 15%;
+  color: #4a5568;
+  /* Modern dark blue-gray */
+  font-weight: 600;
+  /* Slightly bolder for better hierarchy */
 }
 
 .answer_question_text {
   width: 60%;
+  color: #2d3748;
+  /* Darker text for better readability */
+  line-height: 1.6;
+  /* Better text spacing */
 }
 
 .answer_question_right {
   display: flex;
   flex-direction: column;
   margin-left: 5%;
+  font-size: 0.875rem;
+  /* Slightly smaller for metadata */
+}
+
+.question_author {
+  color: #4299e1;
+  /* Matching modern blue theme */
+  font-weight: 500;
+  /* Medium weight for author name */
+  margin-bottom: 0.25rem;
+  /* Space between author and meta */
+}
+
+.answer_question_meta {
+  color: #718096;
+  /* Lighter gray for metadata */
+  font-style: normal;
+  /* Removed italic if present */
 }

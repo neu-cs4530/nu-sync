@@ -26,6 +26,39 @@ describe('POST /create', () => {
       expect(response.text).toEqual(JSON.stringify('testGameID'));
       expect(addGameSpy).toHaveBeenCalledWith('Nim');
     });
+
+    it('should return 200 with a game ID for Spotify game with valid username and accessToken', async () => {
+      addGameSpy.mockResolvedValueOnce('spotifyGame123');
+
+      const response = await supertest(app).post('/games/create').send({
+        gameType: 'Spotify',
+        username: 'testuser',
+        accessToken: 'valid-access-token',
+      });
+
+      expect(response.status).toEqual(200);
+      expect(response.text).toEqual(JSON.stringify('spotifyGame123'));
+      expect(addGameSpy).toHaveBeenCalledWith('Spotify', 'testuser', 'valid-access-token');
+    });
+
+    it('should return 400 if username or accessToken is missing for Spotify game', async () => {
+      const res1 = await supertest(app).post('/games/create').send({
+        gameType: 'Spotify',
+        username: 'testuser',
+      });
+
+      const res2 = await supertest(app).post('/games/create').send({
+        gameType: 'Spotify',
+        accessToken: 'valid-access-token',
+      });
+
+      expect(res1.status).toBe(400);
+      expect(res1.text).toBe('Username and access token are required for Spotify games');
+
+      expect(res2.status).toBe(400);
+      expect(res2.text).toBe('Username and access token are required for Spotify games');
+    });
+
   });
 
   describe('400 Invalid Request', () => {
@@ -70,6 +103,22 @@ describe('POST /create', () => {
       expect(response.status).toEqual(500);
       expect(response.text).toContain('Error when creating game: test error');
       expect(addGameSpy).toHaveBeenCalledWith('Nim');
+    });
+
+    it('should return 500 if Spotify addGame returns error object', async () => {
+      addGameSpy.mockResolvedValueOnce({ error: 'Spotify creation failed' });
+
+      const response = await supertest(app)
+        .post('/games/create')
+        .send({
+          gameType: 'Spotify',
+          username: 'testuser',
+          accessToken: 'fake-token',
+        });
+
+      expect(response.status).toEqual(500);
+      expect(response.text).toContain('Error when creating game: Spotify creation failed');
+      expect(addGameSpy).toHaveBeenCalledWith('Spotify', 'testuser', 'fake-token');
     });
   });
 });
