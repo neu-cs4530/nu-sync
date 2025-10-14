@@ -141,12 +141,28 @@ process.on('SIGINT', async () => {
   });
 });
 
-app.use(
-  cors({
-    credentials: true,
-    origin: [CLIENT_URL],
-  }),
-);
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL,                 // keep whatever you had
+  'https://www.nu-sync.com',
+  'https://nu-sync.com',
+  'https://cs4530-s25-203.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
+app.use(cors({
+  credentials: true,
+  origin: (origin, cb) => {
+    // allow curl/Postman (no Origin) and any in the list
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+
+// Preflights everywhere
+app.options('*', cors());
 
 app.use(express.json());
 
